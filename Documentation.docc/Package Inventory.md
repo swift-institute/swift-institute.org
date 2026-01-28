@@ -1,15 +1,5 @@
 # Package Inventory
 
-<!--
----
-title: Package Inventory
-version: 1.1.0
-last_updated: 2026-01-20
-applies_to: [swift-primitives, swift-institute]
-normative: false
----
--->
-
 @Metadata {
     @TitleHeading("Swift Institute")
 }

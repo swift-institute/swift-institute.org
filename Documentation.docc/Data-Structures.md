@@ -1,14 +1,5 @@
 # Data Structures
 
-<!--
----
-version: 1.0.0
-last_updated: 2026-01-20
-applies_to: [swift-primitives]
-normative: true
----
--->
-
 Complete reference of data structure primitives available in swift-primitives.
 
 ## Overview

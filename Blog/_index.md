@@ -1,17 +1,5 @@
 # Blog Ideas Index
 
-<!--
----
-title: Blog Ideas Index
-version: 1.1.0
-last_updated: 2026-01-23
-applies_to: [swift-institute, swift-primitives]
-normative: false
-llm_optimized: true
-idea_count: 27
----
--->
-
 @Metadata {
     @TitleHeading("Swift Institute")
 }

@@ -1,15 +1,5 @@
 # Memory Reference
 
-<!--
----
-title: Memory Reference
-version: 1.0.0
-last_updated: 2026-01-19
-applies_to: [swift-primitives, swift-institute, swift-standards, swift-foundations]
-normative: true
----
--->
-
 @Metadata {
     @TitleHeading("Swift Institute")
 }

@@ -1,15 +1,5 @@
 # API Audit Process
 
-<!--
----
-title: API Audit Process
-version: 1.0.0
-last_updated: 2026-01-21
-applies_to: [swift-primitives, swift-institute, swift-standards, swift-foundations]
-normative: true
----
--->
-
 @Metadata {
     @TitleHeading("Swift Institute")
 }

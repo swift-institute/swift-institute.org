@@ -1,15 +1,5 @@
 # Documentation Requirements
 
-<!--
----
-title: Documentation Requirements
-version: 2.0.0
-last_updated: 2026-01-16
-applies_to: [swift-primitives, swift-institute, swift-standards]
-normative: true
----
--->
-
 @Metadata {
     @TitleHeading("Swift Institute")
 }

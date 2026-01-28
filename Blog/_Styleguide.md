@@ -1,24 +1,5 @@
 # Blog styleguide
 
-<!--
----
-title: Blog Styleguide
-type: research-discovery
-methodology: RES-017 Pattern Extraction
-status: DECISION
-version: 2.0.0
-last_updated: 2026-01-24
-applies_to: [swift-institute]
-normative: true
-research_basis:
-  - Best-in-Class Blog Post Pattern
-  - Google Developer Documentation Style Guide
-  - Draft.dev Technical Blogging Style Guide
-  - Apple Style Guide
-  - Microsoft Writing Style Guide
----
--->
-
 Style conventions for Swift Institute blog posts, extracted from industry research and best-in-class technical writing standards.
 
 ## Overview

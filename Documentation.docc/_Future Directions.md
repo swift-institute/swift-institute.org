@@ -1,15 +1,5 @@
 # Future Directions
 
-<!--
----
-title: Future Directions
-version: 1.0.0
-last_updated: 2026-01-16
-applies_to: [swift-primitives, swift-institute, swift-standards]
-normative: false
----
--->
-
 @Metadata {
     @TitleHeading("Swift Institute")
 }

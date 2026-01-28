@@ -1,15 +1,5 @@
 # API Concurrency
 
-<!--
----
-title: API Concurrency
-version: 1.0.0
-last_updated: 2026-01-19
-applies_to: [swift-primitives, swift-institute, swift-standards]
-normative: true
----
--->
-
 @Metadata {
     @TitleHeading("Swift Institute")
 }

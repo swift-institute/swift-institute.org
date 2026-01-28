@@ -1,15 +1,5 @@
 # Embedded Swift
 
-<!--
----
-title: Embedded Swift
-version: 1.0.0
-last_updated: 2026-01-18
-applies_to: [swift-primitives, swift-standards]
-normative: true
----
--->
-
 @Metadata {
     @TitleHeading("Swift Institute")
 }

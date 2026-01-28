@@ -1,15 +1,5 @@
 # Commit Standards
 
-<!--
----
-title: Commit Standards
-version: 1.0.0
-last_updated: 2026-01-21
-applies_to: [swift-primitives, swift-institute, swift-standards, swift-foundations, swift-components, swift-applications]
-normative: true
----
--->
-
 @Metadata {
     @TitleHeading("Swift Institute")
 }

@@ -1,16 +1,5 @@
 # SE-Pitch Process
 
-<!--
----
-title: SE-Pitch Process
-version: 1.0.0
-last_updated: 2026-01-22
-applies_to: [swift-institute, swift-primitives, swift-standards, swift-foundations]
-normative: true
-llm_optimized: true
----
--->
-
 @Metadata {
     @TitleHeading("Swift Institute")
 }

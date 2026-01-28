@@ -1,15 +1,5 @@
 # Identity: Why "Institute"
 
-<!--
----
-title: Identity - Why "Institute"
-version: 1.0.0
-last_updated: 2026-01-16
-applies_to: [swift-institute, swift-primitives, swift-standards]
-normative: false
----
--->
-
 @Metadata {
     @TitleHeading("Swift Institute")
 }

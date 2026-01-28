@@ -1,16 +1,5 @@
 # Layer Flowchart
 
-<!--
----
-title: Layer Flowchart
-version: 1.0.0
-last_updated: 2026-01-16
-applies_to: [swift-primitives, swift-institute, swift-standards]
-normative: false
-document_type: visual_aid
----
--->
-
 @Metadata {
     @TitleHeading("Swift Institute")
 }

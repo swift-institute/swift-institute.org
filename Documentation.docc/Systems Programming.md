@@ -1,15 +1,5 @@
 # Systems Programming
 
-<!--
----
-title: Systems Programming
-version: 1.0.0
-last_updated: 2026-01-16
-applies_to: [swift-primitives, swift-kernel-primitives, swift-loader-primitives, swift-x86-primitives, swift-arm-primitives]
-normative: true
----
--->
-
 @Metadata {
     @TitleHeading("Swift Institute")
 }

@@ -1,15 +1,5 @@
 # Semantic Dependencies
 
-<!--
----
-title: Semantic Dependencies
-version: 1.1.0
-last_updated: 2026-01-22
-applies_to: [swift-primitives, swift-standards, swift-foundations]
-normative: true
----
--->
-
 @Metadata {
     @TitleHeading("Swift Institute")
 }

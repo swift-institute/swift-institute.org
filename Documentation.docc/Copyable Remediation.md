@@ -1,18 +1,5 @@
 # Copyable Remediation
 
-<!--
----
-title: Copyable Remediation
-version: 2.1.0
-last_updated: 2026-01-22
-applies_to: [swift-primitives, swift-standards, swift-foundations]
-normative: true
-llm_optimized: true
-document_type: process_workflow
-rule_prefix: COPY
----
--->
-
 @Metadata {
     @TitleHeading("Swift Institute")
 }

@@ -1,15 +1,5 @@
 # Memory Safety
 
-<!--
----
-title: Memory Safety
-version: 2.0.0
-last_updated: 2026-01-27
-applies_to: [swift-primitives, swift-institute, swift-standards, swift-foundations]
-normative: true
----
--->
-
 @Metadata {
     @TitleHeading("Swift Institute")
 }

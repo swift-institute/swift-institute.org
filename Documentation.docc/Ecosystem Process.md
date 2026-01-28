@@ -1,15 +1,5 @@
 # Ecosystem Process
 
-<!--
----
-title: Ecosystem Process
-version: 1.0.0
-last_updated: 2026-01-18
-applies_to: [swift-primitives, swift-standards, swift-foundations, swift-components]
-normative: true
----
--->
-
 @Metadata {
     @TitleHeading("Swift Institute")
 }

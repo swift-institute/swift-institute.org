@@ -1,40 +1,5 @@
 # Documentation Process
 
-<!--
----
-title: Documentation Process
-version: 2.1.0
-last_updated: 2026-01-21
-applies_to: [swift-institute]
-normative: true
----
-
-## Process Instruction (for Claude)
-
-**Trigger**: User points to this file to initiate documentation maintenance.
-
-**Scope**: All permanent documentation in the Swift Institute corpus.
-
-**Action**: Execute the Maintenance Process defined in the visible document sections below.
-
-### Maintenance Goals
-
-Documentation maintenance ensures the corpus remains:
-1. **Internally consistent** - No contradictions between documents
-2. **Appropriately scoped** - Each document has clear, distinct boundaries
-3. **Discoverable** - Related content is findable in logical locations
-4. **LLM-optimized** - Follows structural patterns that enable reliable retrieval
-
-### Output
-
-Maintenance produces:
-1. An audit report identifying issues
-2. Proposed actions (splits, moves, updates)
-3. User approval before execution
-4. Committed changes with descriptive messages
-
--->
-
 @Metadata {
     @TitleHeading("Swift Institute")
 }
