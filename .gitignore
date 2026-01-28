@@ -22,6 +22,9 @@ Thumbs.db
 # Top-level entries (opt-in only)
 # First ignore all, then whitelist specific folders and files
 /*
+!/.claude/
+/.claude/*
+!/.claude/skills/
 !/Blog/
 !/Documentation.docc/
 !/Experiments/
@@ -42,6 +45,7 @@ Thumbs.db
 !CONTRIBUTING.md
 !CODE_OF_CONDUCT.md
 !SECURITY.md
+!CLAUDE.md
 !**/*.docc/**/*.md
 !**/Research/**/*.md
 !**/Skills/**/*.md
