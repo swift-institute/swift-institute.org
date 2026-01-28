@@ -22,125 +22,317 @@ migration_date: 2026-01-28
 
 # Memory Conventions
 
-Rules for ownership, copyability, and memory safety.
+Rules for ownership, copyability, linear types, and span access patterns.
+
+**Source documents**: Memory Copyable.md, Memory Ownership.md
 
 ---
 
 ## ~Copyable Types
 
-### [MEM-COPY-001] When to Use ~Copyable
+### [MEM-COPY-001] Noncopyable Type Declaration
 
-Types that manage unique resources SHOULD be declared as `~Copyable`.
+**Scope**: Types requiring single-ownership semantics.
+
+**Statement**: Types that represent resources with exclusive ownership MUST be marked `~Copyable`.
 
 ```swift
-public struct UniqueHandle: ~Copyable {
-    private var handle: Handle
+// CORRECT
+struct FileDescriptor: ~Copyable {
+    private let fd: CInt
+    deinit { close(fd) }
+}
+
+// INCORRECT - Allows double-free
+struct FileDescriptor {
+    let fd: CInt
+}
+```
+
+**Cross-references**: [PATTERN-014]
+
+---
+
+### [MEM-COPY-002] Noncopyable in Error Types
+
+**Scope**: Error type design involving `~Copyable` values.
+
+**Statement**: `Swift.Error` requires `Copyable`. Move-only values MUST NOT be embedded in `Error` types. Use non-throwing outcome types instead.
+
+```swift
+// CORRECT
+enum RegistrationOutcome {
+    case success(RegisteredToken)
+    case failure(UnregisteredToken, RegistrationError)
+}
+func register(_ token: consuming UnregisteredToken) -> RegistrationOutcome
+
+// INCORRECT - Token lost on failure
+func register(_ token: consuming UnregisteredToken) throws -> RegisteredToken
+```
+
+---
+
+### [MEM-COPY-003] Noncopyable in Collections
+
+**Scope**: Storing `~Copyable` types in collections.
+
+**Statement**: When `~Copyable` types must be stored in collections, wrap the content in a class.
+
+```swift
+// CORRECT - Class provides reference semantics
+final class Entry<T: Sendable>: @unchecked Sendable {
+    enum State: ~Copyable {
+        case pending(Waiter.Queue)
+        case computing
+        case completed(T)
+    }
+    private let lock = Mutex<State>(.pending(.init()))
+}
+var cache: [Key: Entry<Value>] = [:]
+
+// INCORRECT - Cannot store ~Copyable directly
+var cache: [Key: State] = [:]  // Compiler error
+```
+
+---
+
+### [MEM-COPY-004] Extension Constraints for ~Copyable Types
+
+**Scope**: Extensions on generic types with `~Copyable` type parameters.
+
+**Statement**: Extensions MUST include explicit `where Element: ~Copyable` constraints. Without this, extensions implicitly add `where Element: Copyable`.
+
+```swift
+// CORRECT - Available for ALL elements
+extension Container where Element: ~Copyable {
+    func operation() { }
+}
+
+// CORRECT - Intentionally restricted
+extension Container where Element: Copyable {
+    func copyableOnlyOperation() { }
+}
+
+// INCORRECT - Implicitly adds 'where Element: Copyable'
+extension Container {
+    func operation() { }  // Only available when Element: Copyable!
+}
+```
+
+Applies to **all extension content**: methods, computed properties, nested types, and typealiases.
+
+**Cross-references**: [MEM-COPY-001]
+
+---
+
+### [MEM-COPY-005] Nested Accessor Pattern Incompatibility
+
+**Scope**: Using nested accessor pattern with `~Copyable` containers.
+
+**Statement**: Non-consuming nested accessor patterns are incompatible with `~Copyable` containers. The accessor struct must store a reference to the container, which requires copying.
+
+| Form | Ownership | ~Copyable Compatible |
+|------|-----------|---------------------|
+| Consuming | Transfers ownership | Yes |
+| Non-consuming | Borrows or copies | No |
+
+For `~Copyable` containers, choose: keep container Copyable, use direct methods (`container.peekBack()` instead of `container.peek.back`), or wait for language evolution.
+
+**Cross-references**: [API-NAME-002], [MEM-COPY-001]
+
+---
+
+### [MEM-COPY-006] ~Copyable Propagation Gotchas
+
+**Scope**: All scenarios where `~Copyable` constraint suppression fails to propagate.
+
+**Statement**: Swift's `~Copyable` suppression fails across certain boundaries. All known categories:
+
+| Category | Boundary | Workaround |
+|----------|----------|------------|
+| 1 | Extension declaration site | Declare nested types inside struct body |
+| 2 | Implicit Copyable in extensions | Add explicit `where Element: ~Copyable` |
+| 3 | Protocol conformance in separate files | Move conformances to same file |
+| 4 | Sequence/Collection protocol requirements | No workaround; use `forEach` with borrowing closures |
+| 5 | Module emission phase (compound constraints + separate file + Lifetimes flag) | Consolidate to single file |
+
+**Root cause**: Generic parameter identity. `~Copyable` suppression propagates only when the same generic parameter is referenced, not across different generic parameters with identical constraints.
+
+**Workaround hierarchy** (most reliable first):
+1. Nest types inside outer type body (same generic parameter identity)
+2. Add explicit `where Element: ~Copyable` to extensions
+3. Move conformances to same file as declaration
+4. Module-level wrapper types (unreliable — different generic parameter)
+
+**Tracking**: Category 5 — Swift issue #86669
+
+**Cross-references**: [MEM-COPY-004], [MEM-COPY-005]
+
+---
+
+## Linear and Affine Types
+
+### [MEM-LINEAR-001] Exactly-Once Types
+
+**Scope**: Values that must be used exactly once.
+
+**Statement**: Linear types MUST be `~Copyable` with a `consuming func` for the use operation and a `deinit` that traps if not consumed.
+
+```swift
+public struct Continuation<T>: ~Copyable, Sendable {
+    private let resume: @Sendable (T) -> Void
+
+    public consuming func callAsFunction(_ value: T) {
+        resume(value)
+    }
 
     deinit {
-        close(handle)
+        preconditionFailure("Continuation was dropped without being resumed")
     }
 }
 ```
 
 ---
 
-### [MEM-COPY-002] Storage Nesting Rule
+### [MEM-LINEAR-002] At-Most-Once Types
 
-Storage classes for ~Copyable types MUST be nested inside the type body, NOT in extensions.
+**Scope**: Values that may be used at most once.
 
-```swift
-// CORRECT - Storage inside body
-public struct Stack<Element: ~Copyable>: ~Copyable {
-    @usableFromInline
-    final class Storage: ManagedBuffer<Int, Element> { }
-}
+**Statement**: Affine types MUST be `~Copyable` with a `consuming func` and a silent `deinit` (no trap).
 
-// INCORRECT - Storage in extension loses context
-extension Stack {
-    final class Storage: ManagedBuffer<Int, Element> { }  // FAILS
-}
-```
-
-**Rationale**: Extensions lose the ~Copyable constraint propagation from the outer type's generic parameter.
+| Semantics | `deinit` Behavior |
+|-----------|-------------------|
+| Exactly-once (linear) | `preconditionFailure` |
+| At-most-once (affine) | Silent — unused is valid |
 
 ---
 
-### [MEM-COPY-003] Module Split for Sequence
+### [MEM-LINEAR-003] Proof Categories
 
-`Swift.Sequence` requires `Element: Copyable`. Split modules:
+**Scope**: Using ownership as a proof assistant.
 
-```
-Package/
-├── {Type} Primitives Core/       # Type + Swift.Sequence (Copyable)
-├── {Type} Primitives Sequence/   # Sequence.Protocol (~Copyable)
-└── {Type} Primitives/            # Umbrella exports
-```
+| Invariant | Ownership Encoding | Compiler Enforcement |
+|-----------|-------------------|---------------------|
+| Exactly-once use | `~Copyable` + `consuming func` + `deinit` trap | Double-use at compile time; dropped-without-use at runtime |
+| At-most-once use | `~Copyable` + `consuming func` + silent `deinit` | Double-use at compile time |
+| Transfer semantics | `consuming` parameter | Caller cannot use value after transfer |
+| Borrow semantics | `borrowing` parameter | Callee cannot consume or store |
 
 ---
 
-## Bug Workarounds
+## Span Access Patterns
 
-### [COPY-FIX-001] Nested Type Declaration Site
+### [MEM-SPAN-001] Property-Based Span Access
 
-Nested types in extensions don't inherit outer type's generic constraints.
+**Scope**: APIs providing `Span` or `MutableSpan` views.
 
-**Fix**: Declare ALL variant types inside the struct/enum body:
+**Statement**: Types that expose `Span` or `MutableSpan` MUST use property-based access, not closure-based `withSpan(_:)`.
 
 ```swift
-public enum Set<Element: ~Copyable>: ~Copyable {
-    // All variants in body
-    public struct Ordered: ~Copyable { }
-    public struct Bounded: ~Copyable { }
+// CORRECT - Property-based (SE-0456)
+var span: Span<Element> {
+    @_lifetime(borrow self)
+    borrowing get { /* ... */ }
+}
+
+// INCORRECT - Closure-based is vestigial
+func withSpan<R>(_ body: (Span<Element>) -> R) -> R
+```
+
+`Span` is `~Escapable` — the type system enforces scoping, making closures unnecessary.
+
+**Cross-references**: [MEM-COPY-001], SE-0456
+
+---
+
+## Techniques
+
+### [MEM-COPY-010] Noncopyable Workarounds for Associated Types
+
+**Scope**: Protocols where associated types should be `~Copyable`.
+
+**Statement**: When Swift doesn't support `associatedtype T: ~Copyable`, use `Reference.Box<T>` as a workaround. Document the intent.
+
+```swift
+protocol ResourceManager {
+    associatedtype Token  // Implicitly Copyable
+    func acquire() -> Reference.Box<ActualToken>  // Workaround
+    func release(_ token: consuming Reference.Box<ActualToken>)
 }
 ```
 
 ---
 
-### [COPY-FIX-002] Value Generic Deinit Bug
+### [MEM-COPY-011] Two-World Separation
 
-When using `InlineArray<capacity, Element>` with value generics and only value-type properties, deinitializers may not be called.
+**Scope**: APIs with both owned (escapable) and borrowed (`~Escapable`) variants.
 
-**Tracking**: https://github.com/swiftlang/swift/issues/86652
+**Statement**: When owned and borrowed variants have different semantic properties, they MUST be separate types with separate protocol conformances.
 
-**Workaround**: Add a reference-type property:
+| World | Prioritizes | Sacrifices |
+|-------|-------------|------------|
+| Owned | Combinator reuse | Compile-time safety |
+| Borrowed | Zero-copy | Separate protocol |
 
-```swift
-struct Inline<let capacity: Int>: ~Copyable {
-    var _elements: InlineArray<capacity, Element>
-    var _deinitWorkaround: AnyObject? = nil  // Forces correct dispatch
-}
-```
+Provide explicit bridge types for cross-world reuse with controlled copy points.
+
+**Cross-references**: [MEM-COPY-010], [MEM-LINEAR-001]
 
 ---
 
 ## Ownership Annotations
 
-### [MEM-OWN-001] Borrowing for Read-Only
+### [MEM-OWN-001] Consuming Parameters
 
-Use `borrowing` for read-only access to ~Copyable values.
+**Statement**: Use `consuming` when taking ownership. Caller cannot use the value after passing it.
 
 ```swift
-func process(_ value: borrowing Resource) {
-    // Can read but not consume
+public init(_ value: consuming Value) {
+    self._storage = value
 }
 ```
 
 ---
 
-### [MEM-OWN-002] Consuming for Ownership Transfer
+### [MEM-OWN-002] Borrowing Parameters
 
-Use `consuming` when taking ownership.
+**Statement**: Use `borrowing` for read-only access without ownership transfer.
 
 ```swift
-func takeOwnership(_ value: consuming Resource) {
-    // Now owns the value
-}
+public func withValue<Result>(
+    _ body: (borrowing Value) throws -> Result
+) rethrows -> Result
 ```
+
+---
+
+### Ownership Table
+
+| Keyword | Ownership | Caller After Call | Callee Can |
+|---------|-----------|-------------------|------------|
+| `consuming` | Transferred to callee | Cannot use value | Store, consume |
+| `borrowing` | Retained by caller | Can use value | Read only |
+| `inout` | Temporarily loaned | Can use value | Mutate |
+
+---
+
+### Type-Level Ownership Naming
+
+**Statement**: A primitive named after a **reference** (Address, Pointer, Handle) SHOULD be non-owning and `Copyable`. A primitive named after a **resource** (String, Array, Allocation) SHOULD be owning and MAY provide a `.View` borrowing type.
+
+| Category | Examples | Copyable? | Owns Memory? |
+|----------|----------|-----------|--------------|
+| Reference | Address, Pointer, Handle | Yes | No |
+| Resource | String, Array, Allocation | Varies | Yes |
+
+Applying "resource owns, view borrows" to reference types is a **category error**. Pointers are the lens onto memory, not what should have views.
 
 ---
 
 ## Cross-References
 
 See also:
+- **memory-safety** skill for strict safety, unsafe marking, reference primitives
+- **copyable-remediation** skill for auditing and fixing ~Copyable constraint issues
 - **primitives** skill for ~Copyable collection patterns
-- **code-organization** skill for file structure

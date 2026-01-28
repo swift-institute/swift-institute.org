@@ -105,21 +105,6 @@ var isConnecting: Bool    // Requires multiple booleans
 
 ---
 
-### [API-IMPL-004] Explicit State Transitions
-
-State machines SHOULD have explicit transition methods.
-
-```swift
-// CORRECT
-mutating func connect() throws(Connection.Error)
-mutating func disconnect()
-
-// INCORRECT - Direct state mutation
-connection.state = .connected(session)  // Bypasses validation
-```
-
----
-
 ## Cross-References
 
 See also:

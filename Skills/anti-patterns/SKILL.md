@@ -25,140 +25,232 @@ migration_date: 2026-01-28
 
 # Anti-Patterns
 
-Common mistakes to avoid in Swift Institute code.
+Common mistakes to avoid when implementing Swift Institute packages.
+
+**Applies to**: All implementation code in Swift Institute packages.
+
+**Does not apply to**: External dependencies or third-party code.
 
 ---
 
-## Naming Anti-Patterns
+## [PATTERN-009] No Foundation Types
 
-### [ANTI-001] Compound Type Names
+**Scope**: All primitive and standard packages.
+
+**Statement**: Primitive and standard packages MUST NOT use Foundation types.
 
 ```swift
-// ANTI-PATTERN
-struct FileDirectoryWalk { }
-enum ConnectionState { }
-class NetworkRequestHandler { }
-
 // CORRECT
-struct File.Directory.Walk { }
-enum Connection.State { }
-class Network.Request.Handler { }
+import Buffer_Primitives
+import Temporal_Primitives
+func parse(_ buffer: Buffer) -> Instant { ... }
+
+// ANTI-PATTERN
+import Foundation
+func parse(_ data: Data) -> Date { ... }
 ```
 
+**Rationale**: Foundation types prevent Swift Embedded deployment and introduce platform-specific behavior differences.
+
+**Cross-references**: [API-NAME-001], [API-PLAT-001]
+
 ---
 
-### [ANTI-002] Compound Method Names
+## [PATTERN-010] Nested Type Names
+
+**Scope**: All type declarations.
+
+**Statement**: Types MUST use nested namespaces, not compound names.
 
 ```swift
-// ANTI-PATTERN
-func walkFiles() { }
-func openWrite() { }
-
 // CORRECT
-func walk.files() { }
-func open.write() { }
-// Or use nested accessor pattern with Property<Tag, Base>
-```
-
----
-
-## Error Handling Anti-Patterns
-
-### [ANTI-003] Untyped Throws
-
-```swift
-// ANTI-PATTERN
-func read() throws -> Data {
-    // Error type erased
+enum PDF {
+    struct Page { }
+    struct Document { }
 }
+// Usage: PDF.Page, PDF.Document
 
-// CORRECT
-func read() throws(IO.Error) -> Data {
-    // Error type preserved
-}
+// ANTI-PATTERN
+struct PDFPage { }
+struct PDFDocument { }
 ```
+
+**Rationale**: Nested types provide namespace organization and read as `PDF.Page`, matching specification terminology. Type `PDF.` and autocomplete reveals the entire domain.
+
+**Cross-references**: [API-NAME-001], [API-NAME-002]
 
 ---
 
-### [ANTI-004] Compound Error Types
+## [PATTERN-011] Typed Error Enums
+
+**Scope**: All error types.
+
+**Statement**: Errors MUST be typed enums with associated values, not string-based errors.
 
 ```swift
-// ANTI-PATTERN
+// CORRECT
 enum ParseError: Error {
     case invalidHeader(expected: UInt32, found: UInt32)
 }
+throw ParseError.invalidHeader(expected: 0x25504446, found: header)
 
+// ANTI-PATTERN
+throw NSError(domain: "Parser", code: 1, userInfo: [NSLocalizedDescriptionKey: "Invalid header"])
+```
+
+**Rationale**: Typed errors enable exhaustive switch handling and preserve diagnostic information for programmatic error recovery.
+
+**Cross-references**: [API-ERR-001]
+
+---
+
+## [PATTERN-012] Initializers as Canonical Implementation
+
+**Scope**: Type transformations and conversions.
+
+**Statement**: Canonical implementation for type transformations MUST live in initializers or static methods on the target type. Instance methods are convenience wrappers only.
+
+```swift
 // CORRECT
-enum Parse {
-    enum Error: Swift.Error {
-        case invalidHeader(expected: UInt32, found: UInt32)
-    }
+extension Radian {
+    init(_ degrees: Degree) { ... }  // Canonical
+}
+extension Degree {
+    var asRadians: Radian { Radian(self) }  // Convenience only
+}
+
+// ANTI-PATTERN
+extension Angle {
+    func toRadians() -> Double { ... }  // Where is the real logic?
 }
 ```
+
+**Rationale**: Initializers on the target type make the transformation discoverable via autocomplete on the target type. The canonical implementation has a single, predictable location.
+
+**Cross-references**: [API-IMPL-001]
 
 ---
 
-## File Organization Anti-Patterns
+## [PATTERN-013] Concrete Types Before Abstraction
 
-### [ANTI-005] Multiple Types Per File
+**Scope**: Protocol and generic type design.
+
+**Statement**: Abstractions MUST emerge from concrete implementations. Protocols MUST NOT be designed before having 3+ concrete conformers.
 
 ```swift
-// ANTI-PATTERN - File: Models.swift
-struct User { }
-struct Profile { }
-struct Settings { }
+// CORRECT - Start concrete
+struct Circle<T: BinaryFloatingPoint> {
+    var center: Point<2, T>
+    var radius: T
+}
+// Abstract only when you have 3+ concrete conformers
 
-// CORRECT - Separate files
-// User.swift
-struct User { }
-
-// Profile.swift
-struct Profile { }
-
-// Settings.swift
-struct Settings { }
+// ANTI-PATTERN - Abstract for hypotheticals
+protocol GeometricShape {
+    associatedtype Coordinate
+    func contains(_ point: Coordinate) -> Bool
+    func intersects(_ other: Self) -> Bool
+    // ... 20 more requirements
+}
 ```
+
+**Rationale**: Premature abstraction creates protocols that do not fit real use cases. Concrete implementations reveal actual requirements before abstracting.
 
 ---
 
-## Memory Anti-Patterns
+## [PATTERN-015] Macro Naming Exception
 
-### [ANTI-006] Storage in Extensions
+**Scope**: Swift macro declarations.
+
+**Statement**: Swift macros MUST be declared at file scope. Macros CANNOT be nested in extensions or types. When the nesting convention [API-NAME-001] would produce `@Namespace.MacroName`, the macro MUST instead use a compound name: `@NamespaceMacroName`.
+
+This is a language limitation that overrides the design convention.
 
 ```swift
-// ANTI-PATTERN - Storage loses ~Copyable context
-extension Stack {
-    final class Storage: ManagedBuffer<Int, Element> { }
-}
+// CORRECT - Macro at file scope with compound name
+@attached(member, names: named(init), named(scope))
+public macro WitnessScope() = #externalMacro(...)
 
-// CORRECT - Storage in type body
-struct Stack<Element: ~Copyable>: ~Copyable {
-    final class Storage: ManagedBuffer<Int, Element> { }
+// ANTI-PATTERN - Cannot nest macro in extension
+extension Witness {
+    @attached(member, names: named(init), named(scope))
+    public macro Scope() = #externalMacro(...)  // Error: macro must be at file scope
 }
 ```
+
+### Naming Guidance for Macros
+
+| Intended Namespace | Macro Name | Rationale |
+|--------------------|------------|-----------|
+| `Witness.Scope` | `@WitnessScope` | Compound name required |
+| `Effect.Generator` | `@EffectGenerator` | Compound name required |
+| `Codable.Custom` | `@CodableCustom` | Compound name required |
+
+**Rationale**: Language limitations sometimes override design conventions. The exception is narrow (macros only) and the rationale is clear (language constraint).
+
+**Cross-references**: [API-NAME-001]
 
 ---
 
-### [ANTI-007] Foundation in Primitives
+## [PATTERN-016] Conscious Technical Debt
+
+**Scope**: Intentional deviations from best practices due to compiler limitations or other constraints.
+
+**Statement**: Code that violates a pattern MAY be acceptable when it meets ALL of these criteria:
+
+| Criterion | Description | Required |
+|-----------|-------------|----------|
+| **Intentional** | Chosen after evaluating alternatives | Yes |
+| **Documented** | Explicit comments explain the situation | Yes |
+| **Bounded** | Limited to specific files or types | Yes |
+| **Removal criteria** | Specific conditions for when to remove | Yes |
 
 ```swift
-// ANTI-PATTERN - Foundation in primitives
-import Foundation
+// CORRECT - Conscious technical debt
+// ============================================================================
+// TEMPORARY WORKAROUND - DO NOT MODIFY WITHOUT CHECKING COMPILER STATUS
+// ============================================================================
+//
+// WHY THIS EXISTS:
+// Swift compiler bug [MEM-COPY-006] Category 3 prevents using
+// List<Element>.Linked<1> as storage when Element: ~Copyable.
+//
+// WHEN TO REMOVE:
+// Delete these types when compiler fixes cross-module ~Copyable propagation.
+// Track: swift/issues/86xxx
+//
+// MAINTENANCE:
+// If List.Linked storage changes, these MUST be updated to match.
+// Source of truth: swift-list-primitives/Sources/List Primitives/List.Linked.swift
+// ============================================================================
 
-struct Event {
-    let timestamp: Date   // Foundation.Date
-    let payload: Data     // Foundation.Data
-}
-
-// CORRECT - Use primitives types
-import Time_Primitives
-import Binary_Primitives
-
-struct Event {
-    let timestamp: Instant
-    let payload: Binary.Buffer
-}
+// ANTI-PATTERN - Accidental debt
+// Just copied this because I couldn't get the import working
+// TODO: fix later
+struct Storage { ... }
 ```
+
+**Minimal inline format**:
+```swift
+// WORKAROUND: [What this works around]
+// WHY: [Why normal approach doesn't work]
+// WHEN TO REMOVE: [Specific removal criteria]
+// TRACKING: [Issue URL or internal reference]
+```
+
+### Distinguishing Conscious from Accidental Debt
+
+| Property | Conscious Debt | Accidental Debt |
+|----------|----------------|-----------------|
+| Origin | Deliberate decision | Expedience or neglect |
+| Documentation | Explicit header block | None or "TODO: fix" |
+| Scope | Precisely bounded | Undefined spread |
+| Exit plan | Specific removal criteria | "Someday" |
+| Tracking | Issue reference | None |
+
+**Rationale**: Not all technical debt is bad. Conscious debt with clear boundaries and removal criteria is a legitimate engineering tool. The documentation ensures future maintainers understand the intent and can act when conditions change.
+
+**Cross-references**: [MEM-COPY-006], [API-IMPL-005]
 
 ---
 

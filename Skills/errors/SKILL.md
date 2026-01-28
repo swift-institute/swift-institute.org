@@ -80,27 +80,9 @@ Error cases SHOULD describe the failure condition, not the recovery action.
 // CORRECT
 case invalidHeader(expected: UInt32, found: UInt32)
 case insufficientCapacity(required: Int, available: Int)
-case connectionRefused(host: String, port: UInt16)
-
 // INCORRECT
 case retryLater              // Describes recovery, not failure
 case useDefaultValue         // Describes recovery, not failure
-```
-
----
-
-### [API-ERR-004] Include Diagnostic Information
-
-Error cases SHOULD include associated values with diagnostic information.
-
-```swift
-// CORRECT - Rich diagnostic information
-case invalidHeader(expected: UInt32, found: UInt32)
-case outOfBounds(index: Int, count: Int)
-
-// INCORRECT - No diagnostic information
-case invalidHeader
-case outOfBounds
 ```
 
 ---

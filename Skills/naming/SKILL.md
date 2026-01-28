@@ -86,39 +86,8 @@ URL         // No specification context
 
 ---
 
-## File Naming
-
-### [API-NAME-004] File Names Match Types
-
-File names MUST match the type's full nested path with dots separating components.
-
-```
-// CORRECT
-Array.Dynamic.swift
-Array.Dynamic.Iterator.swift
-Set.Ordered.Element.swift
-
-// INCORRECT
-DynamicArray.swift           // Compound name
-ArrayDynamicIterator.swift   // No dot separation
-```
-
----
-
-### [API-NAME-005] Extension File Naming
-
-Extensions use `+` suffix pattern: `TypeName+Protocol.swift`
-
-```
-// CORRECT
-Array.Dynamic+Sequence.swift
-Set.Ordered+Hashable.swift
-```
-
----
-
 ## Cross-References
 
 See also:
 - **errors** skill for error type naming
-- **code-organization** skill for file structure
+- **code-organization** skill for file naming and structure
