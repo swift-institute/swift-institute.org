@@ -24,8 +24,8 @@ DEVELOPER_DIR="$(dirname "$INSTITUTE_ROOT")"
 
 # Repos that self-manage skills via submodule are excluded from REPOS.
 # They are still scanned for skill DISCOVERY (source of truth) but not synced to.
-SELF_MANAGING="swift-institute swift-primitives"
-REPOS="swift-standards swift-foundations"
+SELF_MANAGING="swift-institute swift-primitives swift-foundations"
+REPOS="swift-standards"
 ALL_REPOS="$SELF_MANAGING $REPOS"
 
 # ── Phase 1: Discover all skills ─────────────────────────────────────────────
