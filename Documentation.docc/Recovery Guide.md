@@ -58,11 +58,17 @@ grep -rh "Ordinal and Cardinal" ~/.claude/file-history/ 2>/dev/null
 Tool results contain file contents that were read during sessions:
 
 ```bash
-# Find tool-results with your content
-grep -rl "unique pattern" ~/.claude/projects/-Users-*/*/tool-results/*.txt 2>/dev/null
+# Project directories use dashes instead of slashes:
+# /Users/coen/Developer/swift-institute → -Users-coen-Developer-swift-institute
 
-# List tool-results by size
-find ~/.claude/projects -name "*.txt" -path "*/tool-results/*" -size +10k | head -20
+# Find tool-results with your content
+grep -rl "unique pattern" ~/.claude/projects/-Users-*/*/tool-results/toolu_*.txt 2>/dev/null
+
+# List tool-results by size (files are named toolu_*.txt)
+find ~/.claude/projects -name "toolu_*.txt" -path "*/tool-results/*" -size +10k | head -20
+
+# Search within a specific project's tool-results
+ls ~/.claude/projects/-Users-coen-Developer-swift-institute/*/tool-results/
 ```
 
 **Example from Research recovery:**
@@ -86,7 +92,17 @@ head -5 /path/to/cached/file
 awk -F'→' '{print $NF}' "/path/to/cached/file" > /path/to/restored/file
 ```
 
-Tool-results files may also have line number prefixes in the same format.
+Tool-results files (named `toolu_*.txt`) may have double line number prefixes:
+
+```bash
+# Double line-number format in tool-results:
+#      1→     1→# Content
+#      2→     2→
+#      3→     3→More content
+
+# The same awk command handles both formats:
+awk -F'→' '{print $NF}' "/path/to/tool-result.txt" > /path/to/restored/file
+```
 
 ### 5. Verify and Commit
 
