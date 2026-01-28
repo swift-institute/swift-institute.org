@@ -1,15 +1,18 @@
 #!/bin/bash
-# sync-skills.sh - Synchronize .claude/skills/ symlinks across all Swift Institute repos
+# sync-skills.sh - Synchronize .claude/skills/ symlinks for repos without submodule-based skills
 #
 # Usage: ./Scripts/sync-skills.sh
 #
-# Discovers skills from:
-#   - Repo-level Skills/ in each repo (e.g., swift-institute/Skills/, swift-primitives/Skills/)
-#   - Package-level Skills/ in monorepos (e.g., swift-primitives/swift-*/Skills/)
+# Repos that track .claude/skills/ in git via swift-institute submodule (swift-institute,
+# swift-primitives) are self-managing and NOT handled by this script.
 #
-# Syncs to:
-#   - Each repo's .claude/skills/
-#   - Workspace-level Developer/.claude/skills/
+# This script handles:
+#   - Repos not yet using submodule-based skills (swift-standards, swift-foundations)
+#   - Workspace-level Developer/.claude/skills/ (absolute symlinks, no submodule)
+#
+# Discovers skills from:
+#   - Repo-level Skills/ in each repo
+#   - Package-level Skills/ in monorepos (e.g., swift-primitives/swift-*/Skills/)
 #
 # Cleans up stale symlinks and removes links to skills that no longer exist.
 
@@ -19,7 +22,11 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 INSTITUTE_ROOT="$(dirname "$SCRIPT_DIR")"
 DEVELOPER_DIR="$(dirname "$INSTITUTE_ROOT")"
 
-REPOS="swift-institute swift-primitives swift-standards swift-foundations"
+# Repos that self-manage skills via submodule are excluded from REPOS.
+# They are still scanned for skill DISCOVERY (source of truth) but not synced to.
+SELF_MANAGING="swift-institute swift-primitives"
+REPOS="swift-standards swift-foundations"
+ALL_REPOS="$SELF_MANAGING $REPOS"
 
 # ── Phase 1: Discover all skills ─────────────────────────────────────────────
 # Write discovered skills to a temp file: name<TAB>path
@@ -28,7 +35,7 @@ SKILL_LIST=$(mktemp)
 trap "rm -f '$SKILL_LIST'" EXIT
 
 # Repo-level skills (institute first, then others — first discovered wins)
-for repo in $REPOS; do
+for repo in $ALL_REPOS; do
   repo_path="$DEVELOPER_DIR/$repo"
   [ -d "$repo_path" ] || continue
   [ -d "$repo_path/Skills" ] || continue
@@ -45,7 +52,7 @@ for repo in $REPOS; do
 done
 
 # Package-level skills (monorepos)
-for repo in $REPOS; do
+for repo in $ALL_REPOS; do
   repo_path="$DEVELOPER_DIR/$repo"
   [ -d "$repo_path" ] || continue
 
