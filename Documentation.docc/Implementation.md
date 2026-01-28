@@ -3,8 +3,8 @@
 <!--
 ---
 title: Implementation
-version: 1.0.0
-last_updated: 2026-01-23
+version: 3.0.0
+last_updated: 2026-01-19
 applies_to: [swift-primitives, swift-institute, swift-standards]
 normative: true
 ---
@@ -14,97 +14,173 @@ normative: true
     @TitleHeading("Swift Institute")
 }
 
-Index of all implementation requirements and patterns.
+Index of implementation patterns for Swift Institute packages.
 
 ## Overview
 
-This document serves as the index to all implementation documentation. For sequenced reading guidance, see <doc:Checklist>.
+This document serves as an index to implementation patterns. Each pattern category is documented in its own focused document for optimal LLM consumption and maintainability.
 
-**Normative language**: All documents use RFC 2119 conventions:
+**Normative language**: All pattern documents use RFC 2119 conventions:
 - **MUST** / **MUST NOT**: Absolute requirement or prohibition
 - **SHOULD** / **SHOULD NOT**: Recommended unless valid reason exists
 - **MAY**: Optional
 
 ---
 
-## Document Index
-
-### Entry Point
-
-| Document | Purpose |
-|----------|---------|
-| <doc:Checklist> | Sequenced reading guide—start here |
-
-### Design Requirements
-
-| Document | Requirements | Focus |
-|----------|--------------|-------|
-| <doc:Naming> | API-NAME-001 through API-NAME-008 | Type names, nesting, identifiers |
-| <doc:Errors> | API-ERR-001 through API-ERR-009 | Typed throws, error types |
-| <doc:Code-Organization> | API-IMPL-001 through API-IMPL-014 | File organization, totality |
-| <doc:Concurrency> | API-CONC-001 through API-CONC-012 | Async, actors, resumption, Sendable |
-| <doc:Design> | API-DESIGN-001 through API-DESIGN-014 | Architectural validation |
-| <doc:Layering> | API-LAYER-001 through API-LAYER-002 | Package architecture, layer separation |
-| <doc:Audit-Process> | — | API audit methodology |
-
-### Implementation Patterns
+## Pattern Index
 
 | Document | Patterns | Focus |
 |----------|----------|-------|
-| <doc:C-Shims> | PATTERN-001, PATTERN-018 | C shim layer structure |
-| <doc:Multi-Library> | PATTERN-002, PATTERN-003 | Fine-grained libraries |
-| <doc:Platform-Compilation> | PATTERN-004, PATTERN-019, PATTERN-036 | Platform conditionals |
-| <doc:Swift-6> | PATTERN-005 through PATTERN-008, PATTERN-035 | Language features |
-| <doc:Anti-Patterns> | PATTERN-009 through PATTERN-015 | Common mistakes |
+| <doc:C-Shims> | PATTERN-001, PATTERN-018 | C shim layer structure, semantic boundaries |
+| <doc:Multi-Library> | PATTERN-002, PATTERN-003 | Fine-grained libraries, circular dependency breaking |
+| <doc:Platform-Compilation> | PATTERN-004, 004a-c, PATTERN-019, PATTERN-036 | Platform conditionals, module naming, linker flags |
+| <doc:Swift-6> | PATTERN-005, 005a-b, PATTERN-006-008, PATTERN-035 | Language mode, upcoming features, parameter packs |
+| <doc:Anti-Patterns> | PATTERN-009-013, PATTERN-015 | Common mistakes, Foundation ban, macro naming |
+| <doc:Memory-Copyable> | MEM-COPY-010, 011 | Noncopyable associated types, two-world separation |
+| <doc:API-Concurrency> | API-CONC-010-012 | Lock-free resumption, inout-await, type erasure |
+| <doc:Ecosystem-Process> | ECO-TECH-001-003 | Minimal reproduction, migration boundaries, audit patterns |
+| <doc:API-Design> | API-DESIGN-010-014 | Fallbacks, typealiases, extension points |
+| <doc:Memory-Safety> | MEM-SAFE-010-014 | Dual overloads, span interface, closure scope |
+| <doc:Experiment> | EXP-001–010d | Minimal reproduction packages, empirical verification |
 
 ---
 
-## Quick Reference: Foundational Requirements
+## Quick Reference: Most-Used Patterns
 
-| Requirement | Domain | Summary |
-|-------------|--------|---------|
-| [API-NAME-001](doc:Naming#API-NAME-001) | Naming | `Nest.Name` pattern for all types |
-| [API-NAME-002](doc:Naming#API-NAME-002) | Naming | No compound identifiers |
-| [API-ERR-001](doc:Errors#API-ERR-001) | Errors | Typed throws throughout |
-| [API-IMPL-003](doc:Code-Organization#API-IMPL-003) | Implementation | Primitives must be total |
-| [API-IMPL-005](doc:Code-Organization#API-IMPL-005) | Organization | One type per file |
+### [PATTERN-001] C Shim Layer Structure
+
+Packages requiring platform-specific functionality MUST use minimal C shim targets isolated from Swift code.
+
+> **Full details**: <doc:C-Shims>
 
 ---
 
-## Requirement Numbering
+### [PATTERN-004] SwiftPM Platform Conditions
 
-| Prefix | Domain | Document |
-|--------|--------|----------|
-| API-NAME-* | Naming | Naming.md |
-| API-ERR-* | Errors | Errors.md |
-| API-IMPL-* | Code organization | Code Organization.md |
-| API-DESIGN-* | Design validation | Design.md |
-| API-CONC-* | Concurrency | Concurrency.md |
-| API-LAYER-* | Layering | Layering.md |
-| PATTERN-* | Implementation patterns | Various |
-| MEM-* | Memory ownership | Memory *.md |
-| DOC-* | Documentation | Documentation Requirements.md |
-| TEST-* | Testing | Testing Requirements.md |
+Platform-specific dependencies MUST use SwiftPM condition directives.
+
+> **Full details**: <doc:Platform-Compilation>
+
+---
+
+### [PATTERN-005] Swift 6 Language Mode
+
+All packages MUST require Swift 6.2+ and use Swift 6 language mode.
+
+> **Full details**: <doc:Swift-6>
+
+---
+
+### [PATTERN-009] No Foundation Types
+
+Primitive and standard packages MUST NOT use Foundation types.
+
+> **Full details**: <doc:Anti-Patterns>
+
+---
+
+### [MEM-LINEAR-001] Linear Types for Invariant Enforcement
+
+Types encoding exactly-once or at-most-once semantics MUST be `~Copyable`.
+
+> **Full details**: <doc:Memory-Copyable>
+
+---
+
+## Pattern Categories
+
+### Infrastructure Patterns
+
+| Pattern | Summary |
+|---------|---------|
+| PATTERN-001 | C Shim Layer Structure |
+| PATTERN-002 | Fine-Grained Library Exposure |
+| PATTERN-003 | Nested Test Package Pattern |
+| PATTERN-004 | SwiftPM Platform Conditions |
+| PATTERN-018 | C Shim as Semantic Boundary |
+
+### Language Feature Patterns
+
+| Pattern | Summary |
+|---------|---------|
+| PATTERN-005 | Swift 6 Language Mode |
+| PATTERN-006 | Upcoming Feature Flags |
+| PATTERN-007 | Experimental Feature Flags |
+| PATTERN-008 | Parameter Packs for N-Ary Types |
+| PATTERN-035 | Import Visibility as Module Contract |
+
+### Anti-Patterns (Avoid)
+
+| Pattern | Summary |
+|---------|---------|
+| PATTERN-009 | No Foundation Types |
+| PATTERN-010 | Nested Type Names (not compound) |
+| PATTERN-011 | Typed Error Enums (not strings) |
+| PATTERN-012 | Initializers as Canonical Implementation |
+| PATTERN-013 | Concrete Types Before Abstraction |
+
+### Ownership Patterns
+
+> **Full document**: <doc:Memory-Copyable>
+
+| Pattern | Summary |
+|---------|---------|
+| MEM-LINEAR-001 | Exactly-Once Types (Linear) |
+| MEM-LINEAR-002 | At-Most-Once Types (Affine) |
+| MEM-COPY-003 | Class Wrapper for ~Copyable in Collections |
+| MEM-COPY-010 | Noncopyable Workarounds for Associated Types |
+| MEM-COPY-011 | Two-World Separation for Owned and Borrowed Types |
+
+### Concurrency Patterns
+
+> **Full document**: <doc:API-Concurrency>
+
+| Pattern | Summary |
+|---------|---------|
+| API-CONC-010 | Never Resume Under Lock |
+| API-CONC-011 | Inout-Across-Await Hazard |
+| API-CONC-012 | Type Erasure vs Sendable Tension |
+
+### Audit Patterns
+
+> **Full document**: <doc:Ecosystem-Process>
+
+| Pattern | Summary |
+|---------|---------|
+| ECO-TECH-001 | Minimal Reproduction as Verification Tool |
+| ECO-TECH-002 | Custom Deinit as Migration Boundary |
+| ECO-TECH-003 | Audit Search Patterns |
+| EXP-001–010 | Experiment Package Methodology (see <doc:Experiment>) |
+
+### API Design Patterns
+
+> **Full document**: <doc:API-Design>
+
+| Pattern | Summary |
+|---------|---------|
+| API-DESIGN-010 | Fallback as Feature, Not Compromise |
+| API-DESIGN-011 | Type Aliases as Architectural Boundaries |
+| API-DESIGN-012 | Bound vs Independent Typealias Parameters |
+| API-DESIGN-013 | Typealiases as the Reuse Primitive |
+| API-DESIGN-014 | Never as Closed Default for Extension Points |
+
+### Safety Patterns
+
+> **Full document**: <doc:Memory-Safety>
+
+| Pattern | Summary |
+|---------|---------|
+| MEM-SAFE-010 | Dual-Overload Anti-Pattern |
+| MEM-SAFE-011 | Inline Clarity Over Helper Consolidation |
+| MEM-SAFE-012 | Span as Normative Interface |
+| MEM-SAFE-013 | API Surface Reduction as Safety |
+| MEM-SAFE-014 | Closure Scope Over Property Access for Unsafe Operations |
 
 ---
 
 ## Topics
 
-### Entry Point
-
-- <doc:Checklist>
-
-### Design Requirements
-
-- <doc:Naming>
-- <doc:Errors>
-- <doc:Code-Organization>
-- <doc:Concurrency>
-- <doc:Design>
-- <doc:Layering>
-- <doc:Audit-Process>
-
-### Implementation Patterns
+### Infrastructure Patterns
 
 - <doc:C-Shims>
 - <doc:Multi-Library>
@@ -112,8 +188,17 @@ This document serves as the index to all implementation documentation. For seque
 - <doc:Swift-6>
 - <doc:Anti-Patterns>
 
+### Domain Pattern Documents
+
+- <doc:Memory-Copyable>
+- <doc:API-Concurrency>
+- <doc:Ecosystem-Process>
+- <doc:API-Design>
+- <doc:Memory-Safety>
+
 ### Related Documents
 
 - <doc:Memory>
+- <doc:API-Requirements>
+- <doc:Primitives-Architecture>
 - <doc:Testing-Requirements>
-- <doc:Documentation-Requirements>

@@ -193,6 +193,115 @@ The buffer moves to the I/O thread, gets filled, and moves back. True zero-copy 
 
 ---
 
+## Techniques
+
+**Applies to**: Practical implementation of concurrency patterns.
+
+---
+
+### [API-CONC-010] Never Resume Under Lock
+
+**Scope**: Async coordination primitives using continuations and locks.
+
+**Statement**: Continuations MUST NOT be resumed while holding a lock. The pattern is: collect resumption thunks under lock, release lock, then execute resumptions.
+
+**Correct**:
+```swift
+// Collect resumptions under lock, execute after
+func complete(with value: T) {
+    let resumptions: [Async.Waiter.Resumption]
+    lock.withLock {
+        resumptions = waiters.drain().map { $0.resumption }
+        state = .completed(value)
+    }
+    // Lock released - now safe to resume
+    for resumption in resumptions {
+        resumption.resume()
+    }
+}
+```
+
+**Incorrect**:
+```swift
+// Resuming under lock
+func complete(with value: T) {
+    lock.withLock {
+        for waiter in waiters.drain() {
+            waiter.continuation.resume(returning: value)  // DANGER
+        }
+    }
+}
+```
+
+**Rationale**: Deferred resumption keeps user code out of critical sections, making deadlock impossible by construction.
+
+**Cross-references**: [API-CONC-003], [MEM-LINEAR-001]
+
+---
+
+### [API-CONC-011] Inout-Across-Await Hazard
+
+**Scope**: Async methods accessing mutable state through `_modify` accessors.
+
+**Statement**: When an async method accesses mutable state through a `_modify` accessor, the exclusivity check operates within a single execution context—it does NOT prevent concurrent access from different tasks.
+
+This hazard reinforces why [API-CONC-005] requires conservative Sendable defaults.
+
+**Example hazard**:
+```swift
+// This looks safe but isn't
+actor Container {
+    var items: [Item] = []
+
+    func process() async {
+        // _modify accessor opens here
+        items.append(await fetchItem())  // Suspension point!
+        // Another task could access items during the await
+    }
+}
+```
+
+**Mitigation**: Use local copies across suspension points, or restructure to avoid inout access across await.
+
+**Cross-references**: [API-CONC-005], [API-CONC-010]
+
+---
+
+### [API-CONC-012] Type Erasure vs Sendable Tension
+
+**Scope**: Heterogeneous storage and type erasure in Swift 6 with strict concurrency.
+
+**Statement**: Type erasure mechanisms (raw pointers, `Unmanaged`, unsafe bitcasts) predate Swift Concurrency and are explicitly non-Sendable in Swift 6. When type erasure is required for heterogeneous storage, the composition with Sendable-requiring primitives creates an architectural tension that MUST be resolved explicitly.
+
+#### Resolution Approaches
+
+| Approach | Trade-off |
+|----------|-----------|
+| **Sendable wrapper** (`Reference.Pointer`) | Encapsulates unsafety in one place |
+| **Accept limitation** | Some compositions aren't possible without unsafe opt-in |
+| **`@unchecked Sendable`** at use site | Makes unsafety visible but scattered |
+
+**Example**:
+```swift
+// Type-erased storage needs to be Sendable for use with actors
+final class AnyStorage: @unchecked Sendable {
+    private var pointer: UnsafeMutableRawPointer
+
+    // Explicit synchronization makes @unchecked Sendable justified
+    private let lock = Lock()
+
+    func withValue<T, R>(_ body: (inout T) -> R) -> R {
+        lock.withLock {
+            body(&pointer.assumingMemoryBound(to: T.self).pointee)
+        }
+    }
+}
+```
+
+**Cross-references**: [API-CONC-005], [MEM-SEND-001]
+
+---
+
 ## Summary Table
 
 | Requirement | Focus | Key Constraint |
@@ -203,6 +312,9 @@ The buffer moves to the I/O thread, gets filled, and moves back. True zero-copy 
 | API-CONC-004 | Cancellation/shutdown | No hangs, typed lifecycle errors |
 | API-CONC-005 | Sendable defaults | Conservative by default, explicit escape |
 | API-CONC-006 | Sync/async ownership | Different shapes for different ownership models |
+| API-CONC-010 | Lock-free resumption | Never resume continuations under lock |
+| API-CONC-011 | Inout-await hazard | Exclusivity doesn't cross suspension points |
+| API-CONC-012 | Type erasure tension | Explicit resolution for Sendable composition |
 
 ---
 
@@ -212,4 +324,4 @@ The buffer moves to the I/O thread, gets filled, and moves back. True zero-copy 
 
 - <doc:API-Requirements>
 - <doc:Memory>
-- <doc:Pattern-Advanced>
+- <doc:Memory-Sendable>

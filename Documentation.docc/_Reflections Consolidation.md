@@ -19,6 +19,23 @@ normative: true
 
 **Entry Order**: Process oldest first (TOP of `Reflection Entries.md`, after `## Overview`). Entries are ordered oldest-first, newest-last.
 
+### Package Routing
+
+Entries may be tagged with `[Package: package-name]` in the heading. Route these entries as follows:
+
+1. **Untagged entries**: Consolidate to Swift Institute permanent docs only (per existing CONS-LOOP-002 table)
+2. **Tagged entries**: Consolidate to the package's `Documentation.docc/_Package-Insights.md`
+3. **Dual-routing entries**: If body contains `> **Cross-cutting**:` note, consolidate to BOTH package docs AND Swift Institute
+
+**Package locations**:
+- `swift-*-primitives` packages → `/Users/coen/Developer/swift-primitives/{package}/`
+- `swift-rfc-*`, `swift-iso-*` packages → `/Users/coen/Developer/swift-standards/{package}/`
+- Other `swift-*` packages → `/Users/coen/Developer/swift-foundations/{package}/`
+
+**Documentation.docc location**: `{package}/Sources/{primary-target}/Documentation.docc/`
+
+If `Documentation.docc` doesn't exist for the package, create it with `_Package-Insights.md` following [CONS-PKG-002].
+
 ### Critical: Holistic Integration (NOT Copy-Paste)
 
 Consolidation is **transformation**, not transcription. The goal is LLM-consumable institutional documentation—detailed, structured, pattern-consistent reference material.
@@ -115,7 +132,15 @@ Processing "First Insight" because it appears last in the file.
 
 **Scope**: Determining destination documents for insights.
 
-**Statement**: Determine which permanent documents SHOULD absorb the entry's insights based on content type.
+**Statement**: Determine which permanent documents SHOULD absorb the entry's insights based on content type and package tags.
+
+**Step 1: Check for package tag**
+
+If the entry heading contains `[Package: package-name]`, the primary target is the package's `_Package-Insights.md`. See [CONS-PKG-001] for package routing.
+
+If the entry body contains `> **Cross-cutting**:`, ALSO route to Swift Institute docs per the table below.
+
+**Step 2: Route to Swift Institute docs (untagged or dual-routing entries)**
 
 | Document | Absorbs insights about... |
 |----------|---------------------------|
@@ -131,6 +156,17 @@ Entry: "The Relocation Principle" (about primitive package placement)
 Integration target: Primitives-Architecture.md
 ```
 
+```
+Entry: "Async Buffer Ownership [Package: swift-file-system]"
+Integration target: swift-file-system Documentation.docc/_Package-Insights.md
+```
+
+```
+Entry: "The withBytes.mutable Pattern [Package: swift-file-system]"
+Body contains: > **Cross-cutting**: This pattern applies broadly...
+Integration targets: swift-file-system/_Package-Insights.md, Implementation-Patterns.md
+```
+
 **Incorrect**:
 ```
 Entry: "The Relocation Principle" (about primitive package placement)
@@ -142,9 +178,9 @@ If no existing document fits, create a new document following [CONS-CREATE-001].
 
 **Report format**: `Integration targets: [comma-separated list]`
 
-**Rationale**: Correct target selection ensures insights are discoverable in their logical location.
+**Rationale**: Correct target selection ensures insights are discoverable in their logical location—package-specific insights with packages, cross-cutting principles in Swift Institute.
 
-**Cross-references**: [CONS-LOOP-001], [CONS-CREATE-001]
+**Cross-references**: [CONS-LOOP-001], [CONS-CREATE-001], [CONS-PKG-001]
 
 ---
 
@@ -609,36 +645,287 @@ The new document MUST be added to `## Topics` sections in related documents.
 
 ---
 
-## 5. Non-Integrable Entries
+## 5. Package-Specific Consolidation
 
-**Applies to**: Reflections that should not become permanent documentation.
+**Applies to**: Reflection entries tagged with `[Package: package-name]`.
 
-**Does not apply to**: Insights with lasting institutional value.
+**Does not apply to**: Untagged entries (route to Swift Institute only).
 
 ---
 
-### [CONS-SKIP-001] Non-Integrable Categories
+### [CONS-PKG-001] Package Routing
 
-**Scope**: Identifying entries to remove without integration.
+**Scope**: Determining the target location for package-tagged entries.
 
-**Statement**: Some reflections do not warrant permanent documentation. These MUST be removed without integration.
+**Statement**: When an entry is tagged with `[Package: package-name]`, consolidate to that package's `Documentation.docc/_Package-Insights.md`.
 
-| Category | Description | Example |
-|----------|-------------|---------|
+**Package location resolution**:
+
+| Package Pattern | Repository | Path |
+|-----------------|------------|------|
+| `swift-*-primitives` | swift-primitives | `/Users/coen/Developer/swift-primitives/{package}/` |
+| `swift-rfc-*`, `swift-iso-*`, `swift-ietf-*` | swift-standards | `/Users/coen/Developer/swift-standards/{package}/` |
+| Other `swift-*` | swift-foundations | `/Users/coen/Developer/swift-foundations/{package}/` |
+
+**Documentation.docc location**: `{package}/Sources/{primary-target}/Documentation.docc/`
+
+To find the primary target, inspect `{package}/Sources/` and identify the main source directory (typically matches module name).
+
+**Correct**:
+```
+Entry: [Package: swift-kernel]
+Repository: swift-foundations
+Path: /Users/coen/Developer/swift-foundations/swift-kernel/Sources/Kernel/Documentation.docc/
+Target: _Package-Insights.md
+```
+
+**Incorrect**:
+```
+Entry: [Package: Kernel]
+❌ Use package directory name (swift-kernel), not module name (Kernel)
+```
+
+**Rationale**: Package-specific insights belong with the package, not scattered across Swift Institute docs.
+
+**Cross-references**: [CONS-LOOP-002], [CONS-PKG-002]
+
+---
+
+### [CONS-PKG-002] Creating Package Documentation
+
+**Scope**: Creating Documentation.docc when it doesn't exist.
+
+**Statement**: If the target package lacks a `Documentation.docc` directory, create it with a minimal structure.
+
+**Minimal structure**:
+```
+{package}/Sources/{target}/Documentation.docc/
+└── _Package-Insights.md
+```
+
+**Template**: Copy from <doc:_Package-Insights-Template> and replace placeholders.
+
+**_Package-Insights.md template**:
+```markdown
+# {Package Name} Insights
+
+<!--
+---
+title: {Package Name} Insights
+version: 1.0.0
+last_updated: {YYYY-MM-DD}
+applies_to: [{package-name}]
+normative: false
+---
+-->
+
+@Metadata {
+    @TitleHeading("{Package Name}")
+}
+
+Design decisions, implementation patterns, and lessons learned specific to this package.
+
+## Overview
+
+This document captures insights that emerged during development of {package-name}. These are not API requirements—they are recorded decisions and patterns that inform future work on this package.
+
+**Document type**: Non-normative (recorded decisions, not requirements).
+
+**Consolidation source**: Reflection entries tagged with `[Package: {package-name}]`.
+
+---
+
+## Topics
+
+### Related Documents
+
+- <doc:{Overview-doc-if-exists}>
+```
+
+**Correct**:
+```
+Package swift-ascii lacks Documentation.docc
+Action: Create /Users/coen/Developer/swift-foundations/swift-ascii/Sources/ASCII/Documentation.docc/
+        with _Package-Insights.md using template
+```
+
+**Incorrect**:
+```
+Package swift-ascii lacks Documentation.docc
+Action: Skip consolidation
+❌ Create the structure; don't skip package-tagged entries
+```
+
+**Rationale**: Minimal scaffolding enables consolidation without requiring full documentation upfront.
+
+**Cross-references**: [CONS-PKG-001], [CONS-PKG-003]
+
+---
+
+### [CONS-PKG-003] Package Insight Integration
+
+**Scope**: Transforming reflection content into package documentation.
+
+**Statement**: Package insights follow a simplified structure compared to Swift Institute requirements. They are non-normative and do not require `[PREFIX-CAT-NNN]` identifiers.
+
+**Structure for package insights**:
+```markdown
+---
+
+## {Insight Title}
+
+**Date**: {YYYY-MM-DD}
+
+**Context**: {One sentence describing what prompted this insight}
+
+{2-4 paragraphs describing the insight, pattern, or decision}
+
+**Applies to**: {Specific types, APIs, or subsystems within the package}
+```
+
+**Correct**:
+```markdown
+---
+
+## Async Buffer Ownership Transfer
+
+**Date**: 2026-01-19
+
+**Context**: Implementing zero-copy async read APIs required solving ownership transfer across thread boundaries.
+
+The sync API uses `borrowing Span<UInt8>` because the buffer never leaves the call stack...
+
+[Continued explanation]
+
+**Applies to**: `File.Read.Full.read(from:into:)` async variants
+```
+
+**Incorrect**:
+```markdown
+### [FILE-READ-001] Async Buffer Ownership
+
+**Scope**: Buffer handling in async reads.
+
+**Statement**: Async reads MUST transfer ownership...
+
+❌ Package insights are non-normative; don't use requirement format
+```
+
+**Rationale**: Package insights are recorded decisions, not requirements. A lighter format reduces friction while preserving institutional knowledge.
+
+**Cross-references**: [CONS-PKG-001], [CONS-VOICE-001]
+
+---
+
+## 6. Entry Triage
+
+**Applies to**: Determining how to handle each reflection entry.
+
+**Does not apply to**: Mechanical processing steps (covered in Consolidation Loop).
+
+The consolidation question is not "is this valuable?" but "where does this value belong?" An insight may be valuable but already captured elsewhere, making integration redundant.
+
+---
+
+### [CONS-TRIAGE-001] Entry Category Taxonomy
+
+**Scope**: Classifying entries to determine routing.
+
+**Statement**: Reflection entries fall into four categories. The first two REQUIRE integration; the latter two REQUIRE removal.
+
+| Category | Action | Destination | Example |
+|----------|--------|-------------|---------|
+| **Normative candidates** | Integrate | Swift Institute docs | Insight should become `[API-*]`, `[PATTERN-*]` |
+| **Package-specific** | Integrate | Package `_Package-Insights.md` | Implementation knowledge for one codebase |
+| **Process documentation** | Remove | Already in process files | "We decided on single entry point with dual routing" |
+| **Historical record** | Remove | Value captured or obsolete | Moment-of-insight already integrated elsewhere |
+
+**Correct**:
+```
+Entry: "Names as Constraints" - architectural principle
+Category: Normative candidate
+Action: Integrate into API Naming.md as [API-NAME-XXX]
+
+Entry: "The withBorrowed runner surface" [Package: swift-binary-primitives]
+Category: Package-specific
+Action: Integrate into swift-binary-primitives/_Package-Insights.md
+
+Entry: "Session handoff as knowledge encoding"
+Category: Process documentation
+Action: Remove (process is documented in _AI and Consumption.md)
+```
+
+**Incorrect**:
+```
+Entry: "We decided on single entry point with dual routing"
+Category: Normative candidate
+Action: Integrate into new Swift Institute requirement
+
+// ❌ This is process documentation; integrating it creates duplication
+// The decision is already captured in _Reflections.md itself
+```
+
+**Rationale**: Correct categorization prevents both under-integration (losing valuable insights) and over-integration (creating duplicates).
+
+**Cross-references**: [CONS-TRIAGE-002], [CONS-LOOP-002]
+
+---
+
+### [CONS-TRIAGE-002] The Meta-Reflection Trap
+
+**Scope**: Handling reflections about the reflection process itself.
+
+**Statement**: Reflections about reflecting (the consolidation process, documentation structure, session handoff) are valuable in the moment but MUST NOT be integrated into permanent docs if the insight is already captured in process files.
+
+The trap: writing "we decided X" as a reflection, integrating it into a process doc, then keeping the reflection creates three copies of the same decision.
+
+**Correct**:
+```
+Entry describes the underscore prefix convention for non-normative files.
+Check: Is this already documented in Documentation Requirements.md?
+Yes: Remove entry without integration.
+```
+
+**Incorrect**:
+```
+Entry describes the underscore prefix convention for non-normative files.
+Action: Create [DOC-XXX] requirement explaining the convention.
+Result: Documentation Requirements.md now duplicates what _Reflections.md already explains.
+
+// ❌ The convention is already documented where it's defined
+```
+
+**Discipline**: After consolidation, remove the entry. The permanent docs are the authority.
+
+**Rationale**: Process files ARE the integration target for process reflections. Integrating them elsewhere creates redundancy.
+
+**Cross-references**: [CONS-TRIAGE-001], [CONS-SKIP-001]
+
+---
+
+### [CONS-SKIP-001] Non-Integrable Subcategories
+
+**Scope**: Specific patterns within non-integrable entries.
+
+**Statement**: Within the "process documentation" and "historical record" categories, these specific subcategories MUST be removed without integration:
+
+| Subcategory | Description | Example |
+|-------------|-------------|---------|
 | **Too specific** | Applies only to one codebase moment | "Fixed the typo in line 42 of Parser.swift" |
 | **Superseded** | Later work invalidated the insight | "Using workaround X until Swift adds Y" (Y now exists) |
 | **Personal** | Interesting but not actionable | "Enjoyed the elegance of this solution" |
 | **Duplicate** | Already captured in permanent docs | Insight matches existing [API-XXX-NNN] |
+| **Meta-process** | About this process, not the codebase | "The consolidation process revealed..." |
 
 **Report format**: `Removed [title] - [reason]`
 
 **Rationale**: Not all observations merit permanent documentation. Removing non-integrable entries keeps the process focused.
 
-**Cross-references**: [CONS-LOOP-004]
+**Cross-references**: [CONS-LOOP-004], [CONS-TRIAGE-001]
 
 ---
 
-## 6. Interruption Handling
+## 7. Interruption Handling
 
 **Applies to**: Consolidation sessions that end before completion.
 
@@ -687,14 +974,21 @@ Left Primitives-Architecture.md with partial edits uncommitted.
 - <doc:_Reflection-Entries> - The entries to consolidate
 - <doc:_Reflections> - Process for adding new entries
 
-### Integration Targets
+### Swift Institute Integration Targets
 
 - <doc:API-Requirements>
 - <doc:Primitives-Architecture>
-- <doc:Implementation-Patterns>
+- <doc:Implementation>
 - <doc:Identity>
 - <doc:_Future-Directions>
+
+### Package Integration Targets
+
+Package-tagged entries consolidate to `_Package-Insights.md` within each package's `Documentation.docc/`. See [CONS-PKG-001] for routing rules.
+
+- <doc:_Package-Insights-Template> - Template for creating package insight documents
 
 ### Related Process
 
 - <doc:LLM-Optimized-Documentation>
+- <doc:Documentation-Requirements>

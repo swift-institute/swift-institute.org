@@ -973,6 +973,77 @@ class Tagged<Tag, Value> {  // ❌ Reference type
 
 ---
 
+### [API-IMPL-017] Domain Boundary Types Guard Implicit Policy
+
+**Scope**: APIs that cross semantic domain boundaries.
+
+**Statement**: When data crosses semantic domain boundaries, distinct types MUST guard each domain. Return types MUST reflect the domain that produced the value, not the domain that will consume it.
+
+#### The Principle
+
+Every implicit conversion embeds a policy decision. When code silently converts between types, it makes assumptions about encoding, error handling, and validation that may not match the caller's needs.
+
+**Correct**:
+```swift
+// Syscall wrapper returns kernel domain type
+extension ISO_9945 {
+    public static func realpath(_ path: Kernel.Path) throws(Kernel.Error) -> Kernel.String
+}
+
+// API communicates: "I give you path bytes as the OS returned them.
+// Interpreting those bytes as text is your responsibility."
+
+// Explicit conversion at call site - policy is visible
+let resolved = try ISO_9945.realpath(kernelPath)
+let text = try Swift.String(decoding: resolved, as: UTF8.self)  // Caller chooses encoding
+```
+
+**Incorrect**:
+```swift
+// ❌ Syscall wrapper performs implicit conversion
+extension ISO_9945 {
+    public static func realpath(_ path: String) throws -> String
+    // Hidden: What if the filesystem path isn't valid UTF-8?
+    // Hidden: What encoding does this assume?
+    // Hidden: Does invalid encoding throw, crash, or substitute?
+}
+```
+
+#### Domain-Specific String Types
+
+Each string type guards a different domain:
+
+| Type | Domain | Guards |
+|------|--------|--------|
+| `String_Primitives.String` | OS-native code units | Platform ABI |
+| `Kernel.String` | Kernel operations | Syscall boundaries |
+| `ISO_9899.String` | C specification bytes | C ABI |
+| `Swift.String` | Unicode text | Human readability |
+
+Each boundary crossing is a policy decision:
+- Encoding choice (UTF-8? UTF-16? lossy?)
+- Error handling (throw? substitute? crash?)
+- Validation (strict? permissive?)
+
+These decisions belong at the call site, not buried in low-level wrappers.
+
+#### Layers and Policy
+
+| Layer | Responsibility |
+|-------|----------------|
+| Primitives | Storage and code units |
+| Standards | Syscall wrapping, domain types |
+| Foundations | Policy decisions, conversions |
+| Applications | Domain-specific interpretation |
+
+The Standards layer (syscall wrappers) stays honest: it wraps syscalls, nothing more. Policy lives in Foundations, where it can be explicit and configurable.
+
+**Rationale**: On systems with non-UTF8 filenames (they exist), converting kernel output to `Swift.String` can fail or corrupt data. The syscall wrapper cannot make that policy decision—it doesn't know if the caller wants lossy conversion, error propagation, or something else. Explicit boundaries force these decisions to the surface.
+
+**Cross-references**: [API-IMPL-002], [API-ERR-001], [PRIM-FOUND-003]
+
+---
+
 ## Topics
 
 ### Related Documents
@@ -982,9 +1053,9 @@ class Tagged<Tag, Value> {  // ❌ Reference type
 - <doc:API-Errors>
 - <doc:API-Design>
 - <doc:Primitives-Architecture>
-- <doc:Implementation-Patterns>
+- <doc:Implementation>
 
 ### Process Documents
 
-- <doc:Reflections-Consolidation>
+- <doc:Ecosystem-Process>
 - <doc:Documentation-Maintenance>

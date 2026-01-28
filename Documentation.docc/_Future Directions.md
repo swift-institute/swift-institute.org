@@ -252,7 +252,67 @@ The non-borrowed `Binary.Bytes.Input` could conform today. The unification would
 3. Monitor Swift Evolution for `~Escapable` protocol support
 4. Document the two-world pattern (owned/borrowed) until unification is complete
 
-**Cross-references**: [PATTERN-047], [PATTERN-049], <doc:Pattern-Advanced>
+**Cross-references**: [MEM-COPY-011], [API-DESIGN-013], <doc:Memory-Copyable>
+
+---
+
+## Collection Primitives Evolution
+
+### [FUTURE-008] Arena-Based Linked Lists
+
+**Scope**: `List` primitive storage strategy to support `~Copyable` elements.
+
+**Status**: Design complete. Implementation blocked on List refactoring.
+
+Traditional linked list implementations use class-based nodes:
+
+```swift
+class Node<Element> {
+    var element: Element
+    var next: Node?
+}
+```
+
+Classes in Swift require their generic parameters to be `Copyable`. There is no `class Node<Element: ~Copyable>`. This is a fundamental language constraint—classes are reference types with shared ownership, incompatible with move-only semantics.
+
+#### The Arena Solution
+
+Replace pointer-based linking with index-based linking into a contiguous buffer:
+
+```swift
+struct Node {
+    var element: Element
+    var prevIndex: Int  // -1 for none
+    var nextIndex: Int  // -1 for none
+}
+
+// Storage is ManagedBuffer<Header, Node>
+```
+
+Now the element is stored in a struct (which can have `~Copyable` generic parameters), and the linking is via indices into the buffer rather than pointers to heap objects.
+
+#### Trade-offs
+
+| Category | Arena-Based | Class-Based |
+|----------|-------------|-------------|
+| `~Copyable` support | Full | None |
+| Memory layout | Cache-friendly (contiguous) | Scattered heap allocations |
+| Variant support | Bounded, Inline, Small | Only heap-allocated |
+| Insertion/deletion | Complex (free list management) | Simple (pointer swap) |
+| Capacity management | Must pre-allocate or resize | Grows one node at a time |
+
+The trade-off is clearly favorable for a primitives library targeting modern use cases. The arena approach aligns with [API-DESIGN-009] Structural Parity, enabling `List.Bounded`, `List.Inline`, and `List.Small` variants.
+
+**Blocking factors**: List refactoring must be completed first. The arena storage design is documented in `List-Refactoring-Brief.md`.
+
+**Next steps**:
+
+1. Complete List refactoring per `List-Refactoring-Brief.md`
+2. Implement arena-based storage with free list management
+3. Add `Bounded`, `Inline`, and `Small` variants
+4. Validate `~Copyable` element support across all variants
+
+**Cross-references**: [API-DESIGN-009], [MEM-COPY-001], <doc:_Reflections>
 
 ---
 

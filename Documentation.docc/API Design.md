@@ -641,9 +641,247 @@ A task that concludes "no changes required" may appear to produce no work produc
 - Recorded analysis for future reference
 - Understanding of bridge patterns for cross-layer interoperability
 
-**Rationale**: Well-designed architecture anticipates constraints that haven't yet been encountered. Research that validates existing design confirms the architecture's quality. Research that invalidates existing design reveals improvement opportunities. Both outcomes require the same analytical investment and produce equivalent value—they differ only in what they reveal, not in their worth.
+#### Anti-Pattern: Research Bias Toward Change
+
+There is a subtle pressure in research tasks to produce changes. "I analyzed X and here's what needs to change" feels more substantial than "I analyzed X and confirmed the design is correct."
+
+This bias can lead to unnecessary modifications—changing code to justify the research rather than letting the research inform the decision.
+
+**Correct**:
+```
+Task: Analyze ~Escapable implications for parsing-primitives
+Finding: Architecture already defers ~Escapable to binary-primitives layer
+Output: Documented validation, no code changes
+
+// Implicit assumptions → Explicit confirmations
+// Design quality confirmed, not discovered
+```
+
+**Incorrect**:
+```
+Task: Analyze ~Escapable implications for parsing-primitives
+Finding: Architecture already handles this correctly
+Output: Refactor anyway to demonstrate research value
+
+// ❌ Changes made to justify effort, not to improve code
+```
+
+The correct frame: research produces information. That information might indicate change is needed, or it might confirm the status quo. Both are valid outcomes—they differ only in what they reveal, not in their worth.
+
+**Rationale**: Well-designed architecture anticipates constraints that haven't yet been encountered. Research that validates existing design confirms the architecture's quality. Research that invalidates existing design reveals improvement opportunities. Both outcomes require the same analytical investment and produce equivalent value.
 
 **Cross-references**: [API-DESIGN-004], [API-DESIGN-007], [DOC-CODE-004]
+
+---
+
+## [API-DESIGN-009] Structural Parity for Collection Primitives
+
+**Scope**: API design consistency across collection primitive packages.
+
+**Statement**: All collection primitives at the same layer MUST offer the same capability taxonomy. If one collection primitive has variants for bounded/inline/small storage, all SHOULD. If one supports `~Copyable` elements, all SHOULD.
+
+### The Expectation Set
+
+When developers learn that `Queue` has `.Bounded`, `.Inline`, and `.Small` variants, they form an expectation: "The other collection primitives probably have the same." This expectation is valuable:
+
+- Knowledge transfers across types
+- API surface is predictable
+- Trade-off decisions are consistent
+
+### Consistency Violations
+
+Inconsistency forces developers to make different trade-offs when choosing between collections:
+
+| Need | If Consistent | If Inconsistent |
+|------|--------------|-----------------|
+| Zero allocation | Use `{Collection}.Inline` | "Can't use List—no inline variant" |
+| Move-only elements | Use `{Collection}<Element: ~Copyable>` | "Can't use List—no ~Copyable support" |
+| Fixed capacity | Use `{Collection}.Bounded` | "Must use different error handling patterns" |
+
+**Correct**:
+```text
+Queue:  Queue, Queue.Bounded, Queue.Inline, Queue.Small  ✓
+Deque:  Deque, Deque.Bounded, Deque.Inline, Deque.Small  ✓
+Stack:  Stack, Stack.Bounded, Stack.Inline               ✓
+Heap:   Heap, Heap.Bounded, Heap.Inline                  ✓
+List:   List, List.Bounded, List.Inline, List.Small      ✓
+```
+
+**Incorrect**:
+```text
+Queue:  Queue, Queue.Bounded, Queue.Inline, Queue.Small
+Deque:  Deque, Deque.Bounded, Deque.Inline, Deque.Small
+Stack:  Stack, Stack.Bounded, Stack.Inline
+Heap:   Heap  ❌ Missing variants
+List:   List, List.Singly  ❌ Different taxonomy entirely
+```
+
+**Rationale**: Structural parity reduces cognitive load. Developers learn the variant system once and apply it everywhere. Inconsistency requires learning special cases for each collection.
+
+**Cross-references**: [API-DESIGN-002], [API-NAME-001]
+
+---
+
+## Techniques
+
+**Applies to**: Practical implementation of API design principles.
+
+---
+
+### [API-DESIGN-010] Fallback as Feature, Not Compromise
+
+**Scope**: APIs with optimized paths that may not handle all cases.
+
+**Statement**: When a native/optimized path handles only a subset of cases, the fallback to a slower but complete path is an intentional feature, not defensive programming. The API SHOULD accept all valid inputs and route internally.
+
+**Correct**:
+```swift
+public static func parse(_ string: String) -> UUID? {
+    if string.count == 36 {
+        if let uuid = nativeParse(string) { return uuid }
+    }
+    return pureSwiftParse(string)
+}
+```
+
+**Incorrect**:
+```swift
+// Forcing callers to pre-validate
+public static func parseHyphenated(_ string: String) -> UUID?
+public static func parseCompact(_ string: String) -> UUID?
+```
+
+**Rationale**: Internal routing simplifies caller code and ensures all valid inputs are accepted. The optimization is an implementation detail.
+
+**Cross-references**: [TEST-PERF-006], [API-ERR-003]
+
+---
+
+### [API-DESIGN-011] Type Aliases as Architectural Boundaries
+
+**Scope**: Localizing decisions about type usage, especially unsafe escapes.
+
+**Statement**: When a package consistently uses a specific generic instantiation—especially one involving unsafe escapes—a typealias SHOULD be defined to localize the decision.
+
+**Correct**:
+```swift
+// One typealias, documented justification
+typealias Box<I> = Reference.Indirect<I>.Unchecked
+// 27 usage sites just use Box<MyIterator>
+```
+
+**Incorrect**:
+```swift
+// 27 files each using the full type
+let storage: Reference.Indirect<MyIterator>.Unchecked
+// Decision scattered, no central justification
+```
+
+**Rationale**: Centralized typealiases make architectural decisions visible and changeable in one place.
+
+**Cross-references**: [API-CONC-005], [API-IMPL-006]
+
+---
+
+### [API-DESIGN-012] Bound vs Independent Typealias Parameters
+
+**Scope**: Typealiases in generic type extensions.
+
+**Statement**: When exposing nested types through generic parents via typealias, parameters MUST be bound to the parent's parameters, not independent.
+
+**Correct**:
+```swift
+extension Cache {
+    public typealias Evict = __CacheEvict<Key, Value>
+}
+// Usage: Cache<String, Int>.Evict
+```
+
+**Incorrect**:
+```swift
+extension Cache {
+    public typealias Evict<K, V> = __CacheEvict<K, V>
+}
+// Usage: Cache.Evict<String, Int>  // Ambiguous
+```
+
+**Rationale**: Bound parameters ensure type relationships are preserved and usage is unambiguous.
+
+**Cross-references**: [API-NAME-001], [API-NAME-007a]
+
+---
+
+### [API-DESIGN-013] Typealiases as the Reuse Primitive
+
+**Scope**: Sharing types between facade packages and their implementation dependencies.
+
+**Statement**: When multiple packages need to expose the same types with local names, typealiases MUST be used instead of wrapper types. Typealiases give zero-cost sharing at the ABI level. Wrapper types reintroduce duplication.
+
+**Correct**:
+```swift
+// Facade re-exports with local name
+public typealias Value = Machine_Primitives.Machine.Value
+public typealias Transform = Machine_Primitives.Machine.Transform<Instruction>
+public typealias Program = Machine_Primitives.Machine.Program<Instruction, Fault>
+
+// Zero-cost: types are identical at ABI level
+```
+
+**Incorrect**:
+```swift
+// Wrapper type reintroduces duplication
+public struct BinaryValue {
+    public let inner: Machine_Primitives.Machine.Value
+    // Every method must be forwarded
+}
+```
+
+#### Generic Typealias Extension Limitation
+
+You cannot extend a generic typealias. Workaround: use static functions on the facade namespace instead of instance methods.
+
+#### MemberImportVisibility Discipline
+
+Swift 6's `MemberImportVisibility` feature requires that types used in `@inlinable` public functions be imported publicly. Use `public import` only where `@inlinable` code references the module's types by name.
+
+**Rationale**: Typealiases preserve type identity while providing local names. Zero-cost abstraction.
+
+**Cross-references**: [API-DESIGN-011], [API-DESIGN-012]
+
+---
+
+### [API-DESIGN-014] Never as Closed Default for Extension Points
+
+**Scope**: Designing generic types that allow facade-specific extensions without code duplication.
+
+**Statement**: When designing shared types that may need facade-specific extensions, the extension capability SHOULD be encoded as a generic type parameter with `Never` as the closed default.
+
+**Correct**:
+```swift
+public enum Frame<NodeID, Checkpoint, Failure: Error, Extra> {
+    case call(child: NodeID)
+    case sequence(a: NodeID, b: NodeID, combine: Combine)
+    case extra(Extra)  // Extension point
+}
+
+// Facade that needs nothing extra uses Never
+public typealias BinaryFrame = Frame<NodeID, Checkpoint, Failure, Never>
+
+// Interpreter with Extra = Never:
+case .extra(let never):
+    switch never {}  // Compiles to nothing; proves impossibility
+```
+
+**Incorrect**:
+```swift
+case .extra:
+    fatalError("BinaryFrame doesn't support extra")
+// Runtime trap; Never gives compile-time proof
+```
+
+**Rationale**: The `Extra` parameter pattern enables shared types to serve multiple facades. Facades that don't need extensions use `Never` and get compile-time elimination.
+
+**Cross-references**: [API-DESIGN-013], [API-DESIGN-011]
 
 ---
 
@@ -655,8 +893,6 @@ A task that concludes "no changes required" may appear to produce no work produc
 - <doc:API-Requirements>
 - <doc:API-Implementation>
 - <doc:API-Errors>
-- <doc:Primitives-Architecture>
-- <doc:Implementation-Patterns>
 
 ### Process Documents
 
