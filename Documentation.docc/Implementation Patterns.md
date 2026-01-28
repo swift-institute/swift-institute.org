@@ -25,7 +25,7 @@ This document defines implementation patterns for Swift Institute packages. Thes
 
 ---
 
-### [PATTERN-001] C Shim Layer Structure
+### C Shim Layer Structure
 
 **Scope**: Package organization for platform-specific code.
 
@@ -56,8 +56,6 @@ The C shim layer:
 
 **Rationale**: Isolating C code minimizes unsafe code exposure while providing access to platform primitives. Separation enables independent testing and platform-specific optimization.
 
-**Cross-references**: [API-PLAT-001], [PATTERN-002]
-
 ---
 
 ## Multi-Library Products
@@ -68,7 +66,7 @@ The C shim layer:
 
 ---
 
-### [PATTERN-002] Fine-Grained Library Exposure
+### Fine-Grained Library Exposure
 
 **Scope**: Package product definitions.
 
@@ -101,8 +99,6 @@ A downstream package needing only integer operations can depend on `Integer Prim
 
 **Rationale**: Fine-grained libraries reduce compilation time and binary size. Consumers import only what they need.
 
-**Cross-references**: [API-LAYER-001], [PATTERN-001]
-
 ---
 
 ## Circular Dependency Breaking
@@ -113,7 +109,7 @@ A downstream package needing only integer operations can depend on `Integer Prim
 
 ---
 
-### [PATTERN-003] Nested Test Package Pattern
+### Nested Test Package Pattern
 
 **Scope**: Test target organization.
 
@@ -148,8 +144,6 @@ This breaks the cycle: `swift-testing` depends on primitives, but primitives' te
 
 **Rationale**: Nested test packages decouple test dependencies from the main package, eliminating circular dependency errors.
 
-**Cross-references**: [API-LAYER-001]
-
 ---
 
 ## Conditional Platform Compilation
@@ -160,7 +154,7 @@ This breaks the cycle: `swift-testing` depends on primitives, but primitives' te
 
 ---
 
-### [PATTERN-004] SwiftPM Platform Conditions
+### SwiftPM Platform Conditions
 
 **Scope**: Target dependency declarations.
 
@@ -190,11 +184,9 @@ This ensures ARM-specific code is not compiled (or linked) on x86 targets, and v
 
 **Rationale**: Platform conditions prevent compilation errors and reduce binary size by excluding irrelevant platform code.
 
-**Cross-references**: [API-PLAT-001]
-
 ---
 
-### [PATTERN-004a] Source-Level Platform Conditionals
+### Source-Level Platform Conditionals
 
 **Scope**: `#if` directives in Swift source files for platform-specific code paths.
 
@@ -248,11 +240,9 @@ Use `canImport` when checking for optional modules that may or may not be availa
 
 **Rationale**: For platform conditionals, determinism matters more than elegance. `os()` guarantees consistent behavior across all build environments.
 
-**Cross-references**: [PATTERN-004], [API-PLAT-001]
-
 ---
 
-### [PATTERN-004b] Module Name Normalization
+### Module Name Normalization
 
 **Scope**: Import statements and fully-qualified type paths.
 
@@ -292,11 +282,9 @@ The normalization is invisible until you need to reference it in import statemen
 
 **Rationale**: Understanding the normalization rule prevents confusion when imports fail. Swift requires valid identifiers, and underscores replace spaces automatically.
 
-**Cross-references**: [API-NAME-001], [PATTERN-004a]
-
 ---
 
-### [PATTERN-004c] C Library Linker Flags
+### C Library Linker Flags
 
 **Scope**: Package.swift configuration for platform-specific C library dependencies.
 
@@ -347,8 +335,6 @@ Linux's modular library architecture is the exception. Darwin and Windows includ
 
 **Rationale**: Explicit linker flags make C-level dependencies visible and prevent mysterious link failures. Platform conditions ensure the flag only applies where needed.
 
-**Cross-references**: [PATTERN-004], [PRIM-ORG-003]
-
 ---
 
 ## Swift Language Features
@@ -359,7 +345,7 @@ Linux's modular library architecture is the exception. Darwin and Windows includ
 
 ---
 
-### [PATTERN-005] Swift 6 Language Mode
+### Swift 6 Language Mode
 
 **Scope**: Package manifest configuration.
 
@@ -389,11 +375,9 @@ This enables:
 
 **Rationale**: Swift 6 provides compile-time concurrency safety that eliminates entire categories of runtime bugs.
 
-**Cross-references**: [API-CONC-001], [PATTERN-006], [PATTERN-005a]
-
 ---
 
-### [PATTERN-005a] Memory Safety Warnings as Design Feedback
+### Memory Safety Warnings as Design Feedback
 
 **Scope**: Handling Swift 6 strict memory safety diagnostics.
 
@@ -440,11 +424,9 @@ The warnings make danger visible in the build output. When the `unsafe` keyword 
 
 **Rationale**: The compiler doesn't prevent the work—it demands awareness. Treating safety warnings as collaborative feedback rather than annoyance improves code quality and prepares for future language evolution.
 
-**Cross-references**: [PATTERN-005], [API-PLAT-001]
-
 ---
 
-### [PATTERN-006] Upcoming Feature Flags
+### Upcoming Feature Flags
 
 **Scope**: SwiftSettings configuration.
 
@@ -472,11 +454,9 @@ swiftSettings: []
 
 **Rationale**: Upcoming features improve API hygiene and will become defaults in future Swift versions. Early adoption prevents migration pain.
 
-**Cross-references**: [PATTERN-005], [PATTERN-007]
-
 ---
 
-### [PATTERN-007] Experimental Feature Flags
+### Experimental Feature Flags
 
 **Scope**: Memory-critical and performance-critical packages.
 
@@ -497,11 +477,9 @@ These features enable compile-time verification of resource management, eliminat
 
 **Rationale**: Experimental lifetime features enable move-only semantics required for zero-copy resource management.
 
-**Cross-references**: [API-ERR-005], [API-ERR-006], [PATTERN-006]
-
 ---
 
-### [PATTERN-008] Parameter Packs for N-Ary Types
+### Parameter Packs for N-Ary Types
 
 **Scope**: Types requiring heterogeneous collections with compile-time dimension tracking.
 
@@ -527,8 +505,6 @@ struct Product {
 
 **Rationale**: Parameter packs enable type-safe heterogeneous tuples with compile-time dimension tracking, preserving type information that `Any` arrays lose.
 
-**Cross-references**: [API-IMPL-002]
-
 ---
 
 ## Anti-Patterns
@@ -541,7 +517,7 @@ This section documents common mistakes to avoid when implementing Swift Institut
 
 ---
 
-### [PATTERN-009] No Foundation Types
+### No Foundation Types
 
 **Scope**: All primitive and standard packages.
 
@@ -563,11 +539,9 @@ func parse(_ data: Data) -> Date { ... }
 
 **Rationale**: Foundation types prevent Swift Embedded deployment and introduce platform-specific behavior differences.
 
-**Cross-references**: [API-NAME-001], [API-PLAT-001]
-
 ---
 
-### [PATTERN-010] Nested Type Names
+### Nested Type Names
 
 **Scope**: All type declarations.
 
@@ -591,11 +565,9 @@ struct PDFDocument { }
 
 **Rationale**: Nested types provide namespace organization and read as `PDF.Page`, matching specification terminology. Type `PDF.` and autocomplete reveals the entire domain.
 
-**Cross-references**: [API-NAME-001], [API-NAME-002]
-
 ---
 
-### [PATTERN-011] Typed Error Enums
+### Typed Error Enums
 
 **Scope**: All error types.
 
@@ -617,11 +589,9 @@ throw NSError(domain: "Parser", code: 1, userInfo: [NSLocalizedDescriptionKey: "
 
 **Rationale**: Typed errors enable exhaustive switch handling and preserve diagnostic information for programmatic error recovery.
 
-**Cross-references**: [API-ERR-001], [API-ERR-004]
-
 ---
 
-### [PATTERN-012] Initializers as Canonical Implementation
+### Initializers as Canonical Implementation
 
 **Scope**: Type transformations and conversions.
 
@@ -647,11 +617,9 @@ extension Angle {
 
 **Rationale**: Initializers on the target type make the transformation discoverable via autocomplete on the target type. The canonical implementation has a single, predictable location.
 
-**Cross-references**: [API-IMPL-001], [API-NAME-004]
-
 ---
 
-### [PATTERN-013] Concrete Types Before Abstraction
+### Concrete Types Before Abstraction
 
 **Scope**: Protocol and generic type design.
 
@@ -680,11 +648,9 @@ protocol GeometricShape {
 
 **Rationale**: Premature abstraction creates protocols that do not fit real use cases. Concrete implementations reveal actual requirements before abstracting.
 
-**Cross-references**: [API-NAME-004], [API-IMPL-002]
-
 ---
 
-### [PATTERN-014] Linear Types for Invariant Enforcement
+### Linear Types for Invariant Enforcement
 
 **Scope**: Types that encode exactly-once or at-most-once semantics.
 
@@ -781,15 +747,13 @@ extension Continuation {
 
 **Rationale**: Linear and affine types encode resource semantics at the type level. The compiler becomes a proof assistant for exactly-once usage, eliminating double-resume and forgotten-resume bugs that plague callback-based APIs. This is the Swift equivalent of Rust's ownership system for semantic invariants.
 
-**Cross-references**: [API-ERR-005], [API-ERR-006], [PATTERN-007]
-
 ---
 
-### [PATTERN-015] Macro Naming Exception
+### Macro Naming Exception
 
 **Scope**: Swift macro declarations.
 
-**Statement**: Swift macros MUST be declared at file scope. Macros CANNOT be nested in extensions or types. When the nesting convention [API-NAME-001] would produce `@Namespace.MacroName`, the macro MUST instead use a compound name: `@NamespaceMacroName`.
+**Statement**: Swift macros MUST be declared at file scope. Macros CANNOT be nested in extensions or types. When the nesting convention would produce `@Namespace.MacroName`, the macro MUST instead use a compound name: `@NamespaceMacroName`.
 
 This is a language limitation that overrides the design convention. Documentation MUST acknowledge such exceptions explicitly rather than pretending the nesting convention is universal.
 
@@ -834,17 +798,15 @@ The compound name preserves the namespace association while satisfying the langu
 
 **Rationale**: Language limitations sometimes override design conventions. Acknowledging these exceptions explicitly—with documented rationale—maintains convention integrity while accommodating compiler requirements. The exception is narrow (macros only) and the rationale is clear (language constraint).
 
-**Cross-references**: [API-NAME-001], [API-EXC-001]
-
 ---
 
-### [PATTERN-016] Move-Only Types as Proof Assistants
+### Move-Only Types as Proof Assistants
 
 **Scope**: Types encoding resource linearity or exactly-once semantics.
 
 **Statement**: When `~Copyable` types with `consuming func` are used to enforce exactly-once semantics, the ownership system functions as a compile-time proof assistant. The pattern should be recognized as such and applied systematically to any "exactly once" or "at most once" invariant.
 
-This pattern extends [PATTERN-014] with the observation that Swift's ownership system is not merely a resource management tool—it is a proof system for linear logic.
+This pattern extends with the observation that Swift's ownership system is not merely a resource management tool—it is a proof system for linear logic.
 
 **Proof Categories**:
 
@@ -885,11 +847,9 @@ The same pattern structure appears in both—different domains, same proof oblig
 
 **Rationale**: Recognizing `~Copyable` as a proof assistant rather than just a memory optimization changes how developers approach API design. Any invariant expressible as "exactly N times" or "at most N times" should trigger consideration of ownership-based enforcement.
 
-**Cross-references**: [PATTERN-014], [API-ERR-005], [API-ERR-006]
-
 ---
 
-### [PATTERN-017] Fallback as Feature, Not Compromise
+### Fallback as Feature, Not Compromise
 
 **Scope**: APIs with optimized paths that may not handle all cases.
 
@@ -927,11 +887,9 @@ public static func parseCompact(_ string: String) -> UUID?     // Swift fallback
 
 **Rationale**: Callers should not need to know implementation details. The native path is an optimization; the Swift path preserves functionality. Internal routing provides both without API complexity.
 
-**Cross-references**: [TEST-PERF-006], [API-ERR-003]
-
 ---
 
-### [PATTERN-018] C Shim as Semantic Boundary
+### C Shim as Semantic Boundary
 
 **Scope**: Swift/C interop in platform primitives.
 
@@ -976,11 +934,9 @@ The Windows case proves the necessity: `UuidFromStringA` produces mixed-endian b
 
 **Rationale**: The shim declares "this is the contract" while the system library provides the implementation. Separation keeps platform accidents from leaking across boundaries.
 
-**Cross-references**: [PRIM-ORG-003], [PATTERN-004c]
-
 ---
 
-### [PATTERN-019] Namespace Collision Handling
+### Namespace Collision Handling
 
 **Scope**: Types that collide with system module names.
 
@@ -1014,11 +970,9 @@ This will recur: any name matching a system header becomes contested namespace. 
 
 **Rationale**: Explicit module qualification makes namespace ownership visible. `Darwin_Primitives.Darwin` is unambiguously "our" Darwin, distinct from the system's.
 
-**Cross-references**: [PATTERN-004b], [API-NAME-001]
-
 ---
 
-### [PATTERN-020] Never Resume Under Lock
+### Never Resume Under Lock
 
 **Scope**: Async coordination primitives using continuations and locks.
 
@@ -1066,11 +1020,9 @@ The `Async.Waiter.Resumption` type enforces this by construction—resumptions a
 
 **Rationale**: Deferred resumption keeps user code out of critical sections, making deadlock impossible by construction rather than by discipline.
 
-**Cross-references**: [PATTERN-014], [PATTERN-016], [API-CONC-001]
-
 ---
 
-### [PATTERN-021] Class Wrapper for ~Copyable in Collections
+### Class Wrapper for ~Copyable in Collections
 
 **Scope**: Storing `~Copyable` types in enums, dictionaries, or other collections.
 
@@ -1111,11 +1063,9 @@ This pattern recurs wherever `~Copyable` meets collection types. Recognizing it 
 
 **Rationale**: Swift's ownership system doesn't yet support move-only dictionary values. Classes provide the reference semantics needed for collection storage while preserving move-only content semantics through encapsulation.
 
-**Cross-references**: [PATTERN-014], [PATTERN-016], [API-IMPL-004]
-
 ---
 
-### [PATTERN-022] Minimal Reproduction as Verification Tool
+### Minimal Reproduction as Verification Tool
 
 **Scope**: Resolving debates about compiler behavior, runtime semantics, or "what Swift does."
 
@@ -1176,8 +1126,6 @@ Build a minimal reproduction when:
 The reproduction often reveals that the question itself was wrong—testing the actual behavior surfaces distinctions that theoretical analysis missed.
 
 **Rationale**: Debates about abstractions and principles can continue forever. Debates about "will the compiler accept X?" have definitive answers. The test package takes minutes to create; the ungrounded debate can take hours. The minimal reproduction is a truth machine—it settles claims that no amount of argument can resolve.
-
-**Cross-references**: [API-DESIGN-004], [API-DESIGN-007]
 
 ---
 

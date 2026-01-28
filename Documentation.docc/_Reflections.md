@@ -106,13 +106,13 @@ The gap between what the instructions said and what correct execution required w
 
 ### Instructions Must Demonstrate, Not Just Describe
 
-The fix wasn't just adding more words to the instructions. It was making the instructions *demonstrate* the expected output. The [CONS-LOOP-003] rule now includes a full Correct example showing a properly structured requirement, and an Incorrect example showing what happens when pattern-matching is skipped.
+The fix wasn't just adding more words to the instructions. It was making the instructions *demonstrate* the expected output. The rule now includes a full Correct example showing a properly structured requirement, and an Incorrect example showing what happens when pattern-matching is skipped.
 
 This is the difference between "match the target document's patterns" (vague) and showing exactly what a matched pattern looks like (concrete). Instructions that only describe are incomplete. Instructions that demonstrate are actionable.
 
 ### Process Documents Are Also Documentation
 
-The consolidation document is now itself LLM-optimized documentation. It uses the same [CONS-XXX-NNN] identifiers, the same Scope/Statement structure, the same Cross-references that it mandates for target documents. This self-referential consistency matters: the document doesn't just describe how to create structured documentation—it is structured documentation. A reader (human or LLM) learns the pattern by reading the instructions.
+The consolidation document is now itself LLM-optimized documentation. It uses the same identifiers, the same Scope/Statement structure, the same Cross-references that it mandates for target documents. This self-referential consistency matters: the document doesn't just describe how to create structured documentation—it is structured documentation. A reader (human or LLM) learns the pattern by reading the instructions.
 
 ---
 
@@ -124,17 +124,15 @@ The consolidation document is now itself LLM-optimized documentation. It uses th
 
 LLM optimization is not a separate concern from human readability. The properties that help LLMs—structural predictability, semantic explicitness, compositional atomicity, example-driven specification—are precisely the properties that make documentation clear for humans.
 
-The LLM-Optimized Documentation paper states this explicitly: "Optimizing documentation for LLM consumption is not a departure from good documentation practice—it is an intensification of it." The consolidation work proved this empirically. Adding rule identifiers, Scope declarations, Correct/Incorrect examples, and Cross-references didn't make the document harder for humans to read. It made it easier.
-
 ### The Purpose Statement Shapes Requirements
 
-Adding "The permanent documentation serves as authoritative reference for LLMs working on this codebase" changed how consolidation should be approached. Without this purpose statement, "integration" could mean many things—summarizing, paraphrasing, reorganizing. With it, the requirements become specific: LLMs need explicit detail (not inference), predictable patterns (not creative variation), concrete examples (not abstract principles).
+Adding "The permanent documentation serves as authoritative reference for this codebase" changed how consolidation should be approached. Without this purpose statement, "integration" could mean many things—summarizing, paraphrasing, reorganizing. With it, the requirements become specific: LLMs need explicit detail (not inference), predictable patterns (not creative variation), concrete examples (not abstract principles).
 
 The purpose statement is not decoration. It is the lens through which all subsequent requirements are interpreted. Future readers of the consolidation document will understand not just *what* to do but *why* those specific requirements exist.
 
 ### The Self-Referential Test
 
-A process document that mandates structure should itself be structured. A style guide that requires examples should itself contain examples. The consolidation document now passes this test: it uses [CONS-XXX-NNN] identifiers while mandating them, includes Correct/Incorrect examples while requiring them, provides Cross-references while specifying them.
+A process document that mandates structure should itself be structured. A style guide that requires examples should itself contain examples. The consolidation document now passes this test: it uses identifiers while mandating them, includes Correct/Incorrect examples while requiring them, provides Cross-references while specifying them.
 
 This creates a form of documentation integrity. If the document contradicted its own principles, that contradiction would undermine its authority. By demonstrating its requirements, the document validates them.
 
@@ -156,7 +154,7 @@ The principle generalizes: storage types should be inert. They hold data. Policy
 
 The plan specifies `Witness.Context.value(_:) -> Result<K.Value, Resolution.Error>` as the primary API, with a typed-throws wrapper for convenience. The subscript (`values[Key.self]`) is not the canonical path—it's a convenience that traps on cycles.
 
-This reversal of ergonomics and safety is deliberate. Per [API-IMPL-003], primitives must be total. A function that can trap is not total. By making the Result-returning version primary and the subscript secondary, the architecture acknowledges that cycle detection can fail, and forces callers to handle that failure or explicitly opt into trapping behavior.
+This reversal of ergonomics and safety is deliberate. Per, primitives must be total. A function that can trap is not total. By making the Result-returning version primary and the subscript secondary, the architecture acknowledges that cycle detection can fail, and forces callers to handle that failure or explicitly opt into trapping behavior.
 
 ### TaskLocal Stack vs Global State
 
@@ -180,7 +178,7 @@ The subtlety: when creating a new scope via `Witness.Context.with`, a *fresh* `S
 
 ### The Preparation Store as TaskLocal Scope
 
-`Witness.Preparation` in the original code uses a global `Mutex<Values?>`. The revision uses `@TaskLocal` carrying a `Store`. This eliminates the global state that [API-IMPL-010] prohibits.
+`Witness.Preparation` in the original code uses a global `Mutex<Values?>`. The revision uses `@TaskLocal` carrying a `Store`. This eliminates the global state that prohibits.
 
 The deeper change: preparation becomes scoped. `Preparation.with { store in ... } operation: { ... }` creates a preparation context for the duration of the operation. Multiple concurrent preparation scopes don't interfere. The global one-shot `prepare()` becomes a reusable scoped primitive.
 

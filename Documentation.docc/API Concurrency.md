@@ -16,7 +16,7 @@ This document defines concurrency requirements for Swift Institute packages.
 
 ---
 
-## [API-CONC-001] Modern Swift Concurrency
+## Modern Swift Concurrency
 
 **Scope**: All concurrent implementations.
 
@@ -29,11 +29,9 @@ MUST NOT introduce ad-hoc threading models when structured concurrency suffices.
 
 **Rationale**: Swift concurrency provides compile-time safety guarantees that ad-hoc threading cannot.
 
-**Cross-references**: [API-CONC-002], [API-CONC-003]
-
 ---
 
-## [API-CONC-002] Executor and Thread Topology
+## Executor and Thread Topology
 
 **Scope**: APIs with thread affinity requirements.
 
@@ -44,11 +42,9 @@ MUST NOT introduce ad-hoc threading models when structured concurrency suffices.
 
 **Rationale**: Explicit executor control prevents accidental thread-safety violations.
 
-**Cross-references**: [API-CONC-001], [API-CONC-003]
-
 ---
 
-## [API-CONC-003] Single Resumption Funnel Invariant
+## Single Resumption Funnel Invariant
 
 **Scope**: All suspended operations.
 
@@ -65,11 +61,9 @@ This invariant guarantees:
 
 **Rationale**: Single resumption funnel eliminates an entire class of concurrency bugs.
 
-**Cross-references**: [API-CONC-002], [API-CONC-004]
-
 ---
 
-## [API-CONC-004] Cancellation and Shutdown Invariants
+## Cancellation and Shutdown Invariants
 
 **Scope**: All cancellable and shutdownable operations.
 
@@ -80,17 +74,15 @@ This invariant guarantees:
 
 **Rationale**: Predictable cancellation and shutdown behavior is essential for resource management.
 
-**Cross-references**: [API-ERR-002], [API-CONC-003]
-
 ---
 
-## [API-CONC-005] Conservative Sendable Defaults
+## Conservative Sendable Defaults
 
 **Scope**: Mutable reference wrappers and types that cross concurrency domains.
 
 **Statement**: General-purpose mutable reference wrappers MUST NOT be unconditionally `@unchecked Sendable` unless they provide synchronization or actor isolation by construction. The default MUST be conservative (Sendable only when wrapped value is Sendable), with explicit opt-in for unsafe escapes.
 
-> **Full details**: See <doc:Memory> sections [MEM-SEND-001], [MEM-SEND-002], and [MEM-SEND-003].
+> **Full details**: See <doc:Memory> sections, and.
 
 **The "Pit of Success" Principle**:
 
@@ -101,11 +93,9 @@ This invariant guarantees:
 
 **Rationale**: Swift Concurrency uses `Sendable` as the type-system marker for preventing data races. Making a mutable reference type unconditionally `@unchecked Sendable` removes the compiler's primary guardrail.
 
-**Cross-references**: [API-CONC-001], [API-CONC-004], [API-IMPL-010], <doc:Memory>
-
 ---
 
-## [API-CONC-006] Two-API Pattern for Sync and Async Ownership
+## Two-API Pattern for Sync and Async Ownership
 
 **Scope**: APIs that accept buffers or resources in both synchronous and asynchronous variants.
 
@@ -179,8 +169,6 @@ The buffer moves to the I/O thread, gets filled, and moves back. True zero-copy 
 
 **Rationale**: The two-API shape isn't inconsistency; it's architecturally correct. Borrowing works for sync because the borrow scope encompasses the entire operation. Async operations span thread boundaries—borrows cannot survive this transition. Each shape optimally serves its concurrency model.
 
-**Cross-references**: [API-CONC-001], [PATTERN-047], [MEM-REF-002], [MEM-REF-003]
-
 ---
 
 ## Techniques
@@ -189,7 +177,7 @@ The buffer moves to the I/O thread, gets filled, and moves back. True zero-copy 
 
 ---
 
-### [API-CONC-010] Never Resume Under Lock
+### Never Resume Under Lock
 
 **Scope**: Async coordination primitives using continuations and locks.
 
@@ -225,17 +213,15 @@ func complete(with value: T) {
 
 **Rationale**: Deferred resumption keeps user code out of critical sections, making deadlock impossible by construction.
 
-**Cross-references**: [API-CONC-003], [MEM-LINEAR-001]
-
 ---
 
-### [API-CONC-011] Inout-Across-Await Hazard
+### Inout-Across-Await Hazard
 
 **Scope**: Async methods accessing mutable state through `_modify` accessors.
 
 **Statement**: When an async method accesses mutable state through a `_modify` accessor, the exclusivity check operates within a single execution context—it does NOT prevent concurrent access from different tasks.
 
-This hazard reinforces why [API-CONC-005] requires conservative Sendable defaults.
+This hazard reinforces why requires conservative Sendable defaults.
 
 **Example hazard**:
 ```swift
@@ -253,11 +239,9 @@ actor Container {
 
 **Mitigation**: Use local copies across suspension points, or restructure to avoid inout access across await.
 
-**Cross-references**: [API-CONC-005], [API-CONC-010]
-
 ---
 
-### [API-CONC-012] Type Erasure vs Sendable Tension
+### Type Erasure vs Sendable Tension
 
 **Scope**: Heterogeneous storage and type erasure in Swift 6 with strict concurrency.
 
@@ -287,8 +271,6 @@ final class AnyStorage: @unchecked Sendable {
     }
 }
 ```
-
-**Cross-references**: [API-CONC-005], [MEM-SEND-001]
 
 ---
 

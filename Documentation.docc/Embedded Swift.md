@@ -33,7 +33,7 @@ This document defines requirements for writing Swift packages compatible with Em
 
 ---
 
-### [EMB-TOOL-001] Development Toolchain Requirement
+### Development Toolchain Requirement
 
 **Scope**: Toolchain selection for Embedded compilation.
 
@@ -57,7 +57,7 @@ swiftc -enable-experimental-feature Embedded ...
 
 ---
 
-### [EMB-FLAG-001] Required Compiler Flags
+### Required Compiler Flags
 
 **Scope**: Compiler flags for Embedded compilation.
 
@@ -78,7 +78,7 @@ swiftc -enable-experimental-feature Embedded -wmo -parse-as-library \
 
 ---
 
-### [EMB-FLAG-002] Cross-Compilation Flags
+### Cross-Compilation Flags
 
 **Scope**: Targeting specific embedded architectures.
 
@@ -103,7 +103,7 @@ The `-Osize` flag optimizes for binary size. The `-disable-stack-protector` remo
 
 ---
 
-### [EMB-CONC-001] Three-Tier Availability Model
+### Three-Tier Availability Model
 
 **Scope**: Understanding which concurrency features work.
 
@@ -119,7 +119,7 @@ The `-Osize` flag optimizes for binary size. The `-disable-stack-protector` remo
 
 ---
 
-### [EMB-CONC-002] Compile-Only Features
+### Compile-Only Features
 
 **Scope**: Features that compile but fail to link.
 
@@ -138,7 +138,7 @@ This boundary reveals the architectural split: type checking works; runtime disp
 
 ---
 
-### [EMB-CONC-003] The @MainActor Exception
+### The @MainActor Exception
 
 **Scope**: Why `@MainActor` fails differently.
 
@@ -156,7 +156,7 @@ Custom global actors (`@MyGlobalActor`) compile (though they fail to link). The 
 
 ---
 
-### [EMB-CONC-004] Sendable as the Embedded Story
+### Sendable as the Embedded Story
 
 **Scope**: What concurrency model is actually available.
 
@@ -175,7 +175,7 @@ Every item is a compile-time annotation informing the type checker. None require
 
 ---
 
-### [EMB-CONC-005] Explicit Concurrency Import
+### Explicit Concurrency Import
 
 **Scope**: Import requirements for concurrency types.
 
@@ -197,7 +197,7 @@ Without the import, `Task` produces "cannot find 'Task' in scope." This asymmetr
 
 ---
 
-### [EMB-COMPAT-001] Conditional Compilation Guards
+### Conditional Compilation Guards
 
 **Scope**: Feature guards for Embedded compatibility.
 
@@ -226,7 +226,7 @@ public func fetchAsync() async throws -> Data { ... }
 
 ---
 
-### [EMB-COMPAT-002] Sync Alternatives Pattern
+### Sync Alternatives Pattern
 
 **Scope**: Providing non-async APIs alongside async APIs.
 
@@ -246,7 +246,7 @@ The `Sendable` annotations carry forward into Embedded builds. The async APIs di
 
 ---
 
-### [EMB-COMPAT-003] Binary Size as Feedback
+### Binary Size as Feedback
 
 **Scope**: Using binary size to verify Embedded compilation.
 
@@ -267,7 +267,7 @@ The size reduction proves what Embedded mode removes: runtime metadata, reflecti
 
 ---
 
-### [EMB-DIAG-001] Crash vs Error Distinction
+### Crash vs Error Distinction
 
 **Scope**: Interpreting compiler failures.
 
@@ -293,5 +293,5 @@ A crash during SIL generation suggests the feature is partially implemented and 
 
 ### Cross-References
 
-- [PATTERN-036] Conditional Compilation Foresight
-- [DOC-CONTENT-003] Empirical Verification as Documentation Source
+- Conditional Compilation Foresight
+- Empirical Verification as Documentation Source

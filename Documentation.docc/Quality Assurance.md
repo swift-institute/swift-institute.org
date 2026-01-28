@@ -30,7 +30,7 @@ This document defines the quality assurance infrastructure for the Swift Institu
 
 ---
 
-### [QG-TEST-001] Unified Test Coordination
+### Unified Test Coordination
 
 **Scope**: Package-level and workspace-level test organization.
 
@@ -57,8 +57,6 @@ Primitives.xctestplan
 
 **Rationale**: Unified test coordination ensures changes in lower-tier packages do not break dependent packages. Cross-package regressions are often subtle and only appear when components interact.
 
-**Cross-references**: [QG-CI-001], <doc:Testing-Requirements>
-
 ---
 
 ## Continuous Integration
@@ -69,7 +67,7 @@ Primitives.xctestplan
 
 ---
 
-### [QG-CI-001] CI Configuration Requirements
+### CI Configuration Requirements
 
 **Scope**: GitHub Actions workflow configuration.
 
@@ -106,8 +104,6 @@ jobs:
 
 **Rationale**: Consistent CI configuration prevents "works on my machine" failures and ensures all contributors receive immediate feedback on breaking changes.
 
-**Cross-references**: [QG-TEST-001], [QG-VER-001]
-
 ---
 
 ## Versioning Strategy
@@ -118,7 +114,7 @@ jobs:
 
 ---
 
-### [QG-VER-001] Semantic Versioning
+### Semantic Versioning
 
 **Scope**: Package version numbering.
 
@@ -142,19 +138,15 @@ v1      // Missing minor and patch
 
 **Rationale**: Semantic versioning enables consumers to understand the impact of updates and pin dependencies appropriately.
 
-**Cross-references**: [QG-VER-002]
-
 ---
 
-### [QG-VER-002] Coordinated Breaking Changes
+### Coordinated Breaking Changes
 
 **Scope**: Cross-package dependency updates.
 
 **Statement**: Breaking changes in lower-tier packages MUST trigger coordinated updates to all dependent packages, maintaining graph consistency. A breaking change MUST NOT be released until all dependent packages have been updated and tested.
 
 **Rationale**: Coordinated updates prevent dependency hell where consumers cannot upgrade due to incompatible transitive dependencies.
-
-**Cross-references**: [QG-VER-001], [QG-TEST-001]
 
 ---
 

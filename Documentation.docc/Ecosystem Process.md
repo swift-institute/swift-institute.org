@@ -52,7 +52,7 @@ These dimensions form a 2×3 matrix and are referenced throughout this document 
 
 **Purpose**: Ensure higher-layer packages systematically discover and reuse lower-layer primitives.
 
-### [ECO-REUSE-001] Dependency Audit Triggers
+### Dependency Audit Triggers
 
 A dependency audit MUST be performed when:
 
@@ -66,7 +66,7 @@ An audit is complete when either:
 - (a) an existing primitive is adopted, or
 - (b) a Reuse Rejection Justification ([ECO-REUSE-004]) is recorded.
 
-### [ECO-REUSE-002] Primitive Discovery Protocol
+### Primitive Discovery Protocol
 
 Discovery MUST follow this order:
 
@@ -76,15 +76,15 @@ Discovery MUST follow this order:
 
 The Package Inventory is the authoritative discovery index.
 
-Cross-reference: [API-IMPL-011] No Ad-Hoc Helpers.
+Cross-reference: No Ad-Hoc Helpers.
 
-### [ECO-REUSE-003] Composition Over Reimplementation
+### Composition Over Reimplementation
 
 Existing primitives MUST be composed before introducing new abstractions.
 
-Cross-reference: [PRIM-ORG-002] Unification Over Proliferation.
+Cross-reference: Unification Over Proliferation.
 
-### [ECO-REUSE-004] Reuse Rejection Justification
+### Reuse Rejection Justification
 
 If an existing primitive is not reused, the rejection MUST fall into exactly one category:
 
@@ -100,7 +100,7 @@ The justification MUST be recorded in code review or the Package Inventory.
 
 **Purpose**: Relocate misplaced code to its correct semantic layer.
 
-### [ECO-EXTR-001] Extraction Indicators
+### Extraction Indicators
 
 Code MUST be considered for extraction when one or more of the following are present:
 
@@ -109,9 +109,9 @@ Code MUST be considered for extraction when one or more of the following are pre
 - Generality increases when decoupled
 - The answer to "Is this a more general concept?" is yes
 
-Cross-reference: [PRIM-ORG-001] The Relocation Principle.
+Cross-reference: The Relocation Principle.
 
-### [ECO-EXTR-002] Layer Decision Tree
+### Layer Decision Tree
 
 Layer placement MUST follow:
 
@@ -120,21 +120,21 @@ Layer placement MUST follow:
 3. **Composition without policy** → swift-foundations
 4. **Opinionated but reusable** → swift-components
 
-Cross-reference: [CONTRIB-001], [FLOW-001].
+Cross-reference:,.
 
-### [ECO-EXTR-003] Extraction Execution
+### Extraction Execution
 
 Extractions MUST follow:
 
-- [PRIM-EXTR-001] Extraction Ordering
-- [PRIM-EXTR-002] Extraction Template
-- [PRIM-EXTR-003] Backward Compatibility During Migration
+- Extraction Ordering
+- Extraction Template
+- Backward Compatibility During Migration
 
-### [ECO-EXTR-004] Migration Boundaries
+### Migration Boundaries
 
 Code MUST NOT be extracted when it contains:
 
-1. Custom deinit with domain policy ([PATTERN-027])
+1. Custom deinit with domain policy ()
 2. Implicit ownership of external resources (file descriptors, sockets, task handles)
 3. Cleanup sequencing that depends on domain state
 
@@ -146,7 +146,7 @@ Such code remains localized.
 
 **Purpose**: Identify missing primitives.
 
-### [ECO-GAP-001] Gap Heuristics
+### Gap Heuristics
 
 Signals of a missing primitive include:
 
@@ -154,11 +154,11 @@ Signals of a missing primitive include:
 - Scattered `@unchecked Sendable` markers without centralized justification
 - Repeated transformations appearing in multiple locations
 
-### [ECO-GAP-002] Gap Threshold
+### Gap Threshold
 
 A gap MUST be formally evaluated once the same mechanism appears in three or more locations.
 
-### [ECO-GAP-003] Gap Verification
+### Gap Verification
 
 Before creating a new primitive:
 
@@ -175,7 +175,7 @@ Failed first migrations ([ECO-AUDIT-004]) serve as gap verification evidence.
 
 **Purpose**: Define when and how new primitives are introduced.
 
-### [ECO-CREATE-001] Creation Triggers
+### Creation Triggers
 
 Create a primitive when:
 
@@ -183,7 +183,7 @@ Create a primitive when:
 - Extraction reveals a reusable pattern
 - An external specification requires a new building block
 
-### [ECO-CREATE-002] Layer Placement
+### Layer Placement
 
 Placement MUST:
 
@@ -191,17 +191,17 @@ Placement MUST:
 - Respect primitive tiering ([PRIM-ARCH-001])
 - Introduce no upward dependencies
 
-### [ECO-CREATE-003] Primitive Design Requirements
+### Primitive Design Requirements
 
 New primitives MUST satisfy:
 
 - No Foundation usage ([PRIM-FOUND-001])
 - `-primitives` naming suffix ([PRIM-NAME-001])
 - Mechanism-based naming ([PRIM-NAME-003])
-- API totality ([API-IMPL-003])
+- API totality ()
 - All API Requirements
 
-### [ECO-CREATE-004] Creation Template
+### Creation Template
 
 1. Create package in appropriate swift-primitives tier
 2. Implement minimal API surface
@@ -210,7 +210,7 @@ New primitives MUST satisfy:
 5. Update Package Inventory
 6. Migrate existing ad-hoc implementations
 
-### [ECO-CREATE-005] Creation Deferral Rule
+### Creation Deferral Rule
 
 If a proposed primitive cannot satisfy all design requirements, creation MUST be deferred.
 
@@ -222,7 +222,7 @@ The code remains localized until requirements are met or the design is revised.
 
 **Purpose**: Resolve ambiguous layer placement and extraction decisions.
 
-### [ECO-DECIDE-001] Tie-Breaker Hierarchy
+### Tie-Breaker Hierarchy
 
 When multiple layers or approaches are plausible, apply in order:
 
@@ -231,7 +231,7 @@ When multiple layers or approaches are plausible, apply in order:
 3. **Reuse count** — prefer the option benefiting more packages
 4. **Simplest API surface** — prefer fewer public symbols
 
-### [ECO-DECIDE-002] Decision Recording
+### Decision Recording
 
 Tie-breaker rationale MUST be documented in:
 
@@ -246,7 +246,7 @@ This ensures future reviewers understand non-obvious placements.
 
 **Purpose**: Continuously surface inconsistencies through event-triggered audits.
 
-### [ECO-AUDIT-001] Audit Process
+### Audit Process
 
 Audits are triggered by:
 
@@ -256,9 +256,9 @@ Audits are triggered by:
 
 Question format: "We have [Primitive X]. What's still ad-hoc?"
 
-Cross-reference: [PATTERN-028] Audit-Driven Refactoring.
+Cross-reference: Audit-Driven Refactoring.
 
-### [ECO-AUDIT-002] Audit Search Patterns
+### Audit Search Patterns
 
 Audits MUST, at minimum, search for:
 
@@ -267,7 +267,7 @@ Audits MUST, at minimum, search for:
 - `import Foundation` in primitives or standards
 - Compound type names where `Nest.Name` should be used
 
-### [ECO-AUDIT-003] Migration Criteria
+### Migration Criteria
 
 Migrate only when all criteria are met:
 
@@ -276,7 +276,7 @@ Migrate only when all criteria are met:
 3. The primitive dependency is available
 4. Total code size decreases, not increases
 
-### [ECO-AUDIT-004] First Migration as Diagnostic
+### First Migration as Diagnostic
 
 The first migration attempt is diagnostic.
 
@@ -284,7 +284,7 @@ Failures reveal infrastructure gaps and feed gap verification ([ECO-GAP-003]).
 
 Plan for iteration: audit → attempt → learn → fix → continue.
 
-Cross-reference: [PATTERN-029] First Migration as Diagnostic.
+Cross-reference: First Migration as Diagnostic.
 
 ---
 
@@ -292,15 +292,15 @@ Cross-reference: [PATTERN-029] First Migration as Diagnostic.
 
 **Purpose**: Guiding philosophy for ecosystem decisions.
 
-### [ECO-CENT-001] Centralization Principle
+### Centralization Principle
 
 Duplicating mechanisms locally is architecturally equivalent to reimplementing Foundation in each package.
 
 The same argument that would justify `Foundation.Date` appearing ad-hoc in each package is equally wrong for ad-hoc wrappers providing reference semantics, heap allocation, or other mechanisms.
 
-Cross-reference: [PATTERN-026] Centralization as Architectural Principle.
+Cross-reference: Centralization as Architectural Principle.
 
-### [ECO-CENT-002] Mechanism vs Policy
+### Mechanism vs Policy
 
 | Category | Layer | Example |
 |----------|-------|---------|
@@ -318,16 +318,16 @@ When in doubt, ask: "Does this code make decisions, or does it provide capabilit
 
 **Purpose**: Architectural invariants that apply across all processes.
 
-### [ECO-DEP-001] Dependency Direction
+### Dependency Direction
 
 All dependencies MUST point downward through the layer hierarchy.
 
 - No upward dependencies
 - No lateral dependencies within the same layer
 
-Cross-reference: [ARCH-DEP-001].
+Cross-reference:.
 
-### [ECO-DEP-002] Fine-Grained Dependencies
+### Fine-Grained Dependencies
 
 Packages MUST depend on specific primitive packages, not umbrella packages.
 
@@ -338,7 +338,7 @@ Packages MUST depend on specific primitive packages, not umbrella packages.
 grep -r "import.*_Primitives$" --include="Package.swift"
 ```
 
-Cross-reference: [PATTERN-002] Fine-Grained Library Exposure.
+Cross-reference: Fine-Grained Library Exposure.
 
 ---
 

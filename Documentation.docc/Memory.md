@@ -48,7 +48,7 @@ This document defines memory ownership patterns for the Swift Institute ecosyste
 
 **Applies to**: Types representing resources with exclusive ownership.
 
-### [MEM-COPY-001] Noncopyable Type Declaration
+### Noncopyable Type Declaration
 
 **Scope**: Types requiring single-ownership semantics.
 
@@ -85,11 +85,9 @@ struct FileDescriptor {
 
 **Rationale**: Move-only semantics prevent use-after-free and double-free at compile time. The type system enforces that exactly one owner manages each resource.
 
-**Cross-references**: [PATTERN-014], [SYS-MEM-002], [API-ERR-005]
-
 ---
 
-### [MEM-COPY-002] Noncopyable in Error Types
+### Noncopyable in Error Types
 
 **Scope**: Error type design involving `~Copyable` values.
 
@@ -113,11 +111,9 @@ func register(_ token: consuming UnregisteredToken) throws -> RegisteredToken
 
 **Rationale**: Prevents accidental loss of move-only resources when errors are thrown.
 
-**Cross-references**: [API-ERR-005], [API-ERR-006]
-
 ---
 
-### [MEM-COPY-003] Noncopyable in Collections
+### Noncopyable in Collections
 
 **Scope**: Storing `~Copyable` types in collections.
 
@@ -147,15 +143,13 @@ var cache: [Key: State] = [:]  // Compiler error: State is ~Copyable
 
 **Rationale**: Swift's ownership system doesn't yet support move-only dictionary values. Classes provide the reference semantics needed for collection storage while preserving move-only content semantics through encapsulation.
 
-**Cross-references**: [PATTERN-021]
-
 ---
 
 ## Ownership Keywords
 
 **Applies to**: Function parameters and ownership transfer.
 
-### [MEM-OWN-001] Consuming Parameters
+### Consuming Parameters
 
 **Scope**: Parameters that take ownership of a value.
 
@@ -183,7 +177,7 @@ let token = cell.token()  // cell is consumed
 
 ---
 
-### [MEM-OWN-002] Borrowing Parameters
+### Borrowing Parameters
 
 **Scope**: Parameters that provide temporary read-only access.
 
@@ -210,7 +204,7 @@ indirect.withValue { value in
 
 ---
 
-### [MEM-OWN-003] Ownership in Function Signatures
+### Ownership in Function Signatures
 
 **Scope**: Documenting ownership contracts in APIs.
 
@@ -231,15 +225,13 @@ func inspect(_ resource: borrowing Resource) -> Info
 func modify(_ resource: inout Resource)
 ```
 
-**Cross-references**: [PATTERN-016]
-
 ---
 
 ## Linear and Affine Types
 
 **Applies to**: Types encoding exactly-once or at-most-once semantics.
 
-### [MEM-LINEAR-001] Exactly-Once Types
+### Exactly-Once Types
 
 **Scope**: Values that must be used exactly once.
 
@@ -290,11 +282,9 @@ class Continuation<T> {
 
 **Rationale**: The compiler becomes a proof assistant for exactly-once usage, eliminating double-resume and forgotten-resume bugs.
 
-**Cross-references**: [PATTERN-014], [PATTERN-016]
-
 ---
 
-### [MEM-LINEAR-002] At-Most-Once Types
+### At-Most-Once Types
 
 **Scope**: Values that may be used at most once.
 
@@ -321,11 +311,9 @@ public struct Token: ~Copyable, Sendable {
 | Exactly-once (linear) | `preconditionFailure` - must be used |
 | At-most-once (affine) | Silent - unused is valid |
 
-**Cross-references**: [PATTERN-014]
-
 ---
 
-### [MEM-LINEAR-003] Proof Categories
+### Proof Categories
 
 **Scope**: Using the ownership system as a proof assistant.
 
@@ -340,15 +328,13 @@ public struct Token: ~Copyable, Sendable {
 
 **Rationale**: Recognizing `~Copyable` as a proof assistant rather than just memory optimization changes API design approach. Any invariant expressible as "exactly N times" or "at most N times" should trigger consideration of ownership-based enforcement.
 
-**Cross-references**: [PATTERN-016]
-
 ---
 
 ## Strict Memory Safety
 
 **Applies to**: SE-0458 Strict Memory Safety checking.
 
-### [MEM-SAFE-001] Enable Strict Memory Safety
+### Enable Strict Memory Safety
 
 **Scope**: Memory-critical packages.
 
@@ -379,11 +365,9 @@ swiftSettings: [
 
 **Rationale**: Compiler enforcement catches memory safety violations at build time rather than runtime.
 
-**Cross-references**: [SYS-MEM-001], [PATTERN-005]
-
 ---
 
-### [MEM-SAFE-002] Unsafe Expression Marking
+### Unsafe Expression Marking
 
 **Scope**: Marking unsafe operations in strict mode.
 
@@ -417,11 +401,9 @@ unsafe { self.name = name }  // Error in initializer context
 - Operations *within* the function still require individual `unsafe` markers
 - Parentheses define the expression boundary for assignments
 
-**Cross-references**: [PATTERN-005b]
-
 ---
 
-### [MEM-SAFE-003] Warning Classification
+### Warning Classification
 
 **Scope**: Handling StrictMemorySafety warnings.
 
@@ -442,11 +424,9 @@ unsafe { self.name = name }  // Error in initializer context
 
 **Rationale**: Bucket B warnings exist to make unsafe storage visible in build output, not to demand remediation.
 
-**Cross-references**: [PATTERN-005a], [STRICT_MEMORY_SAFETY.md]
-
 ---
 
-### [MEM-SAFE-004] Five Dimensions of Memory Safety
+### Five Dimensions of Memory Safety
 
 **Scope**: Understanding memory safety guarantees.
 
@@ -460,15 +440,13 @@ unsafe { self.name = name }  // Error in initializer context
 | **Initialization Safety** | Values initialized before use | Definite initialization |
 | **Thread Safety** | Invariants maintained under concurrency | `Sendable`, actors, Swift 6 |
 
-**Cross-references**: SE-0458
-
 ---
 
 ## Reference Primitives
 
 **Applies to**: Types in `swift-reference-primitives`.
 
-### [MEM-REF-001] Reference Primitive Selection
+### Reference Primitive Selection
 
 **Scope**: Choosing the correct reference primitive.
 
@@ -494,7 +472,7 @@ unsafe { self.name = name }  // Error in initializer context
 
 ---
 
-### [MEM-REF-002] Reference.Box
+### Reference.Box
 
 **Scope**: Immutable heap-allocated values.
 
@@ -520,7 +498,7 @@ public final class Box<Value: ~Copyable & Sendable>: @unchecked Sendable {
 
 ---
 
-### [MEM-REF-003] Reference.Indirect
+### Reference.Indirect
 
 **Scope**: Mutable shared state with reference semantics.
 
@@ -567,7 +545,7 @@ extension Reference.Indirect where Value: ~Copyable {
 
 ---
 
-### [MEM-REF-004] Reference.Transfer
+### Reference.Transfer
 
 **Scope**: Cross-boundary ownership transfer.
 
@@ -615,7 +593,7 @@ spawnThread {
 
 ---
 
-### [MEM-REF-005] Reference.Slot
+### Reference.Slot
 
 **Scope**: Reusable heap slot with move semantics.
 
@@ -655,7 +633,7 @@ public enum Store: ~Copyable {
 
 **Applies to**: Types in `swift-lifetime-primitives`.
 
-### [MEM-LIFE-001] Lifetime.Scoped
+### Lifetime.Scoped
 
 **Scope**: RAII-style deterministic cleanup.
 
@@ -698,7 +676,7 @@ func process() {
 
 ---
 
-### [MEM-LIFE-002] Lifetime.Lease
+### Lifetime.Lease
 
 **Scope**: Borrowed values that must be returned.
 
@@ -754,7 +732,7 @@ let returned = lease.release()  // Must call to get value back
 
 ---
 
-### [MEM-LIFE-003] Lifetime.Disposable
+### Lifetime.Disposable
 
 **Scope**: Types requiring explicit cleanup.
 
@@ -783,7 +761,7 @@ struct FileHandle: Lifetime.Disposable {
 
 **Applies to**: Types crossing concurrency boundaries.
 
-### [MEM-SEND-001] Conservative Sendable Defaults
+### Conservative Sendable Defaults
 
 **Scope**: Mutable reference wrappers.
 
@@ -815,11 +793,9 @@ extension Reference.Indirect: @unchecked Sendable {}
 | Default (safe) | `Reference.Indirect<T>` - no ceremony |
 | Unsafe escape | `Reference.Indirect<T>.Unchecked` - name declares intent |
 
-**Cross-references**: [API-CONC-005]
-
 ---
 
-### [MEM-SEND-002] Sendability Tiers
+### Sendability Tiers
 
 **Scope**: Understanding Sendable conformance levels.
 
@@ -835,7 +811,7 @@ extension Reference.Indirect: @unchecked Sendable {}
 
 ---
 
-### [MEM-SEND-003] Accurate Risk Description
+### Accurate Risk Description
 
 **Scope**: Justifying unsafe Sendable escapes.
 
@@ -847,15 +823,13 @@ extension Reference.Indirect: @unchecked Sendable {}
 | "`@unchecked Sendable` means the value can cross domains" | "Removing the compiler's data-race prevention" |
 | "We're asserting transferability" | "We're disabling the Sendable check" |
 
-**Cross-references**: [API-CONC-005]
-
 ---
 
 ## Unsafe Operations
 
 **Applies to**: Working with unsafe Swift APIs.
 
-### [MEM-UNSAFE-001] Unsafe Operation Tracking
+### Unsafe Operation Tracking
 
 **Scope**: Tracking unsafe operations for future annotation.
 
@@ -878,11 +852,9 @@ unsafe {
 | C interop calls | Mark with `unsafe` | Now |
 | Concurrency isolation | Fix immediately | Now |
 
-**Cross-references**: [PATTERN-005a]
-
 ---
 
-### [MEM-UNSAFE-002] Lifetime Annotations
+### Lifetime Annotations
 
 **Scope**: APIs exposing temporary pointers.
 
@@ -912,11 +884,9 @@ func getPointer() -> UnsafeRawPointer {
 }
 ```
 
-**Cross-references**: [SYS-MEM-003]
-
 ---
 
-### [MEM-UNSAFE-003] Safe Attribute
+### Safe Attribute
 
 **Scope**: Asserting function safety despite unsafe operations.
 

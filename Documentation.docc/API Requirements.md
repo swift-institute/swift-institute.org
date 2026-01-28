@@ -42,12 +42,12 @@ These requirements are referenced most frequently and form the foundation of all
 
 | Requirement | Domain | Summary |
 |-------------|--------|---------|
-| [API-NAME-001](#api-name-001-namespace-structure-nestname-pattern) | Naming | `Nest.Name` pattern for all types |
-| [API-NAME-002](#api-name-002-no-compound-identifiers) | Naming | No compound identifiers |
-| [API-ERR-001](#api-err-001-typed-throws-everywhere) | Errors | Typed throws throughout |
-| [API-INFO-001](#api-info-001-information-preservation-principle) | Design | Preserve information across layers |
-| [API-IMPL-003](#api-impl-003-totality-for-primitives) | Implementation | Primitives must be total |
-| [API-IMPL-005](#api-impl-005-one-type-per-file) | Organization | One type per file |
+|(#api-name-001-namespace-structure-nestname-pattern) | Naming | `Nest.Name` pattern for all types |
+|(#api-name-002-no-compound-identifiers) | Naming | No compound identifiers |
+|(#api-err-001-typed-throws-everywhere) | Errors | Typed throws throughout |
+|(#api-info-001-information-preservation-principle) | Design | Preserve information across layers |
+|(#api-impl-003-totality-for-primitives) | Implementation | Primitives must be total |
+|(#api-impl-005-one-type-per-file) | Organization | One type per file |
 
 ---
 
@@ -72,7 +72,7 @@ These requirements are referenced most frequently and form the foundation of all
 
 ---
 
-### [API-NAME-001] Namespace Structure: Nest.Name Pattern
+### Namespace Structure: Nest.Name Pattern
 
 **Scope**: All type declarations.
 
@@ -153,11 +153,9 @@ extension Prism {
 // Usage: Prism.Accessible (appears nested)
 ```
 
-**Cross-references**: [API-NAME-002], [API-IMPL-005]
-
 ---
 
-### [API-NAME-002] No Compound Identifiers
+### No Compound Identifiers
 
 **Scope**: All identifiers including types, functions, methods, properties, variables, and enum cases.
 
@@ -185,11 +183,9 @@ This rule applies universally, including:
 
 **Rationale**: Compound names defeat discoverability and create inconsistent naming patterns. Path-like composition allows autocomplete to guide users through the API.
 
-**Cross-references**: [API-NAME-001], [API-NAME-003]
-
 ---
 
-### [API-NAME-003] Specification-Mirroring Type Names
+### Specification-Mirroring Type Names
 
 **Scope**: Types implementing external specifications (RFCs, ISOs, W3C, etc.).
 
@@ -219,11 +215,9 @@ UniversallyUniqueID        // ❌ Invented name, doesn't match spec
 3. **Documentation**: The type name IS the documentation reference
 4. **Compliance verification**: Easy to audit spec compliance when names match
 
-**Cross-references**: [API-NAME-001], [API-NAME-004]
-
 ---
 
-### [API-NAME-004] Flat Namespace Constants
+### Flat Namespace Constants
 
 **Scope**: Static constants and well-known values on types.
 
@@ -274,11 +268,9 @@ let uuid = RFC_4122.UUID.v5(namespace: RFC_4122.UUID.Namespace.dns, ...)
 
 **Exception**: Sub-namespaces are appropriate when the nested type has its own behavior (methods, conformances) or when constants have different types than the parent.
 
-**Cross-references**: [API-NAME-001], [API-NAME-002]
-
 ---
 
-### [API-NAME-005] Nested Accessor Pattern
+### Nested Accessor Pattern
 
 **Scope**: Instance methods that group related operations.
 
@@ -361,11 +353,9 @@ The namespace struct SHOULD:
 - Use `callAsFunction` for the primary/default operation
 - Provide named methods for variants
 
-**Cross-references**: [API-NAME-002], [API-IMPL-008]
-
 ---
 
-### [API-NAME-006] API Minimalism
+### API Minimalism
 
 **Scope**: All public APIs.
 
@@ -385,8 +375,6 @@ The namespace struct SHOULD:
 
 **Rationale**: Minimal APIs are easier to understand, test, and maintain. Composable primitives enable users to build exactly what they need.
 
-**Cross-references**: [API-NAME-004], [API-IMPL-001]
-
 ---
 
 ## Information Preservation
@@ -397,7 +385,7 @@ The namespace struct SHOULD:
 
 ---
 
-### [API-INFO-001] Information Preservation Principle
+### Information Preservation Principle
 
 **Scope**: All type design, error handling, and API surface decisions.
 
@@ -445,8 +433,6 @@ bytes.withUnsafeBufferPointer { buffer in  // E becomes `any Error`
 
 **Rationale**: Most code loses information—error types become `any Error`, specifications become "just strings", context disappears into global state. Deliberate infrastructure carries meaning through every layer. The typed-throws extensions, specification-mirroring names, and explicit context patterns exist specifically to preserve information that would otherwise be lost.
 
-**Cross-references**: [API-ERR-001], [API-ERR-007], [API-NAME-003], [API-IMPL-010]
-
 ---
 
 ## Layering Model
@@ -457,7 +443,7 @@ bytes.withUnsafeBufferPointer { buffer in  // E becomes `any Error`
 
 ---
 
-### [API-LAYER-001] Explicit Target Layers
+### Explicit Target Layers
 
 **Scope**: Package and target organization.
 
@@ -490,11 +476,9 @@ Typical shape:
 
 **Rationale**: Layered architecture enables testing at each level, platform portability, and clear dependency boundaries.
 
-**Cross-references**: [API-LAYER-002]
-
 ---
 
-### [API-LAYER-002] Responsibility Separation
+### Responsibility Separation
 
 **Scope**: Layer boundaries.
 
@@ -507,8 +491,6 @@ Higher layers are the only place where:
 
 **Rationale**: Separation ensures lower layers remain testable and reusable across different runtime contexts.
 
-**Cross-references**: [API-LAYER-001], [API-ERR-002]
-
 ---
 
 ## Error Handling
@@ -519,7 +501,7 @@ Higher layers are the only place where:
 
 ---
 
-### [API-ERR-001] Typed Throws Everywhere
+### Typed Throws Everywhere
 
 **Scope**: All throwing functions.
 
@@ -546,11 +528,9 @@ func submit() throws(any Error)  // ❌ Existential error
 
 **Rationale**: Typed throws enable exhaustive error handling and prevent error type erasure.
 
-**Cross-references**: [API-ERR-003], [API-ERR-004], [API-ERR-008]
-
 ---
 
-### [API-ERR-002] Lifecycle Precedence Rules
+### Lifecycle Precedence Rules
 
 **Scope**: Operations with multiple lifecycle conditions.
 
@@ -564,11 +544,9 @@ Precedence MUST be enforced at the final resumption boundary.
 
 **Rationale**: Consistent precedence prevents ambiguous error states and ensures predictable shutdown behavior.
 
-**Cross-references**: [API-LAYER-002], [API-CONC-004]
-
 ---
 
-### [API-ERR-003] Typed Continuation Pattern
+### Typed Continuation Pattern
 
 **Scope**: Async boundaries where Swift lacks typed throwing continuations.
 
@@ -603,11 +581,9 @@ Typed errors MUST be preserved by construction.
 
 **Rationale**: Preserves type information across async boundaries without runtime casting.
 
-**Cross-references**: [API-ERR-001]
-
 ---
 
-### [API-ERR-004] No Stringly-Typed Errors
+### No Stringly-Typed Errors
 
 **Scope**: All error types.
 
@@ -631,11 +607,9 @@ struct IOError: Error {
 
 **Rationale**: Structured errors enable programmatic handling and pattern matching.
 
-**Cross-references**: [API-ERR-001]
-
 ---
 
-### [API-ERR-005] Move-Only Values and Error Boundaries
+### Move-Only Values and Error Boundaries
 
 **Scope**: APIs involving `~Copyable` types.
 
@@ -652,11 +626,9 @@ This rule is non-negotiable.
 
 **Rationale**: Prevents accidental loss of move-only resources when errors are thrown.
 
-**Cross-references**: [API-ERR-006]
-
 ---
 
-### [API-ERR-006] Token-Preserving Operation Pattern
+### Token-Preserving Operation Pattern
 
 **Scope**: Operations that consume a move-only token and may fail.
 
@@ -692,11 +664,9 @@ Token fabrication is forbidden.
 
 **Rationale**: Ensures move-only resources are never lost, maintaining typestate invariants.
 
-**Cross-references**: [API-ERR-005]
-
 ---
 
-### [API-ERR-007] Typed Throws Closure Annotation
+### Typed Throws Closure Annotation
 
 **Scope**: Closures passed to methods that preserve typed errors.
 
@@ -765,11 +735,9 @@ The `body:` label (vs stdlib's unlabeled parameter) disambiguates the overload. 
 
 **Rationale**: Swift's type inference has limitations with nested generic closures. Explicit annotation ensures the compiler can trace error types through the call stack.
 
-**Cross-references**: [API-ERR-001], [API-ERR-003]
-
 ---
 
-### [API-ERR-008] Language Semantics Over Naming Conventions
+### Language Semantics Over Naming Conventions
 
 **Scope**: All API naming.
 
@@ -794,7 +762,7 @@ func first() -> Element?
 // Asynchrony via async
 func fetch() async throws(Network.Error) -> Response
 
-// Unchecked via marker parameter (see [API-IMPL-003])
+// Unchecked via marker parameter
 init(__unchecked: Void, _ index: Int)
 
 // Unsafe via @unsafe attribute and unsafe keyword (Swift 6.2+)
@@ -852,11 +820,9 @@ This rule applies universally:
 - Call sites read naturally: `try foo()` not `tryFoo()`
 - Autocomplete and documentation reflect actual behavior
 
-**Cross-references**: [API-ERR-001], [API-IMPL-001], [API-IMPL-003]
-
 ---
 
-### [API-ERR-009] Swift.Error Qualification in Nested Contexts
+### Swift.Error Qualification in Nested Contexts
 
 **Scope**: Generic error constraints inside type extensions with nested Error types.
 
@@ -912,8 +878,6 @@ public func makeUUID<E: Error>(
 
 **Rationale**: Swift's name resolution prefers nested types over stdlib types. Explicit qualification prevents subtle compilation errors when your type has a nested `Error`.
 
-**Cross-references**: [API-ERR-001], [API-NAME-001]
-
 ---
 
 ## Concurrency Model
@@ -924,7 +888,7 @@ public func makeUUID<E: Error>(
 
 ---
 
-### [API-CONC-001] Modern Swift Concurrency
+### Modern Swift Concurrency
 
 **Scope**: All concurrent implementations.
 
@@ -937,11 +901,9 @@ MUST NOT introduce ad-hoc threading models when structured concurrency suffices.
 
 **Rationale**: Swift concurrency provides compile-time safety guarantees that ad-hoc threading cannot.
 
-**Cross-references**: [API-CONC-002], [API-CONC-003]
-
 ---
 
-### [API-CONC-002] Executor and Thread Topology
+### Executor and Thread Topology
 
 **Scope**: APIs with thread affinity requirements.
 
@@ -952,11 +914,9 @@ MUST NOT introduce ad-hoc threading models when structured concurrency suffices.
 
 **Rationale**: Explicit executor control prevents accidental thread-safety violations.
 
-**Cross-references**: [API-CONC-001], [API-CONC-003]
-
 ---
 
-### [API-CONC-003] Single Resumption Funnel Invariant
+### Single Resumption Funnel Invariant
 
 **Scope**: All suspended operations.
 
@@ -973,11 +933,9 @@ This invariant guarantees:
 
 **Rationale**: Single resumption funnel eliminates an entire class of concurrency bugs.
 
-**Cross-references**: [API-CONC-002], [API-CONC-004]
-
 ---
 
-### [API-CONC-004] Cancellation and Shutdown Invariants
+### Cancellation and Shutdown Invariants
 
 **Scope**: All cancellable and shutdownable operations.
 
@@ -987,8 +945,6 @@ This invariant guarantees:
 - All outstanding work MUST be drained or rejected with a typed lifecycle error.
 
 **Rationale**: Predictable cancellation and shutdown behavior is essential for resource management.
-
-**Cross-references**: [API-ERR-002], [API-CONC-003]
 
 ---
 
@@ -1000,7 +956,7 @@ This invariant guarantees:
 
 ---
 
-### [API-IMPL-001] Construction and Transformation
+### Construction and Transformation
 
 **Scope**: Type construction and value transformation.
 
@@ -1035,13 +991,11 @@ init(parsing data: Data)
 init(transforming value: T)
 ```
 
-**Rationale**: Initializers and static methods make construction explicit and discoverable. Fallibility is expressed via `throws`, not labels—see [API-ERR-008].
-
-**Cross-references**: [API-NAME-006], [API-ERR-008]
+**Rationale**: Initializers and static methods make construction explicit and discoverable. Fallibility is expressed via `throws`, not labels—see.
 
 ---
 
-### [API-IMPL-002] Keep Core Types Lean
+### Keep Core Types Lean
 
 **Scope**: Core type definitions.
 
@@ -1072,11 +1026,9 @@ struct Connection {
 
 **Rationale**: Explicit state machines make invalid states unrepresentable.
 
-**Cross-references**: [API-IMPL-003]
-
 ---
 
-### [API-IMPL-003] Totality for Primitives
+### Totality for Primitives
 
 **Scope**: All primitive packages.
 
@@ -1142,11 +1094,9 @@ extension Enumeration {
 
 **Rationale**: Totality eliminates runtime crashes and makes APIs predictable.
 
-**Cross-references**: [API-IMPL-002]
-
 ---
 
-### [API-IMPL-004] Code Awaiting Language Features
+### Code Awaiting Language Features
 
 **Scope**: APIs blocked by missing Swift features.
 
@@ -1190,11 +1140,9 @@ This pattern:
 
 **Rationale**: Preserves design intent while waiting for language evolution.
 
-**Cross-references**: [API-IMPL-009]
-
 ---
 
-### [API-IMPL-005] One Type Per File
+### One Type Per File
 
 **Scope**: All type declarations.
 
@@ -1334,11 +1282,9 @@ extension Point {
 5. **Constrained extensions**: Extensions can have `where` clauses; type declarations cannot.
 6. **Merge conflict reduction**: Parallel work on different aspects of a type doesn't conflict.
 
-**Cross-references**: [API-NAME-001]
-
 ---
 
-### [API-IMPL-006] Abstraction Boundary Integrity
+### Abstraction Boundary Integrity
 
 **Scope**: All abstraction implementations.
 
@@ -1352,7 +1298,7 @@ extension Point {
 
 ---
 
-### [API-IMPL-007] Sharding and Scaling Strategies
+### Sharding and Scaling Strategies
 
 **Scope**: Performance optimizations involving parallelism.
 
@@ -1366,7 +1312,7 @@ extension Point {
 
 ---
 
-### [API-IMPL-008] Inlining Rules
+### Inlining Rules
 
 **Scope**: Performance-critical code.
 
@@ -1422,11 +1368,9 @@ extension File.Directory {
 3. **Orchestration logic SHOULD NOT be `@inlinable`** - Complex logic changes more often; inlining locks in the implementation.
 4. **Primitives packages SHOULD be heavily `@inlinable`** - They're leaf-level by design.
 
-**Cross-references**: [API-NAME-003]
-
 ---
 
-### [API-IMPL-009] Value Generics
+### Value Generics
 
 **Scope**: Types with compile-time constant parameters.
 
@@ -1469,13 +1413,11 @@ extension Ordinal {
 
 #### Current Limitations
 
-Swift does not yet support value-generic constraints (`where N > 0`). See [API-IMPL-004] for how to handle this.
-
-**Cross-references**: [API-IMPL-004]
+Swift does not yet support value-generic constraints (`where N > 0`). See for how to handle this.
 
 ---
 
-### [API-IMPL-010] No Hidden Global State
+### No Hidden Global State
 
 **Scope**: All code.
 
@@ -1488,7 +1430,7 @@ Swift does not yet support value-generic constraints (`where N > 0`). See [API-I
 
 ---
 
-### [API-IMPL-011] No Ad-Hoc Helpers
+### No Ad-Hoc Helpers
 
 **Scope**: All implementation code.
 
@@ -1534,11 +1476,9 @@ private struct Pair<A, B> {
 
 **Rationale**: Ad-hoc helpers fragment the codebase, create maintenance burden, and often duplicate battle-tested implementations with subtle bugs. A complete ecosystem means local helpers indicate either unfamiliarity with available tools or a genuine gap that should be addressed at the ecosystem level—not worked around locally.
 
-**Cross-references**: [API-NAME-006], [API-IMPL-001]
-
 ---
 
-### [API-IMPL-012] Protocol-Based Capability Injection
+### Protocol-Based Capability Injection
 
 **Scope**: APIs requiring platform or cryptographic capabilities.
 
@@ -1649,11 +1589,9 @@ extension Linux {
 
 **Rationale**: This pattern keeps the standards layer Foundation-free and testable while allowing full functionality when platform capabilities are available. The caller controls dependencies, not the library.
 
-**Cross-references**: [API-LAYER-001], [API-LAYER-002], [API-IMPL-010]
-
 ---
 
-### [API-IMPL-013] Effect-Based API Design
+### Effect-Based API Design
 
 **Scope**: APIs where callers need to express intentions that will be interpreted by handlers.
 
@@ -1728,11 +1666,9 @@ Effect-based design is NOT needed when:
 
 **Rationale**: Descriptions are data. Data can be inspected, transformed, mocked, recorded. Actions just happen and leave no trace. The shift from doing to describing makes the impossible possible—testing without mocking frameworks, composition without inheritance, interpretation without coupling.
 
-**Cross-references**: [API-INFO-001], [API-ERR-006], [API-IMPL-002]
-
 ---
 
-### [API-IMPL-014] Zero-Cost Phantom Types
+### Zero-Cost Phantom Types
 
 **Scope**: Type-safe wrappers and domain identifiers.
 
@@ -1819,8 +1755,6 @@ class Tagged<Tag, Value> {  // ❌ Reference type
 
 **Rationale**: Phantom types provide compile-time guarantees (prevent mixing `UserID` and `OrderID`) with zero runtime cost. This is the Swift equivalent of Haskell's `newtype` or Rust's zero-cost newtypes.
 
-**Cross-references**: [API-IMPL-002], [API-NAME-001]
-
 ---
 
 ## Cross-Platform Requirements
@@ -1831,7 +1765,7 @@ class Tagged<Tag, Value> {  // ❌ Reference type
 
 ---
 
-### [API-PLAT-001] Cross-Platform Requirements
+### Cross-Platform Requirements
 
 **Scope**: Platform-specific code.
 
@@ -1858,7 +1792,7 @@ class Tagged<Tag, Value> {  // ❌ Reference type
 
 ---
 
-### [API-DOC-001] Documentation and Comments
+### Documentation and Comments
 
 **Scope**: All documentation and comments.
 
@@ -1883,7 +1817,7 @@ class Tagged<Tag, Value> {  // ❌ Reference type
 
 ---
 
-### [API-TEST-001] Testing and Benchmarks
+### Testing and Benchmarks
 
 **Scope**: All testing strategies.
 
@@ -1911,7 +1845,7 @@ class Tagged<Tag, Value> {  // ❌ Reference type
 
 ---
 
-### [API-DESIGN-001] Subscript Syntax as Correct API for Type-Safe Containers
+### Subscript Syntax as Correct API for Type-Safe Containers
 
 **Scope**: APIs providing type-keyed access to values (dependency containers, heterogeneous storage).
 
@@ -1972,11 +1906,9 @@ The exercise of sketching "ideal" syntax maps each desire to a specific missing 
 
 **Rationale**: Proving an ergonomic desire is impossible within language constraints is as valuable as implementing it. The analysis prevents wasted effort exploring impossible paths and transforms the team's relationship to the API—there is no lingering sense that "we should find a better way." Design maturity includes knowing when to stop searching.
 
-**Cross-references**: [API-NAME-002], [FUTURE-006]
-
 ---
 
-### [API-DESIGN-002] Simplify When Features Don't Compose
+### Simplify When Features Don't Compose
 
 **Scope**: API design decisions when Swift language features conflict.
 
@@ -2021,11 +1953,9 @@ extension Witness {
 
 **Rationale**: Elaborate workarounds add complexity, obscure intent, and create maintenance burden. Simplification often produces better APIs than the original design would have—constraints reveal over-specification.
 
-**Cross-references**: [API-EXC-001], [API-IMPL-004]
-
 ---
 
-### [API-DESIGN-003] Separate Policy from Storage
+### Separate Policy from Storage
 
 **Scope**: Types that store data and may behave differently in different contexts.
 
@@ -2084,11 +2014,9 @@ The same `Values` instance might be used in different contexts. A values contain
 
 **Rationale**: Storage types should be pure data. Policy types should interpret data. Mixing them creates subtle bugs when the same data crosses policy boundaries. Separation makes policy visible and data reusable.
 
-**Cross-references**: [API-IMPL-002], [API-IMPL-010], [PATTERN-020]
-
 ---
 
-### [API-DESIGN-004] Empirical Measurement Resolves Design Debates
+### Empirical Measurement Resolves Design Debates
 
 **Scope**: Design decisions where multiple approaches have theoretical merit.
 
@@ -2144,8 +2072,6 @@ The measurement need not be perfect—a crude grep across the workspace often su
 
 **Rationale**: Theoretical arguments can continue indefinitely when both sides have valid points. Each position seems defensible on its own terms. Empirical measurement—even imperfect measurement—introduces data that can falsify premises. The grep takes 30 seconds; the ungrounded debate can take hours. This applies beyond API design to package organization, module boundaries, and abstraction choices.
 
-**Cross-references**: [API-DESIGN-001], [API-DESIGN-002], [API-DESIGN-005]
-
 ---
 
 ## Exceptions
@@ -2154,7 +2080,7 @@ The measurement need not be perfect—a crude grep across the workspace often su
 
 ---
 
-### [API-EXC-001] Exceptions
+### Exceptions
 
 **Scope**: Deviations from requirements.
 
@@ -2179,7 +2105,7 @@ Any exception MUST be:
 - <doc:Primitives-Architecture>
 - <doc:Implementation-Patterns>
 - <doc:Testing-Requirements>
-- <doc:Documentation-Requirements>
+- <doc:Documentation-Standards>
 
 ### Process Documents
 

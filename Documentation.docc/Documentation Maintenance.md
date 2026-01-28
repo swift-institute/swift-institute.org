@@ -14,7 +14,7 @@ Process for maintaining the health and organization of permanent documentation.
 
 **Does not apply to**: Reflection entries (see <doc:_Reflections-Consolidation>), plan files, or temporary documents.
 
-As reflection entries are consolidated into permanent documentation, documents grow. Without maintenance, documents accumulate content that drifts from their original scope, overlap with other documents, or become too large for effective LLM retrieval. Documentation maintenance addresses these concerns through periodic audit and refactoring.
+As reflection entries are consolidated into permanent documentation, documents grow. Without maintenance, documents accumulate content that drifts from their original scope, overlap with other documents, or become too large for effective retrieval. Documentation maintenance addresses these concerns through periodic audit and refactoring.
 
 **Trigger**: Manual only. User explicitly requests maintenance by pointing to this file.
 
@@ -33,7 +33,7 @@ As reflection entries are consolidated into permanent documentation, documents g
 
 ---
 
-### [MAINT-PROC-001] Process Overview
+### Process Overview
 
 **Scope**: The sequence of maintenance activities.
 
@@ -69,7 +69,7 @@ Phase 5: Verify
 **Incorrect**:
 ```
 Starting maintenance...
-Moving [API-IMPL-015] to Implementation-Patterns.md
+Moving to Implementation-Patterns.md
 Splitting Primitives-Architecture.md...
 Done.
 
@@ -79,11 +79,9 @@ Done.
 
 **Rationale**: Phased execution ensures issues are identified before changes are made, and changes are approved before execution.
 
-**Cross-references**: [MAINT-AUDIT-001], [MAINT-ACT-001]
-
 ---
 
-### [MAINT-PROC-002] Inventory Phase
+### Inventory Phase
 
 **Scope**: Cataloging the documentation corpus.
 
@@ -127,8 +125,6 @@ Documents: API-Requirements, Primitives-Architecture, Implementation-Patterns
 
 **Rationale**: Inventory provides the baseline for identifying maintenance issues.
 
-**Cross-references**: [MAINT-PROC-001]
-
 ---
 
 ## 2. Audit Criteria
@@ -139,7 +135,7 @@ Documents: API-Requirements, Primitives-Architecture, Implementation-Patterns
 
 ---
 
-### [MAINT-AUDIT-001] Scope Drift Detection
+### Scope Drift Detection
 
 **Scope**: Identifying content that doesn't belong in a document.
 
@@ -153,9 +149,7 @@ Documents: API-Requirements, Primitives-Architecture, Implementation-Patterns
 
 **Correct**:
 ```
-## Scope Drift: API-Requirements.md
-
-[API-IMPL-015] "Platform Conditional Compilation"
+## Scope Drift: API-Requirements.md "Platform Conditional Compilation"
 - Stated scope: "API design, naming conventions, method signatures"
 - Actual content: Platform-specific compilation patterns
 - Recommendation: Move to Implementation-Patterns.md
@@ -168,17 +162,13 @@ Documents: API-Requirements, Primitives-Architecture, Implementation-Patterns
 No scope drift detected.
 
 ❌ Did not compare stated scope against actual content
-❌ [API-IMPL-015] addresses platform patterns, not API design
+❌ addresses platform patterns, not API design
 ❌ Missed opportunity to improve discoverability
 ```
 
-**Rationale**: Scope drift degrades discoverability—users (human and LLM) look in the wrong place.
-
-**Cross-references**: [MAINT-ACT-002]
-
 ---
 
-### [MAINT-AUDIT-002] Size Threshold Analysis
+### Size Threshold Analysis
 
 **Scope**: Identifying documents that have grown too large.
 
@@ -214,13 +204,9 @@ Document looks fine.
 ❌ No actionable recommendation provided
 ```
 
-**Rationale**: Large documents reduce LLM retrieval accuracy (chunking problems) and human navigability.
-
-**Cross-references**: [MAINT-SPLIT-001]
-
 ---
 
-### [MAINT-AUDIT-003] Cross-Reference Integrity
+### Cross-Reference Integrity
 
 **Scope**: Verifying cross-references are valid and bidirectional.
 
@@ -232,13 +218,9 @@ Document looks fine.
 
 **Correct**:
 ```
-## Cross-Reference Issues
-
-[API-ERR-007] references [API-IMPL-003]
-- Status: Valid, bidirectional ✓
-
-[PRIM-ORG-001] references [PRIM-NAME-005]
-- Status: INVALID - [PRIM-NAME-005] does not exist
+## Cross-Reference Issues references
+- Status: Valid, bidirectional ✓ references
+- Status: INVALID - does not exist
 - Recommendation: Update or remove reference
 ```
 
@@ -248,18 +230,15 @@ Document looks fine.
 
 All cross-references checked. No issues found.
 
-❌ [PRIM-NAME-005] does not exist in corpus
-❌ Reference from [PRIM-ORG-001] is broken
-❌ LLM following this reference will fail to find content
+❌ does not exist in corpus
+❌ Reference from is broken
 ```
 
-**Rationale**: Broken cross-references degrade document connectivity and LLM navigation.
-
-**Cross-references**: [MAINT-ACT-004]
+**Rationale**: Broken cross-references degrade document connectivity.
 
 ---
 
-### [MAINT-AUDIT-004] Pattern Consistency
+### Pattern Consistency
 
 **Scope**: Verifying all requirements follow structural patterns.
 
@@ -277,14 +256,10 @@ All cross-references checked. No issues found.
 
 **Correct**:
 ```
-## Pattern Issues: Primitives-Architecture.md
-
-[PRIM-ARCH-003] Missing elements:
+## Pattern Issues: Primitives-Architecture.md Missing elements:
 - ❌ No Incorrect example
 - ❌ No Rationale
-- Recommendation: Add missing elements
-
-[PRIM-NAME-002] Complete ✓
+- Recommendation: Add missing elements Complete ✓
 - Rule identifier: ✓
 - Scope: ✓
 - Statement: ✓
@@ -299,18 +274,13 @@ All cross-references checked. No issues found.
 
 All requirements follow correct patterns.
 
-❌ [PRIM-ARCH-003] is missing Incorrect example
-❌ [PRIM-ARCH-003] is missing Rationale
-❌ Incomplete requirements degrade LLM parsing reliability
+❌ is missing Incorrect example
+❌ is missing Rationale
 ```
-
-**Rationale**: Inconsistent patterns degrade LLM parsing reliability.
-
-**Cross-references**: [MAINT-ACT-005]
 
 ---
 
-### [MAINT-AUDIT-005] Duplicate Detection
+### Duplicate Detection
 
 **Scope**: Identifying overlapping content across documents.
 
@@ -322,10 +292,7 @@ All requirements follow correct patterns.
 
 **Correct**:
 ```
-## Duplicate Detection
-
-[API-NAME-003] in API-Requirements.md
-[PRIM-NAME-001] in Primitives-Architecture.md
+## Duplicate Detection in API-Requirements.md in Primitives-Architecture.md
 
 - Both address naming conventions for packages
 - Content overlap: ~70%
@@ -338,14 +305,12 @@ All requirements follow correct patterns.
 
 No duplicates found.
 
-❌ [API-NAME-003] and [PRIM-NAME-001] both cover naming conventions
+❌ and both cover naming conventions
 ❌ 70% content overlap not detected
 ❌ Future updates may create inconsistency between duplicates
 ```
 
 **Rationale**: Duplicates create maintenance burden and risk inconsistency.
-
-**Cross-references**: [MAINT-ACT-003]
 
 ---
 
@@ -359,7 +324,7 @@ Document architecture governs how the corpus is organized—not just what each d
 
 ---
 
-### [MAINT-ARCH-001] Document Archetypes
+### Document Archetypes
 
 **Scope**: Classifying documents by their purpose.
 
@@ -403,11 +368,9 @@ Primitives Architecture.md (MIXED archetypes)
 
 **Rationale**: Archetype mixing is the primary cause of "junk drawer" documents. A document answering multiple kinds of questions lacks coherent scope and grows unboundedly.
 
-**Cross-references**: [MAINT-ARCH-002], [MAINT-SPLIT-001]
-
 ---
 
-### [MAINT-ARCH-002] Audience Statement Requirement
+### Audience Statement Requirement
 
 **Scope**: Document scope declaration.
 
@@ -443,11 +406,9 @@ Foundation independence requirements, extraction procedures, and design philosop
 
 **Rationale**: Audience statements constrain scope. A document that cannot state its question in one sentence is scoped too broadly.
 
-**Cross-references**: [MAINT-ARCH-001], [MAINT-AUDIT-001]
-
 ---
 
-### [MAINT-ARCH-003] Index Document Pattern
+### Index Document Pattern
 
 **Scope**: Documents that have grown to contain multiple sub-domains.
 
@@ -472,7 +433,7 @@ Foundation independence requirements, extraction procedures, and design philosop
 ## Overview
 
 This document serves as an index to [topic]. Each [category] is documented
-in its own focused document for optimal LLM consumption and maintainability.
+in its own focused document for maintainability.
 
 ## Document Index
 
@@ -501,13 +462,11 @@ in its own focused document for optimal LLM consumption and maintainability.
 - Content cannot be meaningfully separated
 - Separation would require duplicating context in each sub-document
 
-**Rationale**: The index pattern improves LLM retrieval (smaller chunks), human navigation (clear entry point), and maintenance (changes isolated to relevant sub-document).
-
-**Cross-references**: [MAINT-SPLIT-001], [MAINT-AUDIT-002]
+**Rationale**: The index pattern improves retrieval (smaller chunks), human navigation (clear entry point), and maintenance (changes isolated to relevant sub-document).
 
 ---
 
-### [MAINT-ARCH-004] Archetype-Based Split Priority
+### Archetype-Based Split Priority
 
 **Scope**: Ordering split decisions.
 
@@ -550,8 +509,6 @@ Action: Split into Primitives-Architecture-Part1.md and Primitives-Architecture-
 
 **Rationale**: Archetype mixing is a more fundamental problem than size. Splitting by size without fixing archetype mixing produces multiple junk drawers instead of one.
 
-**Cross-references**: [MAINT-ARCH-001], [MAINT-SPLIT-001]
-
 ---
 
 ## 3. Split Criteria
@@ -562,7 +519,7 @@ Action: Split into Primitives-Architecture-Part1.md and Primitives-Architecture-
 
 ---
 
-### [MAINT-SPLIT-001] When to Split
+### When to Split
 
 **Scope**: Criteria for document splitting.
 
@@ -601,11 +558,9 @@ Splitting API-Requirements.md because it has 42 requirements.
 
 **Rationale**: Premature splitting creates navigation overhead without improving discoverability.
 
-**Cross-references**: [MAINT-AUDIT-002], [MAINT-SPLIT-002], [MAINT-ARCH-001], [MAINT-ARCH-004]
-
 ---
 
-### [MAINT-SPLIT-002] Split Execution
+### Split Execution
 
 **Scope**: How to perform a document split.
 
@@ -625,8 +580,8 @@ Splitting API-Requirements.md → API-Naming.md + API-Error-Handling.md
 
 1. Created API-Naming.md with [API-NAME-*] requirements
 2. Created API-Error-Handling.md with [API-ERR-*] requirements
-3. Updated [API-NAME-003] cross-reference from [API-ERR-007] → still valid
-4. Updated [PRIM-ORG-001] reference to [API-NAME-003] → now in API-Naming.md
+3. Updated cross-reference from → still valid
+4. Updated reference to → now in API-Naming.md
 5. Added mutual cross-references between new documents
 6. Updated Topics in: API-Naming.md, API-Error-Handling.md, Primitives-Architecture.md
 7. Retained API-Requirements.md with remaining [API-IMPL-*] and [API-CONC-*]
@@ -641,14 +596,12 @@ Splitting API-Requirements.md → API-Naming.md + API-Error-Handling.md
 3. Done.
 
 ❌ Skipped cross-reference updates
-❌ [PRIM-ORG-001] now has broken reference to [API-NAME-003]
+❌ now has broken reference to
 ❌ Topics sections not updated—new documents not discoverable
 ❌ Original document status unclear
 ```
 
 **Rationale**: Systematic execution prevents broken references and orphaned content.
-
-**Cross-references**: [MAINT-SPLIT-001], [MAINT-ACT-002]
 
 ---
 
@@ -660,7 +613,7 @@ Splitting API-Requirements.md → API-Naming.md + API-Error-Handling.md
 
 ---
 
-### [MAINT-MERGE-001] When to Merge
+### When to Merge
 
 **Scope**: Criteria for document merging.
 
@@ -701,8 +654,6 @@ These documents should remain separate.
 
 **Rationale**: Over-fragmented documentation creates navigation overhead without improving discoverability.
 
-**Cross-references**: [MAINT-SPLIT-001]
-
 ---
 
 ## 5. Maintenance Actions
@@ -713,7 +664,7 @@ These documents should remain separate.
 
 ---
 
-### [MAINT-ACT-001] Action Approval
+### Action Approval
 
 **Scope**: User approval before maintenance execution.
 
@@ -723,10 +674,10 @@ These documents should remain separate.
 ```
 ## Proposed Maintenance Actions
 
-1. MOVE [API-IMPL-015] from API-Requirements.md to Implementation-Patterns.md
+1. MOVE from API-Requirements.md to Implementation-Patterns.md
 2. SPLIT Primitives-Architecture.md into Primitives-Architecture.md + Primitives-Naming.md
-3. FIX cross-reference [PRIM-ORG-001] → [PRIM-NAME-003] (was [PRIM-NAME-005])
-4. ADD missing Rationale to [API-ERR-012]
+3. FIX cross-reference → (was)
+4. ADD missing Rationale to
 
 Approve all? [User confirms or modifies]
 
@@ -738,7 +689,7 @@ Proceeding with approved actions only...
 **Incorrect**:
 ```
 Performing maintenance actions:
-- Moving [API-IMPL-015]...
+- Moving...
 - Splitting Primitives-Architecture.md...
 - Fixing cross-references...
 - Adding missing elements...
@@ -751,11 +702,9 @@ Done.
 
 **Rationale**: Maintenance actions are significant refactoring. User oversight prevents unintended changes.
 
-**Cross-references**: [MAINT-PROC-001]
-
 ---
 
-### [MAINT-ACT-002] Move Requirement
+### Move Requirement
 
 **Scope**: Relocating a requirement to a different document.
 
@@ -769,38 +718,36 @@ Done.
 
 **Correct**:
 ```
-Move [API-IMPL-015] to Implementation-Patterns.md
+Move to Implementation-Patterns.md
 
 Steps performed:
-1. Copied [API-IMPL-015] to Implementation-Patterns.md under "Platform Patterns" section
-2. Updated [API-IMPL-015] cross-references to point to new location
-3. Updated [API-ERR-007] reference to [API-IMPL-015] → valid (identifier unchanged)
-4. Removed [API-IMPL-015] from API-Requirements.md
-5. Verified: grep for [API-IMPL-015] shows only Implementation-Patterns.md
+1. Copied to Implementation-Patterns.md under "Platform Patterns" section
+2. Updated cross-references to point to new location
+3. Updated reference to → valid (identifier unchanged)
+4. Removed from API-Requirements.md
+5. Verified: grep for shows only Implementation-Patterns.md
 
-Commit: Move [API-IMPL-015] to Implementation-Patterns.md
+Commit: Move to Implementation-Patterns.md
 ```
 
 **Incorrect**:
 ```
-Move [API-IMPL-015] to Implementation-Patterns.md
+Move to Implementation-Patterns.md
 
 1. Copied content to Implementation-Patterns.md
 2. Deleted from API-Requirements.md
 Done.
 
 ❌ Did not update cross-references
-❌ [API-ERR-007] now has broken reference
+❌ now has broken reference
 ❌ Did not verify no broken references remain
 ```
 
 **Rationale**: Proper relocation maintains reference integrity.
 
-**Cross-references**: [MAINT-AUDIT-001]
-
 ---
 
-### [MAINT-ACT-003] Deduplicate Content
+### Deduplicate Content
 
 **Scope**: Resolving content that appears in multiple documents.
 
@@ -809,28 +756,28 @@ Done.
 1. Identify the canonical location (best scope fit)
 2. Consolidate content into the canonical requirement
 3. Replace duplicate with cross-reference to canonical
-4. Optionally add brief summary with "See [XXX-YYY-NNN] for details"
+4. Optionally add brief summary with "See for details"
 
 **Correct**:
 ```markdown
 ## Deduplication: Naming Conventions
 
-Canonical location: API-Requirements.md [API-NAME-003]
-Duplicate location: Primitives-Architecture.md [PRIM-NAME-001]
+Canonical location: API-Requirements.md
+Duplicate location: Primitives-Architecture.md
 
 Action:
-1. Expanded [API-NAME-003] to cover all package types (general + primitives)
-2. Reduced [PRIM-NAME-001] to primitives-specific additions only
-3. Added "See [API-NAME-003] for general conventions" to [PRIM-NAME-001]
+1. Expanded to cover all package types (general + primitives)
+2. Reduced to primitives-specific additions only
+3. Added "See for general conventions" to
 
 ## After
 
-API-Requirements.md [API-NAME-003]:
+API-Requirements.md:
 - General naming conventions (expanded)
 - Covers all package types
 
-Primitives-Architecture.md [PRIM-NAME-001]:
-- "See [API-NAME-003] for general naming conventions"
+Primitives-Architecture.md:
+- "See for general naming conventions"
 - Primitives-specific additions only
 ```
 
@@ -838,8 +785,8 @@ Primitives-Architecture.md [PRIM-NAME-001]:
 ```markdown
 ## Deduplication: Naming Conventions
 
-Both [API-NAME-003] and [PRIM-NAME-001] kept as-is.
-Added note to [PRIM-NAME-001]: "See also [API-NAME-003]"
+Both and kept as-is.
+Added note to: "See also"
 
 ❌ Content still duplicated in both locations
 ❌ Future updates must be made in two places
@@ -848,11 +795,9 @@ Added note to [PRIM-NAME-001]: "See also [API-NAME-003]"
 
 **Rationale**: Single source of truth prevents inconsistency.
 
-**Cross-references**: [MAINT-AUDIT-005]
-
 ---
 
-### [MAINT-ACT-004] Fix Cross-References
+### Fix Cross-References
 
 **Scope**: Repairing broken or outdated cross-references.
 
@@ -865,25 +810,25 @@ Added note to [PRIM-NAME-001]: "See also [API-NAME-003]"
 
 **Correct**:
 ```
-## Fix Cross-Reference: [PRIM-ORG-001]
+## Fix Cross-Reference:
 
-Issue: References [PRIM-NAME-005] which does not exist
-Analysis: [PRIM-NAME-005] was renumbered to [PRIM-NAME-003] in previous refactor
+Issue: References which does not exist
+Analysis: was renumbered to in previous refactor
 
 Action:
-1. Updated [PRIM-ORG-001] to reference [PRIM-NAME-003]
-2. Verified [PRIM-NAME-003] exists in Primitives-Architecture.md
-3. Added reciprocal reference from [PRIM-NAME-003] to [PRIM-ORG-001]
+1. Updated to reference
+2. Verified exists in Primitives-Architecture.md
+3. Added reciprocal reference from to
 
-Commit: Fix broken cross-reference [PRIM-ORG-001] → [PRIM-NAME-003]
+Commit: Fix broken cross-reference →
 ```
 
 **Incorrect**:
 ```
-## Fix Cross-Reference: [PRIM-ORG-001]
+## Fix Cross-Reference:
 
-Issue: References [PRIM-NAME-005] which does not exist
-Action: Removed the cross-reference line from [PRIM-ORG-001]
+Issue: References which does not exist
+Action: Removed the cross-reference line from
 
 ❌ Did not identify correct target
 ❌ Lost valuable connection between related requirements
@@ -892,11 +837,9 @@ Action: Removed the cross-reference line from [PRIM-ORG-001]
 
 **Rationale**: Valid cross-references maintain document connectivity.
 
-**Cross-references**: [MAINT-AUDIT-003]
-
 ---
 
-### [MAINT-ACT-005] Add Missing Elements
+### Add Missing Elements
 
 **Scope**: Completing requirements that lack required structure.
 
@@ -909,15 +852,15 @@ Action: Removed the cross-reference line from [PRIM-ORG-001]
 
 **Correct**:
 ```markdown
-## Add Missing Elements: [API-ERR-012]
+## Add Missing Elements:
 
 Before:
-### [API-ERR-012] Error Type Naming
+### Error Type Naming
 **Scope**: Error type names.
 **Statement**: Error types MUST use the suffix `Error`.
 
 After:
-### [API-ERR-012] Error Type Naming
+### Error Type Naming
 **Scope**: Error type names.
 **Statement**: Error types MUST use the suffix `Error`.
 
@@ -935,27 +878,21 @@ enum ValidationIssue: Error { } // ❌ Missing Error suffix
 
 **Rationale**: Consistent naming enables discovery—searching for
 "Error" finds all error types.
-
-**Cross-references**: [API-NAME-001]
 ```
 
 **Incorrect**:
 ```markdown
-## Add Missing Elements: [API-ERR-012]
+## Add Missing Elements:
 
 Added placeholder text:
 **Correct**: [TODO: add example]
 **Incorrect**: [TODO: add example]
 **Rationale**: [TODO: add rationale]
 
-❌ Placeholders do not help LLM parsing
+❌ Placeholders do not help parsing
 ❌ Missing concrete examples
 ❌ Missing meaningful rationale
 ```
-
-**Rationale**: Complete structure ensures LLM parsing reliability.
-
-**Cross-references**: [MAINT-AUDIT-004]
 
 ---
 
@@ -967,7 +904,7 @@ Added placeholder text:
 
 ---
 
-### [MAINT-VER-001] Post-Maintenance Verification
+### Post-Maintenance Verification
 
 **Scope**: Verifying corpus integrity after maintenance.
 
@@ -999,7 +936,7 @@ Maintenance complete.
 Changes committed. Maintenance complete.
 
 ❌ Did not verify cross-references (3 are now broken)
-❌ Did not check for orphaned requirements ([API-IMPL-015] not in any Topics)
+❌ Did not check for orphaned requirements ( not in any Topics)
 ❌ Did not verify Topics sections (new document missing from index)
 ❌ Did not check for duplicate identifiers
 ❌ Errors will propagate to future maintenance cycles
@@ -1007,21 +944,15 @@ Changes committed. Maintenance complete.
 
 **Rationale**: Verification catches errors before they propagate.
 
-**Cross-references**: [MAINT-PROC-001]
-
 ---
 
 ## 7. Corpus Compaction
 
-**Applies to**: Managing overall documentation corpus size for LLM consumption.
-
 **Does not apply to**: Individual document structure (see Section 2a).
-
-Large documentation corpora degrade LLM effectiveness. Context windows are finite; retrieval accuracy decreases as corpus size increases. Compaction ensures the corpus remains consumable.
 
 ---
 
-### [MAINT-COMPACT-001] Corpus Size Thresholds
+### Corpus Size Thresholds
 
 **Scope**: Total documentation corpus size.
 
@@ -1054,18 +985,14 @@ Average document: 2,577 words
 
 ❌ Exceeds CRITICAL threshold for total words
 ❌ Exceeds WARNING threshold for document count
-❌ LLM context exhaustion likely during audits
+❌ Context exhaustion likely during audits
 ```
 
-**Action when exceeded**: Trigger compaction review using [MAINT-COMPACT-002] through [MAINT-COMPACT-004].
-
-**Rationale**: Unbounded growth eventually makes documentation unusable for LLM consumption. Thresholds force periodic consolidation.
-
-**Cross-references**: [MAINT-COMPACT-002], [MAINT-AUDIT-002]
+**Action when exceeded**: Trigger compaction review using through.
 
 ---
 
-### [MAINT-COMPACT-002] Cross-Document Redundancy
+### Cross-Document Redundancy
 
 **Scope**: Eliminating duplicate content across documents.
 
@@ -1081,14 +1008,14 @@ Average document: 2,577 words
 ## Cross-Document Redundancy: "No Foundation" rule
 
 Found in:
-- API-Requirements.md [API-LAYER-001] (3 paragraphs)
-- Primitives-Requirements.md [PRIM-FOUND-001] (4 paragraphs)
-- Pattern-Anti-Patterns.md [PATTERN-009] (2 paragraphs)
+- API-Requirements.md (3 paragraphs)
+- Primitives-Requirements.md (4 paragraphs)
+- Pattern-Anti-Patterns.md (2 paragraphs)
 
 Action:
-1. Canonical location: Primitives-Requirements.md [PRIM-FOUND-001]
-2. API-Requirements.md: Replace with "See [PRIM-FOUND-001]"
-3. Pattern-Anti-Patterns.md: Replace with "See [PRIM-FOUND-001]"
+1. Canonical location: Primitives-Requirements.md
+2. API-Requirements.md: Replace with "See"
+3. Pattern-Anti-Patterns.md: Replace with "See"
 
 Words saved: ~450
 ```
@@ -1106,11 +1033,9 @@ No redundancy found.
 
 **Rationale**: Single source of truth reduces corpus size and prevents drift between duplicate explanations.
 
-**Cross-references**: [MAINT-AUDIT-005], [MAINT-ACT-003]
-
 ---
 
-### [MAINT-COMPACT-003] Content Density
+### Content Density
 
 **Scope**: Reducing verbosity within documents.
 
@@ -1134,7 +1059,7 @@ No redundancy found.
 
 **Correct**:
 ```markdown
-### [API-ERR-001] Typed Throws
+### Typed Throws
 
 **Scope**: All throwing functions.
 
@@ -1155,7 +1080,7 @@ func parse() throws -> Document  // ❌ Erases error type
 
 **Incorrect**:
 ```markdown
-### [API-ERR-001] Typed Throws
+### Typed Throws
 
 **Scope**: All throwing functions in all packages across the ecosystem.
 
@@ -1198,24 +1123,22 @@ use catch-all handlers or attempt unsafe downcasts.
 ❌ ~180 words → could be ~60 words
 ```
 
-**Rationale**: Dense documentation is more LLM-retrievable. Verbose documentation exhausts context before conveying essential rules.
-
-**Cross-references**: [MAINT-COMPACT-001]
+**Rationale**: Dense documentation is more retrievable. Verbose documentation exhausts context before conveying essential rules.
 
 ---
 
-### [MAINT-COMPACT-004] Essential vs Extended Content
+### Essential vs Extended Content
 
 **Scope**: Separating core rules from extended guidance.
 
 **Statement**: When a document exceeds size thresholds AND contains both essential rules and extended content (deep examples, edge cases, historical context), consider separating into:
 
-1. **Core document**: Rules with minimal examples (optimized for LLM retrieval)
+1. **Core document**: Rules with minimal examples (optimized for retrieval)
 2. **Extended document**: Deep dives, edge cases, worked examples (for human learning)
 
 | Content Type | Location | Purpose |
 |--------------|----------|---------|
-| Rule statements | Core | LLM retrieval, quick reference |
+| Rule statements | Core | Quick reference |
 | Single correct/incorrect example | Core | Illustrate the rule |
 | Multiple examples | Extended | Show variations |
 | Edge cases | Extended | Handle unusual situations |
@@ -1225,7 +1148,7 @@ use catch-all handlers or attempt unsafe downcasts.
 **Correct**:
 ```
 API-Errors.md (Core - 400 words)
-- [API-ERR-001] through [API-ERR-009]
+- through
 - One example each
 - Concise rationales
 
@@ -1240,13 +1163,11 @@ API-Errors-Extended.md (Extended - 1,200 words)
 - Extended content is minimal
 - Separation would fragment coherent narrative
 
-**Rationale**: LLMs need dense, retrievable rule statements. Humans benefit from extended examples. Separating these serves both audiences.
-
-**Cross-references**: [MAINT-COMPACT-001], [MAINT-ARCH-003]
+**Rationale**: Dense, retrievable rule statements serve quick reference. Extended examples serve deeper understanding. Separating these serves both needs.
 
 ---
 
-### [MAINT-COMPACT-005] Compaction Execution
+### Compaction Execution
 
 **Scope**: Performing compaction changes.
 
@@ -1278,8 +1199,6 @@ Reduction: 33% fewer words, 8% fewer documents
 
 **Rationale**: Measured compaction ensures meaningful reduction without content loss.
 
-**Cross-references**: [MAINT-COMPACT-001], [MAINT-PROC-001]
-
 ---
 
 ## Topics
@@ -1288,7 +1207,7 @@ Reduction: 33% fewer words, 8% fewer documents
 
 - <doc:_Reflections-Consolidation> - Process that grows documentation
 - <doc:_Reflections> - Entry point for reflection capture
-- <doc:LLM-Optimized-Documentation> - Principles guiding document structure
+-  - Principles guiding document structure
 
 ### Documentation Corpus
 

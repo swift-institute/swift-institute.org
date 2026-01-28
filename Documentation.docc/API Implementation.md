@@ -39,7 +39,7 @@ This document defines the implementation style requirements for Swift Institute 
 
 ---
 
-### [API-IMPL-001] Construction and Transformation
+### Construction and Transformation
 
 **Scope**: Type construction and value transformation.
 
@@ -76,8 +76,6 @@ init(transforming value: T)
 
 **Rationale**: Initializers and static methods make construction explicit and discoverable. Fallibility is expressed via `throws`, not labels—see <doc:API-Errors#API-ERR-008>.
 
-**Cross-references**: [API-NAME-006], [API-ERR-008]
-
 ---
 
 ## Core Types
@@ -86,7 +84,7 @@ init(transforming value: T)
 
 ---
 
-### [API-IMPL-002] Keep Core Types Lean
+### Keep Core Types Lean
 
 **Scope**: Core type definitions.
 
@@ -149,11 +147,9 @@ The enum forces explicit naming of states that booleans collapse by omission.
 
 **Rationale**: Explicit state machines make invalid states unrepresentable. Booleans lie by omission—they imply two states when three or more often exist.
 
-**Cross-references**: [API-IMPL-003]
-
 ---
 
-### [API-IMPL-003] Totality for Primitives
+### Totality for Primitives
 
 **Scope**: All primitive packages.
 
@@ -219,8 +215,6 @@ extension Enumeration {
 
 **Rationale**: Totality eliminates runtime crashes and makes APIs predictable.
 
-**Cross-references**: [API-IMPL-002]
-
 ---
 
 ## Code Organization
@@ -229,7 +223,7 @@ extension Enumeration {
 
 ---
 
-### [API-IMPL-004] Code Awaiting Language Features
+### Code Awaiting Language Features
 
 **Scope**: APIs blocked by missing Swift features.
 
@@ -273,11 +267,9 @@ This pattern:
 
 **Rationale**: Preserves design intent while waiting for language evolution.
 
-**Cross-references**: [API-IMPL-009]
-
 ---
 
-### [API-IMPL-005] One Type Per File
+### One Type Per File
 
 **Scope**: All type declarations.
 
@@ -417,11 +409,9 @@ extension Point {
 5. **Constrained extensions**: Extensions can have `where` clauses; type declarations cannot.
 6. **Merge conflict reduction**: Parallel work on different aspects of a type doesn't conflict.
 
-**Cross-references**: [API-NAME-001]
-
 ---
 
-### [API-IMPL-006] Abstraction Boundary Integrity
+### Abstraction Boundary Integrity
 
 **Scope**: All abstraction implementations.
 
@@ -435,7 +425,7 @@ extension Point {
 
 ---
 
-### [API-IMPL-007] Sharding and Scaling Strategies
+### Sharding and Scaling Strategies
 
 **Scope**: Performance optimizations involving parallelism.
 
@@ -449,7 +439,7 @@ extension Point {
 
 ---
 
-### [API-IMPL-008] Inlining Rules
+### Inlining Rules
 
 **Scope**: Performance-critical code.
 
@@ -505,11 +495,9 @@ extension File.Directory {
 3. **Orchestration logic SHOULD NOT be `@inlinable`** - Complex logic changes more often; inlining locks in the implementation.
 4. **Primitives packages SHOULD be heavily `@inlinable`** - They're leaf-level by design.
 
-**Cross-references**: [API-NAME-003]
-
 ---
 
-### [API-IMPL-009] Value Generics
+### Value Generics
 
 **Scope**: Types with compile-time constant parameters.
 
@@ -552,9 +540,7 @@ extension Ordinal {
 
 #### Current Limitations
 
-Swift does not yet support value-generic constraints (`where N > 0`). See [API-IMPL-004] for how to handle this.
-
-**Cross-references**: [API-IMPL-004]
+Swift does not yet support value-generic constraints (`where N > 0`). See for how to handle this.
 
 ---
 
@@ -564,7 +550,7 @@ Swift does not yet support value-generic constraints (`where N > 0`). See [API-I
 
 ---
 
-### [API-IMPL-010] No Hidden Global State
+### No Hidden Global State
 
 **Scope**: All code.
 
@@ -622,7 +608,7 @@ If the API can be misused in ways the documentation forbids, the API is incomple
 
 ---
 
-### [API-IMPL-011] No Ad-Hoc Helpers
+### No Ad-Hoc Helpers
 
 **Scope**: All implementation code.
 
@@ -668,8 +654,6 @@ private struct Pair<A, B> {
 
 **Rationale**: Ad-hoc helpers fragment the codebase, create maintenance burden, and often duplicate battle-tested implementations with subtle bugs. A complete ecosystem means local helpers indicate either unfamiliarity with available tools or a genuine gap that should be addressed at the ecosystem level—not worked around locally.
 
-**Cross-references**: [API-NAME-006], [API-IMPL-001], <doc:Ecosystem-Process#ECO-REUSE-002>
-
 ---
 
 ## Advanced Patterns
@@ -678,7 +662,7 @@ private struct Pair<A, B> {
 
 ---
 
-### [API-IMPL-012] Protocol-Based Capability Injection
+### Protocol-Based Capability Injection
 
 **Scope**: APIs requiring platform or cryptographic capabilities.
 
@@ -789,11 +773,9 @@ extension Linux {
 
 **Rationale**: This pattern keeps the standards layer Foundation-free and testable while allowing full functionality when platform capabilities are available. The caller controls dependencies, not the library.
 
-**Cross-references**: [API-LAYER-001], [API-LAYER-002], [API-IMPL-010]
-
 ---
 
-### [API-IMPL-013] Effect-Based API Design
+### Effect-Based API Design
 
 **Scope**: APIs where callers need to express intentions that will be interpreted by handlers.
 
@@ -868,11 +850,9 @@ Effect-based design is NOT needed when:
 
 **Rationale**: Descriptions are data. Data can be inspected, transformed, mocked, recorded. Actions just happen and leave no trace. The shift from doing to describing makes the impossible possible—testing without mocking frameworks, composition without inheritance, interpretation without coupling.
 
-**Cross-references**: [API-INFO-001], [API-ERR-006], [API-IMPL-002]
-
 ---
 
-### [API-IMPL-014] Zero-Cost Phantom Types
+### Zero-Cost Phantom Types
 
 **Scope**: Type-safe wrappers and domain identifiers.
 
@@ -959,11 +939,9 @@ class Tagged<Tag, Value> {  // ❌ Reference type
 
 **Rationale**: Phantom types provide compile-time guarantees (prevent mixing `UserID` and `OrderID`) with zero runtime cost. This is the Swift equivalent of Haskell's `newtype` or Rust's zero-cost newtypes.
 
-**Cross-references**: [API-IMPL-002], [API-NAME-001]
-
 ---
 
-### [API-IMPL-017] Domain Boundary Types Guard Implicit Policy
+### Domain Boundary Types Guard Implicit Policy
 
 **Scope**: APIs that cross semantic domain boundaries.
 
@@ -1029,8 +1007,6 @@ These decisions belong at the call site, not buried in low-level wrappers.
 The Standards layer (syscall wrappers) stays honest: it wraps syscalls, nothing more. Policy lives in Foundations, where it can be explicit and configurable.
 
 **Rationale**: On systems with non-UTF8 filenames (they exist), converting kernel output to `Swift.String` can fail or corrupt data. The syscall wrapper cannot make that policy decision—it doesn't know if the caller wants lossy conversion, error propagation, or something else. Explicit boundaries force these decisions to the surface.
-
-**Cross-references**: [API-IMPL-002], [API-ERR-001], [PRIM-FOUND-003]
 
 ---
 

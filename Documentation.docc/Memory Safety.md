@@ -14,7 +14,7 @@ This document defines strict memory safety patterns per SE-0458.
 
 ---
 
-## [MEM-SAFE-001] Enable Strict Memory Safety
+## Enable Strict Memory Safety
 
 **Scope**: Memory-critical packages.
 
@@ -45,11 +45,9 @@ swiftSettings: [
 
 **Rationale**: Compiler enforcement catches memory safety violations at build time rather than runtime.
 
-**Cross-references**: [SYS-MEM-001], [PATTERN-005]
-
 ---
 
-## [MEM-SAFE-002] Unsafe Expression Marking
+## Unsafe Expression Marking
 
 **Scope**: Marking unsafe operations in strict mode.
 
@@ -83,11 +81,9 @@ unsafe { self.name = name }  // Error in initializer context
 - Operations *within* the function still require individual `unsafe` markers
 - Parentheses define the expression boundary for assignments
 
-**Cross-references**: [PATTERN-005b]
-
 ---
 
-## [MEM-SAFE-003] Warning Classification
+## Warning Classification
 
 **Scope**: Handling StrictMemorySafety warnings.
 
@@ -108,11 +104,9 @@ unsafe { self.name = name }  // Error in initializer context
 
 **Rationale**: Bucket B warnings exist to make unsafe storage visible in build output, not to demand remediation.
 
-**Cross-references**: [PATTERN-005a], [STRICT_MEMORY_SAFETY.md]
-
 ---
 
-## [MEM-SAFE-004] Five Dimensions of Memory Safety
+## Five Dimensions of Memory Safety
 
 **Scope**: Understanding memory safety guarantees.
 
@@ -126,13 +120,11 @@ unsafe { self.name = name }  // Error in initializer context
 | **Initialization Safety** | Values initialized before use | Definite initialization |
 | **Thread Safety** | Invariants maintained under concurrency | `Sendable`, actors, Swift 6 |
 
-**Cross-references**: SE-0458
-
 ---
 
 ## Unsafe Operation Tracking
 
-### [MEM-UNSAFE-001] Unsafe Operation Tracking
+### Unsafe Operation Tracking
 
 **Scope**: Tracking unsafe operations for future annotation.
 
@@ -146,11 +138,9 @@ unsafe { self.name = name }  // Error in initializer context
 | C interop calls | Mark with `unsafe` | Now |
 | Concurrency isolation | Fix immediately | Now |
 
-**Cross-references**: [PATTERN-005a]
-
 ---
 
-### [MEM-UNSAFE-002] Lifetime Annotations
+### Lifetime Annotations
 
 **Scope**: APIs exposing temporary pointers.
 
@@ -174,11 +164,9 @@ func getPointer() -> UnsafeRawPointer {
 }
 ```
 
-**Cross-references**: [SYS-MEM-003]
-
 ---
 
-### [MEM-UNSAFE-003] Safe Attribute
+### Safe Attribute
 
 **Scope**: Asserting function safety despite unsafe operations.
 
@@ -199,7 +187,7 @@ public final class Box<Value: ~Copyable & Sendable>: @unchecked Sendable {
 
 ---
 
-### [MEM-SAFE-010] Dual-Overload Anti-Pattern
+### Dual-Overload Anti-Pattern
 
 **Scope**: APIs with both safe and unsafe overloads for the same operation.
 
@@ -230,11 +218,9 @@ public func process(_ buffer: UnsafeBufferPointer<UInt8>) -> Result
 
 **Rationale**: Dual public overloads encourage unsafe usage when safe alternatives exist.
 
-**Cross-references**: [MEM-SAFE-011], [API-NAME-008]
-
 ---
 
-### [MEM-SAFE-011] Inline Clarity Over Helper Consolidation
+### Inline Clarity Over Helper Consolidation
 
 **Scope**: Helper functions for unsafe operations.
 
@@ -259,11 +245,9 @@ func readUInt32(from pointer: UnsafeRawPointer) -> UInt32 {
 
 **Rationale**: Visible unsafety at call sites enables code review and audit. Hidden unsafety spreads undetected.
 
-**Cross-references**: [MEM-SAFE-010], [API-NAME-008]
-
 ---
 
-### [MEM-SAFE-012] Span as Normative Interface
+### Span as Normative Interface
 
 **Scope**: APIs for contiguous memory access.
 
@@ -292,11 +276,9 @@ public struct Buffer {
 
 **Rationale**: Span provides bounds checking and lifetime safety. Pointer APIs should be escape hatches, not defaults.
 
-**Cross-references**: [MEM-SAFE-010], [MEM-SAFE-011], [MEM-SPAN-001]
-
 ---
 
-### [MEM-SAFE-013] API Surface Reduction as Safety
+### API Surface Reduction as Safety
 
 **Scope**: Reducing public API surface for safety improvements.
 
@@ -319,11 +301,9 @@ public struct Path {
 
 **Rationale**: Fewer public APIs means fewer ways to misuse the type. The capability remains; the danger is removed.
 
-**Cross-references**: [MEM-SAFE-010], [MEM-SAFE-012]
-
 ---
 
-### [MEM-SAFE-014] Closure Scope Over Property Access for Unsafe Operations
+### Closure Scope Over Property Access for Unsafe Operations
 
 **Scope**: APIs providing access to unsafe pointers or resources with lifetime dependencies.
 
@@ -385,8 +365,6 @@ Consistency teaches developers to expect scoped access for unsafe operations.
 
 **Rationale**: Properties that return pointers lie about safety through ergonomics. Closures make the contract visible: the pointer is valid only within the scope. Migration from property to closure access increases verbosity but converts implicit contracts into explicit code structure.
 
-**Cross-references**: [MEM-SAFE-010], [MEM-SAFE-011], [MEM-SAFE-012], [MEM-SAFE-002]
-
 ---
 
 ## Concurrency Safety (Sendable)
@@ -395,7 +373,7 @@ Consistency teaches developers to expect scoped access for unsafe operations.
 
 ---
 
-### [MEM-SEND-001] Conservative Sendable Defaults
+### Conservative Sendable Defaults
 
 **Scope**: Mutable reference wrappers.
 
@@ -420,11 +398,9 @@ extension Reference.Indirect {
 extension Reference.Indirect: @unchecked Sendable {}
 ```
 
-**Cross-references**: [API-CONC-005]
-
 ---
 
-### [MEM-SEND-002] Sendability Tiers
+### Sendability Tiers
 
 **Scope**: Understanding Sendable conformance levels.
 
@@ -440,7 +416,7 @@ extension Reference.Indirect: @unchecked Sendable {}
 
 ---
 
-### [MEM-SEND-003] Accurate Risk Description
+### Accurate Risk Description
 
 **Scope**: Justifying unsafe Sendable escapes.
 
@@ -452,8 +428,6 @@ extension Reference.Indirect: @unchecked Sendable {}
 | "`@unchecked Sendable` means transferable" | "Removing the compiler's data-race prevention" |
 
 **Rationale**: Euphemisms hide risk. Accurate descriptions enable informed decisions.
-
-**Cross-references**: [API-CONC-005]
 
 ---
 

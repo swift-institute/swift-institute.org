@@ -37,7 +37,7 @@ The consolidation process MUST execute these steps in order, repeating until all
 
 ---
 
-### [CONS-LOOP-001] Identify the Oldest Entry
+### Identify the Oldest Entry
 
 **Scope**: Entry selection for processing.
 
@@ -63,15 +63,13 @@ Processing "First Insight" because it appears last in the file.
 ❌ This processes newest-first, violating chronological order.
 ```
 
-**Report format**: `Processing entry: [YYYY-MM-DD]: [Title]`
+**Report format**: `Processing entry:: [Title]`
 
 **Rationale**: Oldest-first processing ensures insights are integrated in the order they were discovered, preserving logical development of ideas.
 
-**Cross-references**: [CONS-LOOP-002]
-
 ---
 
-### [CONS-LOOP-002] Analyze Integration Targets
+### Analyze Integration Targets
 
 **Scope**: Determining destination documents for insights.
 
@@ -79,7 +77,7 @@ Processing "First Insight" because it appears last in the file.
 
 **Step 1: Check for package tag**
 
-If the entry heading contains `[Package: package-name]`, the primary target is the package's `_Package-Insights.md`. See [CONS-PKG-001] for package routing.
+If the entry heading contains `[Package: package-name]`, the primary target is the package's `_Package-Insights.md`. See for package routing.
 
 If the entry body contains `> **Cross-cutting**:`, ALSO route to Swift Institute docs per the table below.
 
@@ -117,17 +115,15 @@ Integration target: Identity.md
 ❌ Identity.md covers organizational identity, not package architecture.
 ```
 
-If no existing document fits, create a new document following [CONS-CREATE-001].
+If no existing document fits, create a new document following.
 
 **Report format**: `Integration targets: [comma-separated list]`
 
 **Rationale**: Correct target selection ensures insights are discoverable in their logical location—package-specific insights with packages, cross-cutting principles in Swift Institute.
 
-**Cross-references**: [CONS-LOOP-001], [CONS-CREATE-001], [CONS-PKG-001]
-
 ---
 
-### [CONS-LOOP-003] Integrate Knowledge
+### Integrate Knowledge
 
 **Scope**: The transformation of reflection content into permanent documentation.
 
@@ -135,8 +131,8 @@ If no existing document fits, create a new document following [CONS-CREATE-001].
 
 1. Read the current document content
 2. Identify the appropriate section for the insight
-3. Match the document's structural patterns (see [CONS-INTEG-002])
-4. Transform voice from reflective to normative (see [CONS-VOICE-001])
+3. Match the document's structural patterns
+4. Transform voice from reflective to normative
 5. Add Correct/Incorrect examples
 6. Add Rationale section
 7. Add Cross-references to related requirements
@@ -144,7 +140,7 @@ If no existing document fits, create a new document following [CONS-CREATE-001].
 
 **Correct**:
 ```markdown
-### [PRIM-ORG-001] The Relocation Principle
+### The Relocation Principle
 
 **Scope**: Package assignment for primitives.
 
@@ -165,8 +161,6 @@ primitive *is*, not where it was *first needed*.
 
 **Rationale**: Semantic organization means primitives migrate toward
 their natural home as understanding deepens.
-
-**Cross-references**: [PRIM-NAME-003], [PRIM-ORG-002]
 ```
 
 **Incorrect**:
@@ -180,13 +174,11 @@ A primitive's home is determined by what it is, not where it was first needed.
    Rationale section, Cross-references, rule identifier.
 ```
 
-**Rationale**: Full structural compliance ensures LLMs can reliably parse and retrieve requirements.
-
-**Cross-references**: [CONS-INTEG-001], [CONS-INTEG-002], [CONS-VOICE-001]
+**Rationale**: Full structural compliance ensures reliable parsing and retrieval of requirements.
 
 ---
 
-### [CONS-LOOP-004] Remove Processed Entry
+### Remove Processed Entry
 
 **Scope**: Cleanup of processed reflection entries.
 
@@ -214,11 +206,9 @@ A primitive's home is determined by what it is, not where it was first needed.
 
 **Rationale**: Removal prevents duplicate processing and keeps `Reflection Entries.md` focused on unprocessed insights.
 
-**Cross-references**: [CONS-LOOP-005]
-
 ---
 
-### [CONS-LOOP-005] Commit Changes
+### Commit Changes
 
 **Scope**: Version control for consolidation work.
 
@@ -235,8 +225,8 @@ Integrated insights into: [list of updated documents]
 Consolidate reflection: Information Preservation
 
 Integrated insights into: API Requirements.md, Future Directions.md
-- Added [API-INFO-001] Information Preservation Principle
-- Added [FUTURE-005] Deletion as Refinement
+- Added Information Preservation Principle
+- Added Deletion as Refinement
 ```
 
 **Incorrect**:
@@ -248,11 +238,9 @@ Updated docs
 
 **Rationale**: Descriptive commit messages enable tracking of how institutional knowledge evolved.
 
-**Cross-references**: [CONS-LOOP-004], [CONS-LOOP-006]
-
 ---
 
-### [CONS-LOOP-006] Report and Continue
+### Report and Continue
 
 **Scope**: Progress reporting between consolidations.
 
@@ -260,13 +248,11 @@ Updated docs
 
 **Report format**: `Consolidated [title]. [N] entries remaining.`
 
-If entries remain, return to [CONS-LOOP-001].
+If entries remain, return to.
 
 If no entries remain: `Consolidation complete. All reflection entries integrated.`
 
 **Rationale**: Progress reporting provides visibility into consolidation state.
-
-**Cross-references**: [CONS-LOOP-001]
 
 ---
 
@@ -278,7 +264,7 @@ If no entries remain: `Consolidation complete. All reflection entries integrated
 
 ---
 
-### [CONS-VOICE-001] Reflective to Normative Transformation
+### Reflective to Normative Transformation
 
 **Scope**: Language style in permanent documentation.
 
@@ -302,38 +288,34 @@ fully-qualified paths."
 
 **Rationale**: Timeless, impersonal language ensures documentation remains accurate regardless of when it is read or who reads it.
 
-**Cross-references**: [CONS-LOOP-003]
-
 ---
 
 ## 3. Integration Guidelines
 
 **Applies to**: All content integration decisions.
 
-**Does not apply to**: Non-integrable entries (see [CONS-SKIP-001]).
+**Does not apply to**: Non-integrable entries.
 
 ---
 
-### [CONS-INTEG-001] LLM-Consumable Documentation Purpose
+### Documentation Purpose
 
 **Scope**: The overarching goal of permanent documentation.
 
-**Statement**: The permanent documentation serves as authoritative reference for LLMs working on this codebase. This purpose shapes all integration requirements.
+**Statement**: The permanent documentation serves as authoritative reference for this codebase. This purpose shapes all integration requirements.
 
 | Property | Requirement | Rationale |
 |----------|-------------|-----------|
-| **Detailed** | Explicit statement of principles | LLMs cannot infer unstated context |
+| **Detailed** | Explicit statement of principles | Readers cannot infer unstated context |
 | **Pattern-consistent** | Predictable structure | Enables reliable information retrieval |
 | **Example-rich** | Correct/Incorrect code examples | Disambiguates abstract principles |
 | **Cross-referenced** | Links between related requirements | Enables holistic understanding |
 
-**Rationale**: LLMs expose documentation weaknesses that humans compensate for unconsciously. Optimization for LLMs simultaneously improves human readability.
-
-**Cross-references**: [CONS-INTEG-002], [CONS-INTEG-003]
+**Rationale**: Explicit documentation exposes weaknesses that readers compensate for unconsciously. Optimization simultaneously improves readability.
 
 ---
 
-### [CONS-INTEG-002] Pattern Matching Requirement
+### Pattern Matching Requirement
 
 **Scope**: Structural compliance when adding content.
 
@@ -341,7 +323,7 @@ fully-qualified paths."
 
 **Example pattern in `API-Requirements.md`**:
 ```markdown
-### [API-XXX-NNN] Requirement Title
+### Requirement Title
 
 **Scope**: What this requirement covers.
 
@@ -358,8 +340,6 @@ fully-qualified paths."
 ` ` `
 
 **Rationale**: Why this requirement exists.
-
-**Cross-references**: [API-YYY-MMM], [PRIM-ZZZ-PPP]
 ```
 
 **Correct**:
@@ -373,16 +353,13 @@ structure—including all subsections.
 Appending a paragraph to an existing section without Scope,
 Statement, examples, Rationale, or Cross-references.
 
-❌ Pattern violation degrades LLM retrieval accuracy.
 ```
 
-**Rationale**: Consistent patterns enable LLMs to predict document structure and locate information reliably.
-
-**Cross-references**: [CONS-INTEG-001], [CONS-INTEG-003]
+**Rationale**: Consistent patterns enable predicting document structure and locate information reliably.
 
 ---
 
-### [CONS-INTEG-003] Expansion Requirement
+### Expansion Requirement
 
 **Scope**: Transforming terse reflections into complete documentation.
 
@@ -399,9 +376,9 @@ Statement, examples, Rationale, or Cross-references.
 ```markdown
 Reflection: "Names should describe mechanism, not origin."
 
-Becomes: [PRIM-NAME-003] with Scope, Statement, three Correct examples,
+Becomes: with Scope, Statement, three Correct examples,
 three Incorrect examples, Rationale paragraph, and Cross-references
-to [PRIM-ORG-001] and [PRIM-NAME-001].
+to and.
 ```
 
 **Incorrect**:
@@ -413,13 +390,11 @@ Becomes: "Names should describe mechanism, not origin."
 ❌ No expansion—just voice transformation.
 ```
 
-**Rationale**: Expansion provides the detail LLMs need for accurate application of principles.
-
-**Cross-references**: [CONS-INTEG-001], [CONS-INTEG-002]
+**Rationale**: Expansion provides the detail readers need for accurate application of principles.
 
 ---
 
-### [CONS-INTEG-004] Duplication Avoidance
+### Duplication Avoidance
 
 **Scope**: Preventing redundant content.
 
@@ -428,23 +403,21 @@ Becomes: "Names should describe mechanism, not origin."
 **Correct**:
 ```
 Reflection mentions typed throws closure annotation.
-API-Requirements.md already has [API-ERR-007] covering this.
+API-Requirements.md already has covering this.
 Action: Skip integration, note in commit message.
 ```
 
 **Incorrect**:
 ```
-Adding [API-ERR-012] that duplicates [API-ERR-007] content.
+Adding that duplicates content.
 ❌ Creates inconsistency if one is updated without the other.
 ```
 
 **Rationale**: Duplication creates maintenance burden and risks inconsistency.
 
-**Cross-references**: [CONS-INTEG-002]
-
 ---
 
-### [CONS-INTEG-005] Structure Creation
+### Structure Creation
 
 **Scope**: Adding new sections to target documents.
 
@@ -466,7 +439,7 @@ Adding [API-ERR-012] that duplicates [API-ERR-007] content.
 
 ---
 
-### [PRIM-ORG-001] The Relocation Principle
+### The Relocation Principle
 
 **Scope**: Package assignment for primitives.
 
@@ -488,8 +461,6 @@ A primitive's home is determined by what it is.
 
 **Rationale**: New sections must match existing patterns to maintain document consistency.
 
-**Cross-references**: [CONS-INTEG-002], [CONS-CREATE-001]
-
 ---
 
 ## 4. Document Creation
@@ -500,7 +471,7 @@ A primitive's home is determined by what it is.
 
 ---
 
-### [CONS-CREATE-001] New Document Template
+### New Document Template
 
 **Scope**: Structure for newly created permanent documents.
 
@@ -513,7 +484,7 @@ A primitive's home is determined by what it is.
 ---
 title: [Title]
 version: 1.0.0
-last_updated: [YYYY-MM-DD]
+last_updated:
 applies_to: [package-list]
 normative: true
 ---
@@ -550,7 +521,7 @@ normative: true
 
 ---
 
-### [PREFIX-CAT-001] First Requirement
+### First Requirement
 
 **Scope**: [Requirement scope]
 
@@ -568,8 +539,6 @@ normative: true
 
 **Rationale**: [Why this requirement exists]
 
-**Cross-references**: [Related rules]
-
 ---
 
 ## Topics
@@ -582,9 +551,7 @@ normative: true
 
 The new document MUST be added to `## Topics` sections in related documents.
 
-**Rationale**: Consistent document structure enables reliable LLM parsing across the entire documentation corpus.
-
-**Cross-references**: [CONS-INTEG-002], [CONS-INTEG-005]
+**Rationale**: Consistent document structure across the entire documentation corpus.
 
 ---
 
@@ -596,7 +563,7 @@ The new document MUST be added to `## Topics` sections in related documents.
 
 ---
 
-### [CONS-PKG-001] Package Routing
+### Package Routing
 
 **Scope**: Determining the target location for package-tagged entries.
 
@@ -630,11 +597,9 @@ Entry: [Package: Kernel]
 
 **Rationale**: Package-specific insights belong with the package, not scattered across Swift Institute docs.
 
-**Cross-references**: [CONS-LOOP-002], [CONS-PKG-002]
-
 ---
 
-### [CONS-PKG-002] Creating Package Documentation
+### Creating Package Documentation
 
 **Scope**: Creating Documentation.docc when it doesn't exist.
 
@@ -701,11 +666,9 @@ Action: Skip consolidation
 
 **Rationale**: Minimal scaffolding enables consolidation without requiring full documentation upfront.
 
-**Cross-references**: [CONS-PKG-001], [CONS-PKG-003]
-
 ---
 
-### [CONS-PKG-003] Package Insight Integration
+### Package Insight Integration
 
 **Scope**: Transforming reflection content into package documentation.
 
@@ -745,7 +708,7 @@ The sync API uses `borrowing Span<UInt8>` because the buffer never leaves the ca
 
 **Incorrect**:
 ```markdown
-### [FILE-READ-001] Async Buffer Ownership
+### Async Buffer Ownership
 
 **Scope**: Buffer handling in async reads.
 
@@ -755,8 +718,6 @@ The sync API uses `borrowing Span<UInt8>` because the buffer never leaves the ca
 ```
 
 **Rationale**: Package insights are recorded decisions, not requirements. A lighter format reduces friction while preserving institutional knowledge.
-
-**Cross-references**: [CONS-PKG-001], [CONS-VOICE-001]
 
 ---
 
@@ -770,7 +731,7 @@ The consolidation question is not "is this valuable?" but "where does this value
 
 ---
 
-### [CONS-TRIAGE-001] Entry Category Taxonomy
+### Entry Category Taxonomy
 
 **Scope**: Classifying entries to determine routing.
 
@@ -787,7 +748,7 @@ The consolidation question is not "is this valuable?" but "where does this value
 ```
 Entry: "Names as Constraints" - architectural principle
 Category: Normative candidate
-Action: Integrate into API Naming.md as [API-NAME-XXX]
+Action: Integrate into API Naming.md as
 
 Entry: "The withBorrowed runner surface" [Package: swift-binary-primitives]
 Category: Package-specific
@@ -810,11 +771,9 @@ Action: Integrate into new Swift Institute requirement
 
 **Rationale**: Correct categorization prevents both under-integration (losing valuable insights) and over-integration (creating duplicates).
 
-**Cross-references**: [CONS-TRIAGE-002], [CONS-LOOP-002]
-
 ---
 
-### [CONS-TRIAGE-002] The Meta-Reflection Trap
+### The Meta-Reflection Trap
 
 **Scope**: Handling reflections about the reflection process itself.
 
@@ -832,7 +791,7 @@ Yes: Remove entry without integration.
 **Incorrect**:
 ```
 Entry describes the underscore prefix convention for non-normative files.
-Action: Create [DOC-XXX] requirement explaining the convention.
+Action: Create requirement explaining the convention.
 Result: Documentation Requirements.md now duplicates what _Reflections.md already explains.
 
 // ❌ The convention is already documented where it's defined
@@ -842,11 +801,9 @@ Result: Documentation Requirements.md now duplicates what _Reflections.md alread
 
 **Rationale**: Process files ARE the integration target for process reflections. Integrating them elsewhere creates redundancy.
 
-**Cross-references**: [CONS-TRIAGE-001], [CONS-SKIP-001]
-
 ---
 
-### [CONS-SKIP-001] Non-Integrable Subcategories
+### Non-Integrable Subcategories
 
 **Scope**: Specific patterns within non-integrable entries.
 
@@ -857,14 +814,12 @@ Result: Documentation Requirements.md now duplicates what _Reflections.md alread
 | **Too specific** | Applies only to one codebase moment | "Fixed the typo in line 42 of Parser.swift" |
 | **Superseded** | Later work invalidated the insight | "Using workaround X until Swift adds Y" (Y now exists) |
 | **Personal** | Interesting but not actionable | "Enjoyed the elegance of this solution" |
-| **Duplicate** | Already captured in permanent docs | Insight matches existing [API-XXX-NNN] |
+| **Duplicate** | Already captured in permanent docs | Insight matches existing |
 | **Meta-process** | About this process, not the codebase | "The consolidation process revealed..." |
 
 **Report format**: `Removed [title] - [reason]`
 
 **Rationale**: Not all observations merit permanent documentation. Removing non-integrable entries keeps the process focused.
-
-**Cross-references**: [CONS-LOOP-004], [CONS-TRIAGE-001]
 
 ---
 
@@ -876,7 +831,7 @@ Result: Documentation Requirements.md now duplicates what _Reflections.md alread
 
 ---
 
-### [CONS-INT-001] Graceful Interruption
+### Graceful Interruption
 
 **Scope**: Handling mid-consolidation interruptions.
 
@@ -906,8 +861,6 @@ Left Primitives-Architecture.md with partial edits uncommitted.
 
 **Rationale**: Clean interruption handling ensures documentation never enters an inconsistent state.
 
-**Cross-references**: [CONS-LOOP-005]
-
 ---
 
 ## Topics
@@ -927,11 +880,11 @@ Left Primitives-Architecture.md with partial edits uncommitted.
 
 ### Package Integration Targets
 
-Package-tagged entries consolidate to `_Package-Insights.md` within each package's `Documentation.docc/`. See [CONS-PKG-001] for routing rules.
+Package-tagged entries consolidate to `_Package-Insights.md` within each package's `Documentation.docc/`. See for routing rules.
 
 - <doc:_Package-Insights-Template> - Template for creating package insight documents
 
 ### Related Process
 
-- <doc:LLM-Optimized-Documentation>
-- <doc:Documentation-Requirements>
+- 
+- <doc:Documentation-Standards>

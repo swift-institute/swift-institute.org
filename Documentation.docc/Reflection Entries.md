@@ -96,7 +96,7 @@ struct TestQueue<Element: ~Copyable>: ~Copyable {
 
 This compiles. But the **same pattern** inside the full Queue implementation fails. The difference: Queue has other nested types (Bounded, Inline, Small) and a Storage class. The interaction between multiple nested types in a non-empty struct triggers the bug.
 
-This reinforces the value of the [EXP-004a] Incremental Construction methodology—test patterns in isolation, then in increasing complexity, to find exactly where behavior changes.
+This reinforces the value of the Incremental Construction methodology—test patterns in isolation, then in increasing complexity, to find exactly where behavior changes.
 
 ---
 
@@ -153,7 +153,7 @@ This is consistent with how Swift handles other generic features. Generic specia
 
 ### When This Bug Will Be Fixed
 
-The bug is tracked as [MEM-COPY-006] Category 3 in the Memory Copyable documentation. The expected fix involves either:
+The bug is tracked as Category 3 in the Memory Copyable documentation. The expected fix involves either:
 - Cross-module constraint propagation in the type checker
 - Or special handling for generic type instantiation with `~Copyable` parameters
 
@@ -167,7 +167,7 @@ Until fixed, the nested type pattern is the only reliable workaround for contain
 
 ### The Value of Controlled Experiments
 
-The investigation followed [EXP-004a] Incremental Construction—building up complexity to find where behavior changes. The experiment package tested 8 variants:
+The investigation followed Incremental Construction—building up complexity to find where behavior changes. The experiment package tested 8 variants:
 
 | Variant | Configuration | Result |
 |---------|---------------|--------|
@@ -227,7 +227,7 @@ The Queue.Linked storage implementation is a near-copy of List.Linked storage, v
 // ============================================================================
 //
 // WHY THIS EXISTS:
-// Swift compiler bug [MEM-COPY-006] Category 3...
+// Swift compiler bug Category 3...
 //
 // WHEN TO REMOVE:
 // Delete these types when compiler fixes cross-module ~Copyable propagation
@@ -281,12 +281,12 @@ This isn't a lesson about file organization. It's an observation about compiler 
 
 ### The Trade-Off Accepted
 
-Consolidating swift-heap-primitives into a single 4084-line file violates [API-IMPL-005] (one type per file). This is explicitly documented as temporary:
+Consolidating swift-heap-primitives into a single 4084-line file violates (one type per file). This is explicitly documented as temporary:
 
 ```swift
 // WORKAROUND: This Sequence conformance only compiles because all source code
 // is consolidated into a single file. When the compiler bug is fixed, this
-// package can be restructured into multiple files per [API-IMPL-005].
+// package can be restructured into multiple files per.
 ```
 
 The violation is:
@@ -299,7 +299,7 @@ Users get `for-in` loops, `map`, `filter`, and all standard Sequence operations.
 
 ### The Investigation Pattern That Led Here
 
-The path to this workaround followed the [EXP-004a] methodology:
+The path to this workaround followed the methodology:
 
 1. **Isolate**: Created minimal reproduction, confirmed the bug
 2. **Document**: Filed Swift issue #86669 with exact trigger conditions
@@ -316,7 +316,7 @@ The key insight from failed workaround #1: patterns that work in minimal reprodu
 
 ### Beyond Known Patterns
 
-The existing documentation ([MEM-COPY-006]) catalogued three categories of `~Copyable` constraint propagation failures:
+The existing documentation () catalogued three categories of `~Copyable` constraint propagation failures:
 
 1. **Category 1**: Nested types in extensions
 2. **Category 2**: Implicit Copyable constraints in generic contexts
@@ -408,12 +408,12 @@ The complexity difference matters. The compiler processes these differently. Int
 
 ### From Hours to Minutes
 
-The Heap bug investigation could have taken days of trial-and-error. Instead, by following [EXP-001] through [EXP-011], the exact trigger conditions were isolated in under an hour:
+The Heap bug investigation could have taken days of trial-and-error. Instead, by following through, the exact trigger conditions were isolated in under an hour:
 
-1. **[EXP-002] Minimal Package**: Created isolated `noncopyable-sequence-bug` experiment
-2. **[EXP-004] Binary Search**: Systematically enabled/disabled code blocks
-3. **[EXP-005] Isolation**: Tested file placement, constraint variations
-4. **[EXP-011] Production Replication**: Verified in actual swift-heap-primitives
+1. ** Minimal Package**: Created isolated `noncopyable-sequence-bug` experiment
+2. ** Binary Search**: Systematically enabled/disabled code blocks
+3. ** Isolation**: Tested file placement, constraint variations
+4. ** Production Replication**: Verified in actual swift-heap-primitives
 
 The binary search was particularly effective. Starting from "works" (Sequence disabled) and "fails" (Sequence enabled), the investigation narrowed:
 
@@ -503,7 +503,7 @@ The Pattern Issue Submission methodology codifies these requirements. Following 
 ```swift
 // WORKAROUND: This Sequence conformance only compiles because all source code
 // is consolidated into a single file. When the compiler bug is fixed, this
-// package can be restructured into multiple files per [API-IMPL-005].
+// package can be restructured into multiple files per.
 //
 // Tracked: https://github.com/swiftlang/swift/issues/86669
 ```
@@ -511,7 +511,7 @@ The Pattern Issue Submission methodology codifies these requirements. Following 
 This comment does four things:
 
 1. **Explains the "why"**: Future readers understand the single-file structure isn't a design choice
-2. **References the constraint**: [API-IMPL-005] violation is acknowledged
+2. **References the constraint**: violation is acknowledged
 3. **Provides exit criteria**: "When the compiler bug is fixed"
 4. **Links to tracking**: Issue URL for status checking
 
@@ -538,7 +538,7 @@ This transforms workarounds from technical debt into managed constraints with cl
 
 ## 2026-01-20: The Accessor Pattern Boundary [Package: swift-heap-primitives]
 
-*Context: Attempting to unify Heap API by replacing compound methods (`takeMin()`, `popMin()`) with accessor patterns (`heap.take.min`, `heap.pop.min()`) per [API-NAME-002].*
+*Context: Attempting to unify Heap API by replacing compound methods (`takeMin()`, `popMin()`) with accessor patterns (`heap.take.min`, `heap.pop.min()`) per.*
 
 ### The Fundamental Constraint
 
@@ -552,7 +552,7 @@ public struct Take {
 
 For a `~Copyable` container, this is impossible. The accessor struct needs to store the container, but storing a `~Copyable` value requires the accessor itself to be `~Copyable`. A `~Copyable` accessor defeats the purpose—accessors need to be freely passable as intermediate values.
 
-The [MEM-COPY-005] documentation predicted this exactly:
+The documentation predicted this exactly:
 
 > "Non-consuming nested accessor patterns are fundamentally incompatible with `~Copyable` containers. The accessor struct must store a reference to the container, which requires copying—impossible for `~Copyable` types."
 
@@ -570,7 +570,7 @@ Even with class-based storage, the struct itself is `~Copyable` to support `~Cop
 
 ### The Documentation Consultation Failure
 
-The documentation already contained the answer. [MEM-COPY-005] explicitly describes this limitation with a decision table:
+The documentation already contained the answer. explicitly describes this limitation with a decision table:
 
 | Form | Ownership | ~Copyable Compatible |
 |------|-----------|---------------------|
@@ -583,7 +583,7 @@ The session spent significant effort implementing, debugging, and analyzing comp
 
 ### The Decision: Accept Compound Methods
 
-For `~Copyable` containers, compound methods (`takeMin()`, `popMin()`) remain the correct pattern. This violates [API-NAME-002] (no compound identifiers), but [MEM-COPY-005] provides the exception:
+For `~Copyable` containers, compound methods (`takeMin()`, `popMin()`) remain the correct pattern. This violates (no compound identifiers), but provides the exception:
 
 > "For `~Copyable` containers requiring the nested accessor pattern, choose one:
 > 1. Keep container Copyable - Accept that ~Copyable elements aren't supported
@@ -608,7 +608,7 @@ The session followed this path:
 4. Hit compiler errors (cannot hold `~Copyable` container in Copyable struct)
 5. Attempted workarounds (swap-based mutation, shared storage)
 6. All workarounds failed
-7. Finally read [MEM-COPY-005]
+7. Finally read
 8. Found the exact limitation documented with explanation and alternatives
 
 Steps 2-6 were unnecessary. The documentation existed specifically to prevent this exploration.
@@ -626,7 +626,7 @@ These assumptions masked the fundamental constraint: the container struct's copy
 
 Before attempting to unify or standardize APIs across types with different constraint profiles:
 
-1. **Check [MEM-COPY-005]** for `~Copyable` container patterns
+1. **Check** for `~Copyable` container patterns
 2. **Identify the container's copyability**: Is it unconditionally `~Copyable`, conditionally `Copyable`, or always `Copyable`?
 3. **Match the API pattern to the constraint**: Accessor patterns for `Copyable` containers, direct methods for `~Copyable` containers
 
@@ -716,7 +716,7 @@ The error message effectively documents the constraint:
 
 > struct 'Bounded' has '~Copyable' constraint preventing 'Copyable' conformance
 
-This is the same insight as [MEM-COPY-005], expressed in compiler diagnostic form. Swift's error messages for ownership violations often contain the conceptual explanation alongside the technical failure.
+This is the same insight as, expressed in compiler diagnostic form. Swift's error messages for ownership violations often contain the conceptual explanation alongside the technical failure.
 
 ---
 
@@ -757,7 +757,7 @@ The `.swift.txt` extension is intentional. It preserves the exact failing code a
 
 ### The Incremental Construction Record
 
-The experiment documents the [EXP-004a] methodology even though it was applied mentally during debugging:
+The experiment documents the methodology even though it was applied mentally during debugging:
 
 | Variant | Configuration | Result |
 |---------|---------------|--------|
@@ -771,11 +771,9 @@ This table in `main.swift`'s header makes the investigation reproducible. Someon
 
 ## 2026-01-20: The Value of "Obvious" Experiments
 
-*Context: Creating an experiment for a limitation already documented in [MEM-COPY-005].*
+*Context: Creating an experiment for a limitation already documented in.*
 
-### When Documentation Isn't Enough
-
-[MEM-COPY-005] states the limitation clearly:
+### When Documentation Isn't Enough states the limitation clearly:
 
 > "Non-consuming nested accessor patterns are fundamentally incompatible with `~Copyable` containers."
 
@@ -783,7 +781,7 @@ Why create an experiment for something already documented? Because:
 
 1. **Documentation describes; experiments prove.** The document says it's impossible. The experiment shows *exactly why* with compiler output.
 
-2. **Documentation is trusted; experiments are verified.** If [MEM-COPY-005] contained an error, the experiment would reveal it.
+2. **Documentation is trusted; experiments are verified.** If contained an error, the experiment would reveal it.
 
 3. **Documentation is abstract; experiments are concrete.** The experiment shows the actual types, the actual error, the actual workaround.
 
@@ -806,7 +804,7 @@ This experiment tests one specific question: "Can the accessor pattern work with
 
 - Whether compound methods work (that's production code's job)
 - Whether `~Copyable` works in general (other experiments cover that)
-- Whether [MEM-COPY-005] is complete (it covers multiple patterns)
+- Whether is complete (it covers multiple patterns)
 
 Single-question experiments are more valuable than comprehensive ones. They're easier to understand, faster to run, and clearer when they fail.
 
@@ -824,11 +822,11 @@ The actual sequence was:
 2. Hit compiler errors
 3. Tried workarounds (swap-based mutation, shared storage)
 4. All failed
-5. Read [MEM-COPY-005]
+5. Read
 6. Accepted compound methods
 7. Created experiment to document finding
 
-The methodology ([EXP-001] through [EXP-011]) prescribes:
+The methodology ( through) prescribes:
 
 1. Hit uncertainty
 2. Create experiment
@@ -852,7 +850,7 @@ The difference is cost, not outcome. The finding is valid regardless of when it 
 
 Process exists to prevent wasted effort. Following it saves time. But not following it doesn't invalidate the result—it just means the result cost more to achieve.
 
-The reflection entries document both the finding AND the process deviation. Future work benefits from both: the technical insight (accessor patterns don't work for `~Copyable`) and the process insight (check [MEM-COPY-005] before attempting such changes).
+The reflection entries document both the finding AND the process deviation. Future work benefits from both: the technical insight (accessor patterns don't work for `~Copyable`) and the process insight (check before attempting such changes).
 
 ---
 
@@ -1318,7 +1316,7 @@ This suggests a language evolution direction: `~BitwiseCopyable` as explicit opt
 
 ## 2026-01-21: Experiment Discovery as Claim Verification
 
-*Context: Applying [EXP-015] Claim Verification methodology to validate the bitwisecopyable-analysis.md document.*
+*Context: Applying Claim Verification methodology to validate the bitwisecopyable-analysis.md document.*
 
 ### From Analysis to Evidence
 
@@ -1337,7 +1335,7 @@ Each claim became a code block that either compiles or doesn't. The experiment i
 
 The experiment outlives the analysis document. If a future Swift version changes BitwiseCopyable behavior—either fixing the issue or changing the error messages—the experiment will reveal it immediately. The analysis document might go stale; the experiment cannot lie.
 
-This reinforces the [EXP-015] methodology: testable claims deserve experiments, even when the claims seem obvious or are already documented. The experiment converts assertion into proof.
+This reinforces the methodology: testable claims deserve experiments, even when the claims seem obvious or are already documented. The experiment converts assertion into proof.
 
 ### The Negative Space Test
 
@@ -1407,7 +1405,7 @@ Both follow the same pattern. Both can share tag types. They're siblings in iden
 
 ### The Experiment That Proved It
 
-Per [EXP-015], the design was verified with a discovery experiment before implementation. The experiment tested whether a single-generic `Accessor<Base>` (without Tag) could discriminate operations. It cannot. When `Base` conforms to multiple protocols, all operations from all conformances appear on the accessor. Only `Tag ==` constraints enable compile-time operation discrimination.
+Per, the design was verified with a discovery experiment before implementation. The experiment tested whether a single-generic `Accessor<Base>` (without Tag) could discriminate operations. It cannot. When `Base` conforms to multiple protocols, all operations from all conformances appear on the accessor. Only `Tag ==` constraints enable compile-time operation discrimination.
 
 This experiment now serves as living documentation: anyone questioning why Tag is required can run the experiment and see the problem firsthand.
 
@@ -1456,11 +1454,11 @@ For typical accessor patterns, the namespace-as-tag approach is cleaner.
 
 *Context: Discovering that protocols CAN be nested directly in non-generic enums, eliminating the need for `__` hoisted protocols in many cases.*
 
-> **DOCUMENTATION AUDIT**: [API-NAME-001] describes hoisting with `__` prefix as the solution for protocol nesting. This needs updating: hoisting is only needed when the parent type is generic. Non-generic namespace enums can nest protocols directly.
+> **DOCUMENTATION AUDIT**: describes hoisting with `__` prefix as the solution for protocol nesting. This needs updating: hoisting is only needed when the parent type is generic. Non-generic namespace enums can nest protocols directly.
 
 ### The Cleaner Pattern
 
-The [API-NAME-001] pattern:
+The pattern:
 ```swift
 public protocol __InputAccessRandom: ... { ... }
 extension Input.Access {
@@ -1524,7 +1522,7 @@ The package is `identity-primitives` because both types are about **identity**�
 
 ## 2026-01-21: Experiment-Driven Architecture
 
-*Context: Using [EXP-015] Claim Verification to validate design assumptions before implementation.*
+*Context: Using Claim Verification to validate design assumptions before implementation.*
 
 ### The Methodology Applied
 
@@ -1563,9 +1561,9 @@ The experiment is checked in to `swift-identity-primitives/Experiments/`. It ser
 ### Documents Requiring Full Audit
 
 **Swift Institute (cross-cutting)**:
-- `API Naming.md` - [API-NAME-001] hoisting pattern needs conditional guidance
+- `API Naming.md` - hoisting pattern needs conditional guidance
 - `API Implementation.md` - Accessor pattern implementation guidance needed
-- `Memory Copyable.md` - [MEM-COPY-005] accessor limitations need updating with Accessor<Base, Tag> solution
+- `Memory Copyable.md` - accessor limitations need updating with Accessor<Base, Tag> solution
 - `Pattern Anti-Patterns.md` - Add anti-pattern: using nested Tag enum when namespace suffices
 
 **swift-primitives documentation**:
@@ -1654,7 +1652,7 @@ This principle eliminates safety qualifiers from method names entirely when the 
 
 ## 2026-01-21: Experiment Discovery for API Design Decisions
 
-*Context: Using [EXP-017] Improvement Discovery methodology to evaluate naming alternatives for Input protocol primitives.*
+*Context: Using Improvement Discovery methodology to evaluate naming alternatives for Input protocol primitives.*
 
 ### The Systematic Comparison
 
@@ -1797,7 +1795,7 @@ This suggests a maintenance pattern: when running full tier verification (as don
 
 The version bump from 1.0.0 to 2.0.0 reflected the scope of change: nine tiers became sixteen, all package assignments were re-verified, and new sections were added. This wasn't a typo fix or clarification—it was structural revision.
 
-Applying semver to documentation is unusual but valuable for normative documents. Other documents reference [PRIM-ARCH-001]; a major version signals "re-read this, the model changed."
+Applying semver to documentation is unusual but valuable for normative documents. Other documents reference; a major version signals "re-read this, the model changed."
 
 ### The Signal to Consumers
 
@@ -1992,7 +1990,7 @@ The asymmetry is jarring. Both are packed bit containers; their names should ref
 - `Array<Bit>.Packed` — packed bit array
 - `Set<Bit>.Packed` — packed bit set
 
-The new naming follows [API-NAME-003]: types implementing the same concept for different container semantics should mirror each other's structure.
+The new naming follows: types implementing the same concept for different container semantics should mirror each other's structure.
 
 ### The Implementation Pattern
 
@@ -2131,7 +2129,7 @@ The distinction mirrors `Array.removeAll(keepingCapacity:)` but split into two m
 
 ### The Naming Convention
 
-Both are single-word methods per [API-NAME-002]. The names communicate:
+Both are single-word methods per. The names communicate:
 - `clear`: thorough, complete reset (returns to initial state)
 - `removeAll`: removes elements, might preserve structure
 
@@ -2181,7 +2179,7 @@ This means SDG edges answer a different question than IDG edges:
 - **IDG**: "What does this package currently use?"
 - **SDG**: "What would this package need if it fully realized its semantic purpose?"
 
-A lateral SDG edge is a signal, not a violation. It indicates the package's current tier is temporary—it will rise when implementation catches up to intent. The [SEM-DEP-005] review process should treat lateral SDG edges as tier placement predictions, not errors.
+A lateral SDG edge is a signal, not a violation. It indicates the package's current tier is temporary—it will rise when implementation catches up to intent. The review process should treat lateral SDG edges as tier placement predictions, not errors.
 
 ---
 

@@ -15,7 +15,7 @@ This document defines the *issue submission workflow*—the process followed aft
 **Prerequisites**:
 1. Completed experiment per [Experiment](../Experiments/Experiment.md)
 2. Verified the behavior is not documented/expected
-3. Reduced the reproduction to minimal form per [EXP-004]
+3. Reduced the reproduction to minimal form per
 
 **Output**: A standalone GitHub repository containing a minimal reproduction, comprehensive README, and inline documentation suitable for a Swift compiler issue report.
 
@@ -43,8 +43,6 @@ An experiment result of `REFUTED` indicates that the original hypothesis ("this 
 | Regression from previous version | ✓ (high priority) | |
 | Affects multiple Swift Institute packages | ✓ (note in impact) | |
 
-**Cross-references**: [EXP-001] (Pattern Experiment Investigation.md), [EXP-006] (Pattern Experiment.md)
-
 ---
 
 ## Assistant-Driven Workflow
@@ -63,11 +61,11 @@ An experiment result of `REFUTED` indicates that the original hypothesis ("this 
    - Swift version and environment
 
 2. **Draft the issue package**:
-   - Generate repository name per [ISSUE-001]
-   - Create Package.swift per [ISSUE-003]
-   - Create source file(s) with inline documentation per [ISSUE-004]
-   - Create README.md per [ISSUE-005]
-   - Create test target if runtime bug per [ISSUE-006]
+   - Generate repository name per
+   - Create Package.swift per
+   - Create source file(s) with inline documentation per
+   - Create README.md per
+   - Create test target if runtime bug per
 
 3. **Present for review**:
    - Display the complete package structure
@@ -179,11 +177,9 @@ The workflow MUST abort and request clarification if:
 - Repository name already exists
 - Duplicate issue found (offer to comment on existing instead)
 
-**Cross-references**: [ISSUE-008], [ISSUE-009]
-
 ---
 
-## [ISSUE-001] Repository Location and Naming
+## Repository Location and Naming
 
 **Scope**: Where to create issue packages and how to name them.
 
@@ -238,11 +234,9 @@ Once an issue repository is linked from a Swift issue, the repository name MUST 
 
 **Rationale**: Consistent location and naming enables discovery, links to GitHub issues, and distinguishes issue reproductions from internal experiments. Renaming breaks links from Swift issues.
 
-**Cross-references**: [ISSUE-002], [ISSUE-003], [ISSUE-008]
-
 ---
 
-## [ISSUE-002] Package Structure
+## Package Structure
 
 **Scope**: Required files and directory layout for issue packages.
 
@@ -317,11 +311,9 @@ swift-issue-{name}/
 
 **Rationale**: Minimal structure isolates the bug. Multi-module structure when the bug involves cross-module semantics; cross-package when SPM resolution is involved.
 
-**Cross-references**: [ISSUE-001], [ISSUE-003]
-
 ---
 
-## [ISSUE-003] Package.swift Template
+## Package.swift Template
 
 **Scope**: Standard Package.swift content for issue packages.
 
@@ -432,11 +424,9 @@ If the bug reproduces only on a specific Swift version or snapshot, the Package.
 
 **Rationale**: Minimal Package.swift makes it clear what is required to trigger the bug vs. what is incidental. Version-specific bugs need version-specific manifests.
 
-**Cross-references**: [ISSUE-002], [EXP-003a] (Pattern Experiment.md)
-
 ---
 
-## [ISSUE-004] Source File Documentation
+## Source File Documentation
 
 **Scope**: Required inline documentation in source files.
 
@@ -500,11 +490,9 @@ For reproductions under 10 lines, the documentation MAY be abbreviated, provided
 
 **Rationale**: Inline documentation makes the reproduction self-contained. Anyone reading the source file understands the bug without needing the README. However, ritualistic verbosity should not outweigh the code itself.
 
-**Cross-references**: [ISSUE-005], [EXP-003b] (Pattern Experiment.md)
-
 ---
 
-## [ISSUE-004a] Source File Example: Compiler Crash
+## Source File Example: Compiler Crash
 
 **Scope**: Example source file for compiler crash bugs.
 
@@ -563,11 +551,9 @@ public enum CopyableBox<T: ~Copyable> {
 }
 ```
 
-**Cross-references**: [ISSUE-004], [ISSUE-007]
-
 ---
 
-## [ISSUE-004b] Source File Example: Runtime Bug
+## Source File Example: Runtime Bug
 
 **Scope**: Example source file for runtime behavior bugs.
 
@@ -613,11 +599,9 @@ public struct ContainerLiteral<Element: ~Copyable>: ~Copyable {
 }
 ```
 
-**Cross-references**: [ISSUE-004], [ISSUE-006]
-
 ---
 
-## [ISSUE-005] README.md Structure
+## README.md Structure
 
 **Scope**: Required README structure for issue packages.
 
@@ -640,11 +624,9 @@ public struct ContainerLiteral<Element: ~Copyable>: ~Copyable {
 
 **Rationale**: Standardized README enables efficient triage. The Swift team can quickly understand severity, reproduce, and locate the bug in the compiler.
 
-**Cross-references**: [ISSUE-004], [ISSUE-005a]
-
 ---
 
-## [ISSUE-005a] README.md Template
+## README.md Template
 
 **Scope**: Complete README template for issue packages.
 
@@ -748,11 +730,9 @@ The compiler crashes sometimes.
 Run swift build.
 ````
 
-**Cross-references**: [ISSUE-005], [ISSUE-004]
-
 ---
 
-## [ISSUE-006] Test Target (Runtime Bugs)
+## Test Target (Runtime Bugs)
 
 **Scope**: When and how to include test targets.
 
@@ -852,11 +832,9 @@ func buggyCase() {
 
 **Rationale**: Tests make runtime bugs reproducible and verifiable. Clear naming identifies which test demonstrates the bug vs which are controls. CI-friendly assertions prevent infrastructure issues during investigation.
 
-**Cross-references**: [ISSUE-002], [ISSUE-004b]
-
 ---
 
-## [ISSUE-007] Reduction Requirements
+## Reduction Requirements
 
 **Scope**: Standards for code minimization in issue packages.
 
@@ -925,11 +903,9 @@ public enum Box<T>: Boxable {  // ❌ Unnecessary conformance
 
 **Rationale**: Minimal reproductions isolate the bug precisely, making it easier for the Swift team to identify and fix the root cause.
 
-**Cross-references**: [EXP-004] (Pattern Experiment Investigation.md), [ISSUE-004]
-
 ---
 
-## [ISSUE-008] Git and GitHub Workflow
+## Git and GitHub Workflow
 
 **Scope**: Version control and repository setup.
 
@@ -1003,11 +979,9 @@ git commit --amend             # ❌ After issue is filed
 
 **Rationale**: GitHub repositories provide stable URLs for issue reports and enable Swift team members to clone and reproduce directly. Force-pushes and history rewrites break references during investigation.
 
-**Cross-references**: [ISSUE-001], [ISSUE-005]
-
 ---
 
-## [ISSUE-009] Issue Filing Checklist
+## Issue Filing Checklist
 
 **Scope**: Pre-submission verification.
 
@@ -1061,8 +1035,6 @@ Help needed with typed throws   # ❌ Sounds like question, not bug report
 
 **Rationale**: Complete verification prevents duplicate filings and ensures the Swift team can reproduce without follow-up questions.
 
-**Cross-references**: [ISSUE-005], [ISSUE-007]
-
 ---
 
 ## Issue Submission Workflow Summary
@@ -1075,7 +1047,7 @@ Help needed with typed throws   # ❌ Sounds like question, not bug report
                     PHASE 1: PREPARATION
                     ════════════════════
 
-1. PREREQUISITE: Experiment completed [EXP-006]
+1. PREREQUISITE: Experiment completed
    │
    ├─ Result: REFUTED or unexpected behavior
    ├─ Verified: Not documented/expected behavior
@@ -1131,7 +1103,7 @@ Help needed with typed throws   # ❌ Sounds like question, not bug report
                     ═══════════════════
                                             │
                                             ▼
-5. CREATE REPOSITORY [ISSUE-008]
+5. CREATE REPOSITORY
    │
    ├─ mkdir /Users/coen/Developer/coenttb/swift-issue-{name}
    ├─ Write all files
@@ -1162,7 +1134,7 @@ Help needed with typed throws   # ❌ Sounds like question, not bug report
    └─ Body: README content + repo link
                                             │
                                             ▼
-8. UPDATE README [ISSUE-008]
+8. UPDATE README
    │
    ├─ Add "Filed as swiftlang/swift#{number}"
    └─ git commit && git push

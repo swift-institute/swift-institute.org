@@ -41,7 +41,7 @@ The requirements serve three interconnected purposes:
 
 ---
 
-### [CONTRIB-001] Layer Decision Tree
+### Layer Decision Tree
 
 **Scope**: Determining where a contribution belongs.
 
@@ -77,8 +77,6 @@ Is it a type that standards require but do not define?
 
 **Rationale**: Starting at the lowest applicable layer ensures maximum reusability and prevents coupling to higher-level concerns.
 
-**Cross-references**: [CONTRIB-002], <doc:API-Requirements> [API-LAYER-001], <doc:Ecosystem-Process#ECO-EXTR-002>
-
 ---
 
 ## Contribution Workflow
@@ -89,7 +87,7 @@ Is it a type that standards require but do not define?
 
 ---
 
-### [CONTRIB-002] Fork and Clone
+### Fork and Clone
 
 **Scope**: Initial repository setup.
 
@@ -113,11 +111,9 @@ git clone https://github.com/swift-institute/swift-primitives.git
 
 **Rationale**: Verifying the build environment before changes ensures issues are attributable to new code, not environment problems.
 
-**Cross-references**: [CONTRIB-003]
-
 ---
 
-### [CONTRIB-003] Feature Branch Creation
+### Feature Branch Creation
 
 **Scope**: Branch management.
 
@@ -140,24 +136,22 @@ git checkout -b wip
 
 **Rationale**: Descriptive branch names communicate intent and simplify code review and git history navigation.
 
-**Cross-references**: [CONTRIB-002], [CONTRIB-005]
-
 ---
 
-### [CONTRIB-004] Implementation Requirements
+### Implementation Requirements
 
 **Scope**: All code changes.
 
-**Statement**: All implementations MUST follow the requirements in <doc:API-Requirements>, <doc:Documentation-Requirements>, and <doc:Testing-Requirements>.
+**Statement**: All implementations MUST follow the requirements in <doc:API-Requirements>, <doc:Documentation-Standards>, and <doc:Testing-Requirements>.
 
 Key requirements summary:
 
 | Requirement | Layer | Reference |
 |-------------|-------|-----------|
-| No Foundation types | primitives, standards | [API-LAYER-001] |
-| All public API documented | all | [DOC-001] |
-| All public API tested | all | [TEST-001] |
-| Typed errors only | all | [API-ERR-001] |
+| No Foundation types | primitives, standards | |
+| All public API documented | all | |
+| All public API tested | all | |
+| Typed errors only | all | |
 
 **Correct**:
 ```swift
@@ -189,11 +183,9 @@ public struct Angle {
 
 **Rationale**: Consistent adherence to requirements ensures interoperability across the 61+ package ecosystem.
 
-**Cross-references**: <doc:API-Requirements>, <doc:Documentation-Requirements>, <doc:Testing-Requirements>
-
 ---
 
-### [CONTRIB-005] Local Testing
+### Local Testing
 
 **Scope**: Pre-submission verification.
 
@@ -219,11 +211,9 @@ swift test --filter SomeSpecificTest
 
 **Rationale**: Local test execution catches regressions before CI and reduces review iteration cycles.
 
-**Cross-references**: [CONTRIB-006], <doc:Testing-Requirements>
-
 ---
 
-### [CONTRIB-006] Pull Request Submission
+### Pull Request Submission
 
 **Scope**: Pull request content and format.
 
@@ -254,8 +244,6 @@ Fixed stuff
 
 **Rationale**: Detailed pull request descriptions enable efficient review and create valuable documentation for future maintainers.
 
-**Cross-references**: [CONTRIB-005]
-
 ---
 
 ## Commit Practices
@@ -266,7 +254,7 @@ Fixed stuff
 
 ---
 
-### [CONTRIB-007] Selective Staging for Focused Commits
+### Selective Staging for Focused Commits
 
 **Scope**: Staging changes for commit.
 
@@ -295,11 +283,9 @@ Selective staging is documentation through git. Future readers (and bisectors) b
 
 **Rationale**: Focused commits create a navigable history. When debugging, `git bisect` works best when each commit represents a single logical change.
 
-**Cross-references**: [CONTRIB-008]
-
 ---
 
-### [CONTRIB-008] Commit Message Contracts
+### Commit Message Contracts
 
 **Scope**: Commit message content.
 
@@ -332,11 +318,9 @@ git commit -m "Performance improvements"
 
 **Rationale**: Mechanisms matter for debugging. If a platform has issues, the commit message tells maintainers exactly where to investigate.
 
-**Cross-references**: [CONTRIB-007], [CONTRIB-009]
-
 ---
 
-### [CONTRIB-009] Multi-Package Commit Ordering
+### Multi-Package Commit Ordering
 
 **Scope**: Commits spanning multiple packages.
 
@@ -357,8 +341,6 @@ Platform primitives are architectural peers—they don't depend on each other. S
 
 **Rationale**: Following dependency order ensures the build remains valid at each commit point, supporting bisection and rollback.
 
-**Cross-references**: [CONTRIB-007], [CONTRIB-008], <doc:Primitives-Architecture>
-
 ---
 
 ## Topics
@@ -366,5 +348,5 @@ Platform primitives are architectural peers—they don't depend on each other. S
 ### Requirements
 
 - <doc:API-Requirements>
-- <doc:Documentation-Requirements>
+- <doc:Documentation-Standards>
 - <doc:Testing-Requirements>

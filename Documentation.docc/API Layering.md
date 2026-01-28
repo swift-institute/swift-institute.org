@@ -16,7 +16,7 @@ This document defines layering requirements for package and target organization.
 
 ---
 
-## [API-LAYER-001] Explicit Target Layers
+## Explicit Target Layers
 
 **Scope**: Package and target organization.
 
@@ -49,11 +49,9 @@ Typical shape:
 
 **Rationale**: Layered architecture enables testing at each level, platform portability, and clear dependency boundaries.
 
-**Cross-references**: [API-LAYER-002], <doc:Five-Layer-Architecture>
-
 ---
 
-## [API-LAYER-002] Responsibility Separation
+## Responsibility Separation
 
 **Scope**: Layer boundaries.
 
@@ -65,8 +63,6 @@ Higher layers are the only place where:
 - Backpressure and retry policy are applied
 
 **Rationale**: Separation ensures lower layers remain testable and reusable across different runtime contexts.
-
-**Cross-references**: [API-LAYER-001], [API-ERR-002]
 
 ---
 
@@ -100,8 +96,6 @@ When designing a new target or package, verify:
   - Defined behavior for late events (drop)
 
 **Rationale**: Centralized platform selection enables consistent behavior and easier testing.
-
-**Cross-references**: [API-LAYER-001], [PATTERN-004]
 
 ---
 

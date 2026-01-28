@@ -38,7 +38,7 @@ This document defines the error handling requirements for Swift Institute packag
 
 ---
 
-### [API-ERR-001] Typed Throws Everywhere
+### Typed Throws Everywhere
 
 **Scope**: All throwing functions.
 
@@ -65,11 +65,9 @@ func submit() throws(any Error)  // ❌ Existential error
 
 **Rationale**: Typed throws enable exhaustive error handling and prevent error type erasure.
 
-**Cross-references**: [API-ERR-003], [API-ERR-004], [API-ERR-008]
-
 ---
 
-### [API-ERR-002] Lifecycle Precedence Rules
+### Lifecycle Precedence Rules
 
 **Scope**: Operations with multiple lifecycle conditions.
 
@@ -83,11 +81,9 @@ Precedence MUST be enforced at the final resumption boundary.
 
 **Rationale**: Consistent precedence prevents ambiguous error states and ensures predictable shutdown behavior.
 
-**Cross-references**: [API-LAYER-002], [API-CONC-004]
-
 ---
 
-### [API-ERR-003] Typed Continuation Pattern
+### Typed Continuation Pattern
 
 **Scope**: Async boundaries where Swift lacks typed throwing continuations.
 
@@ -122,11 +118,9 @@ Typed errors MUST be preserved by construction.
 
 **Rationale**: Preserves type information across async boundaries without runtime casting.
 
-**Cross-references**: [API-ERR-001]
-
 ---
 
-### [API-ERR-007] Typed Throws Closure Annotation
+### Typed Throws Closure Annotation
 
 **Scope**: Closures passed to methods that preserve typed errors.
 
@@ -195,11 +189,9 @@ The `body:` label (vs stdlib's unlabeled parameter) disambiguates the overload. 
 
 **Rationale**: Swift's type inference has limitations with nested generic closures. Explicit annotation ensures the compiler can trace error types through the call stack.
 
-**Cross-references**: [API-ERR-001], [API-ERR-003]
-
 ---
 
-### [API-ERR-003a] Typed Do Blocks Over Result Initializers
+### Typed Do Blocks Over Result Initializers
 
 **Scope**: Capturing typed throws in local scope without erasure.
 
@@ -239,8 +231,6 @@ The `throws(E)` annotation tells the compiler what error type to expect. The `ca
 
 The verbose `do throws(E) { } catch { }` is more honest than the terse `Result { }`.
 
-**Cross-references**: [API-ERR-001], [API-ERR-003]
-
 ---
 
 ## Error Types
@@ -249,7 +239,7 @@ The verbose `do throws(E) { } catch { }` is more honest than the terse `Result {
 
 ---
 
-### [API-ERR-004] No Stringly-Typed Errors
+### No Stringly-Typed Errors
 
 **Scope**: All error types.
 
@@ -273,11 +263,9 @@ struct IOError: Error {
 
 **Rationale**: Structured errors enable programmatic handling and pattern matching.
 
-**Cross-references**: [API-ERR-001]
-
 ---
 
-### [API-ERR-009] Swift.Error Qualification in Nested Contexts
+### Swift.Error Qualification in Nested Contexts
 
 **Scope**: Generic error constraints inside type extensions with nested Error types.
 
@@ -333,8 +321,6 @@ public func makeUUID<E: Error>(
 
 **Rationale**: Swift's name resolution prefers nested types over stdlib types. Explicit qualification prevents subtle compilation errors when your type has a nested `Error`.
 
-**Cross-references**: [API-ERR-001], [API-NAME-001]
-
 ---
 
 ## Move-Only Boundaries
@@ -343,7 +329,7 @@ public func makeUUID<E: Error>(
 
 ---
 
-### [API-ERR-005] Move-Only Values and Error Boundaries
+### Move-Only Values and Error Boundaries
 
 **Scope**: APIs involving `~Copyable` types.
 
@@ -360,13 +346,11 @@ This rule is non-negotiable.
 
 **Rationale**: Prevents accidental loss of move-only resources when errors are thrown.
 
-> **Related guidance**: See <doc:Memory> section [MEM-COPY-002] for comprehensive ~Copyable and error handling patterns.
-
-**Cross-references**: [API-ERR-006], <doc:Memory>
+> **Related guidance**: See <doc:Memory> for comprehensive ~Copyable and error handling patterns.
 
 ---
 
-### [API-ERR-006] Token-Preserving Operation Pattern
+### Token-Preserving Operation Pattern
 
 **Scope**: Operations that consume a move-only token and may fail.
 
@@ -402,8 +386,6 @@ Token fabrication is forbidden.
 
 **Rationale**: Ensures move-only resources are never lost, maintaining typestate invariants.
 
-**Cross-references**: [API-ERR-005], <doc:Memory>
-
 ---
 
 ## Language Semantics
@@ -412,7 +394,7 @@ Token fabrication is forbidden.
 
 ---
 
-### [API-ERR-008] Language Semantics Over Naming Conventions
+### Language Semantics Over Naming Conventions
 
 **Scope**: All API naming.
 
@@ -437,7 +419,7 @@ func first() -> Element?
 // Asynchrony via async
 func fetch() async throws(Network.Error) -> Response
 
-// Unchecked via marker parameter (see [API-IMPL-003])
+// Unchecked via marker parameter
 init(__unchecked: Void, _ index: Int)
 
 // Unsafe via @unsafe attribute and unsafe keyword (Swift 6.2+)
@@ -494,8 +476,6 @@ This rule applies universally:
 - Language constructs are enforced by the compiler; names are not
 - Call sites read naturally: `try foo()` not `tryFoo()`
 - Autocomplete and documentation reflect actual behavior
-
-**Cross-references**: [API-ERR-001], [API-IMPL-001], [API-IMPL-003]
 
 ---
 

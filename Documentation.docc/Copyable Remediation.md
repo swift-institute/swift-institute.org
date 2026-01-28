@@ -13,7 +13,7 @@ This document defines the *remediation workflow* for identifying and resolving ~
 **Entry point**: A package fails to compile with `type 'X' does not conform to protocol 'Copyable'`, or you want to proactively ensure proper ~Copyable support.
 
 **Prerequisites**:
-1. Read <doc:Memory-Copyable> for constraint propagation rules [MEM-COPY-004] through [MEM-COPY-006]
+1. Read <doc:Memory-Copyable> for constraint propagation rules through
 2. Understand the six categories of propagation failure
 
 **Canonical references**:
@@ -32,16 +32,14 @@ This document defines the *remediation workflow* for identifying and resolving ~
 
 | Error Message / Symptom | Likely Category | Remediation Rule |
 |------------------------|-----------------|------------------|
-| `type 'Element' does not conform to protocol 'Copyable'` | 2, 3, or 5 | [COPY-FIX-003], [COPY-FIX-004] |
-| Error appears only during `swift build` (not in IDE) | 5 | [COPY-FIX-006] |
-| Error appears after adding `Sequence` conformance | 3 or 4 | [COPY-FIX-005] |
-| Nested type fails with ~Copyable constraint | 1 | [COPY-FIX-002] |
-| Extension methods unavailable for ~Copyable elements | 2 | [COPY-FIX-003] |
-| `ManagedBuffer` subclass fails in nested type | 1 | [COPY-FIX-002] |
-| **~Copyable element deinit NOT called** (memory leak) | Runtime bug | [COPY-FIX-009] |
-| `InlineArray<capacity, ...>` with value generic | Runtime bug | [COPY-FIX-009] |
-
-**Cross-references**: [MEM-COPY-006] (Memory Copyable.md)
+| `type 'Element' does not conform to protocol 'Copyable'` | 2, 3, or 5 | |
+| Error appears only during `swift build` (not in IDE) | 5 | |
+| Error appears after adding `Sequence` conformance | 3 or 4 | |
+| Nested type fails with ~Copyable constraint | 1 | |
+| Extension methods unavailable for ~Copyable elements | 2 | |
+| `ManagedBuffer` subclass fails in nested type | 1 | |
+| **~Copyable element deinit NOT called** (memory leak) | Runtime bug | |
+| `InlineArray<capacity, ...>` with value generic | Runtime bug | |
 
 **Research documents**:
 - `Noncopyable Generics Constraint Propagation.md` — Full research paper on constraint poisoning
@@ -51,7 +49,7 @@ This document defines the *remediation workflow* for identifying and resolving ~
 
 ---
 
-## [COPY-REM-001] Remediation Triggers
+## Remediation Triggers
 
 **Scope**: Conditions that warrant applying this workflow.
 
@@ -69,11 +67,9 @@ This document defines the *remediation workflow* for identifying and resolving ~
 
 **Rationale**: Proactive application of this workflow prevents constraint poisoning issues from being introduced. Reactive application after build failures ensures systematic diagnosis rather than ad-hoc fixes.
 
-**Cross-references**: [EXP-012] (Experiment Discovery.md)
-
 ---
 
-## [COPY-REM-002] Pre-Audit Checklist
+## Pre-Audit Checklist
 
 **Scope**: Information to gather before starting remediation.
 
@@ -118,13 +114,11 @@ File Organization:
 
 **Rationale**: Understanding the full architecture before making changes prevents introducing new issues while fixing existing ones.
 
-**Cross-references**: [EXP-013] (Experiment Discovery.md)
-
 ---
 
 ## Remediation Rules
 
-### [COPY-FIX-001] Nesting Level Principle
+### Nesting Level Principle
 
 **Scope**: Fundamental architecture rule for ~Copyable constraint propagation.
 
@@ -182,11 +176,9 @@ public struct Stack<Element: ~Copyable>: ~Copyable {
 
 **Rationale**: This is the fundamental constraint of Swift's ~Copyable generics. The compiler does not propagate `~Copyable` suppression across nesting boundaries.
 
-**Cross-references**: [MEM-COPY-006] Category 1
-
 ---
 
-### [COPY-FIX-002] Nested Type Declaration Site
+### Nested Type Declaration Site
 
 **Scope**: Where to declare nested types that use the outer type's generic parameter.
 
@@ -238,11 +230,9 @@ extension Container {
 
 **Rationale**: The Swift compiler establishes constraint contexts at type declaration boundaries. When a nested type is declared inside the main type body, it inherits the enclosing generic context. Extensions create separate constraint contexts that do not automatically inherit `~Copyable` suppressions.
 
-**Cross-references**: [MEM-COPY-006] Category 1
-
 ---
 
-### [COPY-FIX-003] Extension Constraint Requirement
+### Extension Constraint Requirement
 
 **Scope**: All extensions on types with `~Copyable` generic parameters.
 
@@ -288,7 +278,7 @@ This rule applies to everything declared in extensions:
 - Methods
 - Computed properties
 - **Typealiases** (commonly overlooked)
-- Nested types (but prefer body declaration per [COPY-FIX-002])
+- Nested types (but prefer body declaration per)
 
 ```swift
 // WRONG: Typealias with implicit Copyable constraint
@@ -304,11 +294,9 @@ extension Container where Element: ~Copyable {
 
 **Rationale**: Per SE-0427, "Plain extensions default to being constrained to types where generic parameters are Copyable." This implicit constraint causes methods and members to silently become unavailable for `~Copyable` elements. Explicit constraints make the API contract visible and intentional.
 
-**Cross-references**: [MEM-COPY-004], [MEM-COPY-006] Category 2
-
 ---
 
-### [COPY-FIX-004] Conditional Conformance Placement
+### Conditional Conformance Placement
 
 **Scope**: Where to declare conditional `Copyable` and protocol conformances.
 
@@ -370,19 +358,17 @@ Package/
 │       └── exports.swift
 ```
 
-See [MEM-COPY-006] Category 6 for details.
+See Category 6 for details.
 
 **Rationale**: The Swift compiler's constraint solver processes all extensions in a module together. When it sees both a stored property using `Element` and a conformance requiring `Element: Copyable`, it propagates the `Copyable` requirement backwards to the stored property—causing "poisoning." Same-file placement allows careful ordering; module boundaries create separate compilation units that prevent cross-propagation.
 
-**Cross-references**: [MEM-COPY-006] Categories 3, 5, 6
-
 ---
 
-### [COPY-FIX-005] Protocol Conformance Strategy
+### Protocol Conformance Strategy
 
 **Scope**: Conforming to `Sequence`, `Collection`, and custom protocols.
 
-**Statement**: Protocol conformances that require `Copyable` (like `Swift.Sequence`) MUST be conditional on `Element: Copyable` and placed per [COPY-FIX-004].
+**Statement**: Protocol conformances that require `Copyable` (like `Swift.Sequence`) MUST be conditional on `Element: Copyable` and placed per.
 
 ### Swift.Sequence/Collection Limitation
 
@@ -434,16 +420,14 @@ public protocol `Protocol`: ~Copyable {
 
 1. **Check** if `Sequence`/`Collection` conformance exists
 2. **Add** `where Element: Copyable` constraint if missing
-3. **Move** conformance to type definition file per [COPY-FIX-004]
+3. **Move** conformance to type definition file per
 4. **Consider** custom protocols for ~Copyable element iteration
 
 **Rationale**: Swift's standard library `Sequence` and `Collection` protocols predate noncopyable types and implicitly require `Self: Copyable`. Until these protocols are updated (pending Swift Evolution), containers supporting ~Copyable elements cannot unconditionally conform. Conditional conformance provides the best of both worlds: standard iteration for copyable elements, custom patterns for noncopyable.
 
-**Cross-references**: [MEM-COPY-006] Category 4
-
 ---
 
-### [COPY-FIX-006] Multi-File Emit-Module Bug
+### Multi-File Emit-Module Bug
 
 **Scope**: Errors that appear only during `swift build` with library targets.
 
@@ -490,7 +474,7 @@ Sources/Stack Primitives/
 
 ```swift
 // NOTE: All extensions consolidated into single file due to Swift compiler
-// emit-module phase bug. See [MEM-COPY-006] Category 5.
+// emit-module phase bug. See Category 5.
 // Tracking: Swift issue #86669
 ```
 
@@ -509,11 +493,9 @@ extension Container where Element: ~Copyable {
 
 **Rationale**: The Swift compiler's `-emit-module` phase processes files differently than type-checking. When all six trigger conditions are present, the compiler loses track of the `~Copyable` suppression during module serialization. This is a confirmed compiler bug (#86669), not intended behavior. Consolidation into a single file is a workaround until the bug is fixed.
 
-**Cross-references**: [MEM-COPY-006] Category 5
-
 ---
 
-### [COPY-FIX-007] Copy-on-Write Implementation
+### Copy-on-Write Implementation
 
 **Scope**: Implementing CoW for types that are conditionally `Copyable`.
 
@@ -590,11 +572,9 @@ extension Stack where Element: Copyable {
 
 **Rationale**: When `Element: Copyable`, the container itself becomes `Copyable` and supports value semantics. Users expect that copying a container creates an independent copy. Without CoW, mutations to one copy affect all copies sharing the same storage. The ~Copyable variant doesn't need CoW because move-only types cannot be copied—each instance owns its storage uniquely.
 
-**Cross-references**: [MEM-COPY-004]
-
 ---
 
-### [COPY-FIX-008] Sendable Conformance
+### Sendable Conformance
 
 **Scope**: Conditional `Sendable` conformance for ~Copyable types.
 
@@ -635,11 +615,9 @@ extension Stack: @unchecked Sendable where Element: Sendable {}
 
 **Rationale**: `Sendable` and `Copyable` are orthogonal properties. A type can be safely shared across concurrency domains (`Sendable`) regardless of whether it can be copied (`Copyable`). Tying `Sendable` to `Copyable` would prevent move-only thread-safe types from being used in concurrent contexts—an unnecessary restriction.
 
-**Cross-references**: <doc:Memory-Sendable>
-
 ---
 
-### [COPY-FIX-009] InlineArray + Value Generic Deinit Bug
+### InlineArray + Value Generic Deinit Bug
 
 **Scope**: ~Copyable structs using `InlineArray` with value generic capacity parameters.
 
@@ -742,11 +720,9 @@ struct Container<Element: ~Copyable, let capacity: Int>: ~Copyable {
 
 **Rationale**: The Swift compiler generates different deinit dispatch code paths depending on whether a struct contains reference types. When a struct has only value-type properties and uses `InlineArray` with a value generic parameter, the compiler takes a fast path that fails to properly dispatch to the custom deinit for cross-module `~Copyable` elements. Adding any reference type property forces the compiler to use the correct, slower deinit path.
 
-**Cross-references**: [MEM-COPY-001]
-
 ---
 
-### [COPY-FIX-010] Module Boundary Solution
+### Module Boundary Solution
 
 **Scope**: Enabling conditional `Sequence`/`Collection` conformances without constraint poisoning.
 
@@ -826,8 +802,6 @@ extension Container: Sequence where Element: Copyable { }
 
 **Rationale**: The Swift compiler processes all files in a module together, allowing constraint propagation between files. By placing the type definition and conditional conformances in separate SPM targets (modules), each target compiles independently. When the Sequence module compiles, the Core module is already a compiled `.swiftmodule`—the constraint solver cannot propagate requirements backwards across the module boundary.
 
-**Cross-references**: [MEM-COPY-006] Category 6, [COPY-FIX-004]
-
 ---
 
 ## Remediation Workflow
@@ -845,7 +819,7 @@ extension Container: Sequence where Element: Copyable { }
    └─ Note all 'does not conform to Copyable' errors
                                             │
                                             ▼
-2. COMPLETE PRE-AUDIT CHECKLIST [COPY-REM-002]
+2. COMPLETE PRE-AUDIT CHECKLIST
    │
    ├─ List all generic types with ~Copyable
    ├─ Map nesting hierarchy
@@ -867,22 +841,22 @@ extension Container: Sequence where Element: Copyable { }
 │               PHASE 2: ARCHITECTURE FIXES                    │
 └─────────────────────────────────────────────────────────────┘
 
-4. FIX NESTING LEVEL ISSUES [COPY-FIX-001]
+4. FIX NESTING LEVEL ISSUES
    │
    ├─ Move Storage classes to Level 0
    └─ Update references in nested types
 
-5. FIX DECLARATION SITE ISSUES [COPY-FIX-002]
+5. FIX DECLARATION SITE ISSUES
    │
    ├─ Move nested types from extensions to body
    └─ Keep only methods in extensions
 
-6. ADD EXTENSION CONSTRAINTS [COPY-FIX-003]
+6. ADD EXTENSION CONSTRAINTS
    │
    ├─ Add `where Element: ~Copyable` to all base extensions
    └─ Verify typealiases have proper constraints
 
-7. CONSOLIDATE CONDITIONAL CONFORMANCES [COPY-FIX-004]
+7. CONSOLIDATE CONDITIONAL CONFORMANCES
    │
    ├─ Move all conditional conformances to type file
    └─ Or split into separate SPM modules
@@ -912,14 +886,14 @@ extension Container: Sequence where Element: Copyable { }
 
 11. DOCUMENT WORKAROUNDS
     │
-    └─ Add comments per [PATTERN-016] for any compiler bugs
+    └─ Add comments per for any compiler bugs
 ```
 
 ---
 
 ## Verification Tests
 
-### [COPY-TEST-001] ~Copyable Element Test
+### ~Copyable Element Test
 
 **Scope**: Verifying the type works with ~Copyable elements.
 
@@ -943,7 +917,7 @@ func noncopyableElements() {
 }
 ```
 
-### [COPY-TEST-002] Conditional Copyable Test
+### Conditional Copyable Test
 
 **Scope**: Verifying conditional Copyable conformance works.
 
@@ -967,7 +941,7 @@ func conditionalCopyable() {
 }
 ```
 
-### [COPY-TEST-003] Sequence Conformance Test
+### Sequence Conformance Test
 
 **Scope**: Verifying Sequence conformance works when Element: Copyable.
 
@@ -986,7 +960,7 @@ func sequenceConformance() {
 }
 ```
 
-### [COPY-TEST-004] Deinit Verification Test
+### Deinit Verification Test
 
 **Scope**: Verifying ~Copyable element deinitializers are called correctly.
 
@@ -1024,7 +998,7 @@ func inlineDeinitOrder() {
 }
 ```
 
-**Critical**: If `deinitOrder` is empty (`[]`), the [COPY-FIX-009] workaround is needed.
+**Critical**: If `deinitOrder` is empty (`[]`), the workaround is needed.
 
 ---
 

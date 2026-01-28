@@ -38,7 +38,7 @@ This document defines design validation requirements for Swift Institute package
 
 ---
 
-### [API-DESIGN-001] Subscript Syntax as Correct API for Type-Safe Containers
+### Subscript Syntax as Correct API for Type-Safe Containers
 
 **Scope**: APIs providing type-keyed access to values (dependency containers, heterogeneous storage).
 
@@ -99,8 +99,6 @@ The exercise of sketching "ideal" syntax maps each desire to a specific missing 
 
 **Rationale**: Proving an ergonomic desire is impossible within language constraints is as valuable as implementing it. The analysis prevents wasted effort exploring impossible paths and transforms the team's relationship to the API—there is no lingering sense that "we should find a better way." Design maturity includes knowing when to stop searching.
 
-**Cross-references**: [API-NAME-002], [FUTURE-006]
-
 ---
 
 ## Language Constraints
@@ -109,7 +107,7 @@ The exercise of sketching "ideal" syntax maps each desire to a specific missing 
 
 ---
 
-### [API-DESIGN-002] Simplify When Features Don't Compose
+### Simplify When Features Don't Compose
 
 **Scope**: API design decisions when Swift language features conflict.
 
@@ -154,11 +152,9 @@ extension Witness {
 
 **Rationale**: Elaborate workarounds add complexity, obscure intent, and create maintenance burden. Simplification often produces better APIs than the original design would have—constraints reveal over-specification.
 
-**Cross-references**: [API-EXC-001], [API-IMPL-004]
-
 ---
 
-### [API-DESIGN-003] Separate Policy from Storage
+### Separate Policy from Storage
 
 **Scope**: Types that store data and may behave differently in different contexts.
 
@@ -217,8 +213,6 @@ The same `Values` instance might be used in different contexts. A values contain
 
 **Rationale**: Storage types should be pure data. Policy types should interpret data. Mixing them creates subtle bugs when the same data crosses policy boundaries. Separation makes policy visible and data reusable.
 
-**Cross-references**: [API-IMPL-002], [API-IMPL-010], [PATTERN-020]
-
 ---
 
 ## Design Principles
@@ -227,7 +221,7 @@ The same `Values` instance might be used in different contexts. A values contain
 
 ---
 
-### [API-DESIGN-004] Empirical Measurement Resolves Design Debates
+### Empirical Measurement Resolves Design Debates
 
 **Scope**: Design decisions where multiple approaches have theoretical merit.
 
@@ -283,11 +277,9 @@ The measurement need not be perfect—a crude grep across the workspace often su
 
 **Rationale**: Theoretical arguments can continue indefinitely when both sides have valid points. Each position seems defensible on its own terms. Empirical measurement—even imperfect measurement—introduces data that can falsify premises. The grep takes 30 seconds; the ungrounded debate can take hours. This applies beyond API design to package organization, module boundaries, and abstraction choices.
 
-**Cross-references**: [API-DESIGN-001], [API-DESIGN-002], [API-DESIGN-005]
-
 ---
 
-### [API-DESIGN-005] Surface Hidden Premises Through Challenge
+### Surface Hidden Premises Through Challenge
 
 **Scope**: Design proposals with hierarchies, "primary types," or "canonical" designations.
 
@@ -339,7 +331,7 @@ For any proposed hierarchy or "primary type":
 1. **Identify the root claim**: What is being designated as primary/canonical/root?
 2. **State the premise explicitly**: "This design requires the premise that X is the canonical Y."
 3. **Test acceptance**: Would stakeholders accept that premise if stated directly?
-4. **Verify empirically**: Can the premise be measured? (See [API-DESIGN-004])
+4. **Verify empirically**: Can the premise be measured? (See)
 
 If the premise is controversial or empirically questionable, the hierarchy is suspect.
 
@@ -358,11 +350,9 @@ The disguise prevents scrutiny.
 
 **Rationale**: Monologic analysis rarely surfaces hidden premises—the designer has no incentive to articulate premises they implicitly accept. Adversarial challenge creates that incentive. Each challenge forces a more precise statement of the position. The final conclusion may not match where analysis started—but it will be *correct*, arrived at through iterative refinement under pressure.
 
-**Cross-references**: [API-DESIGN-004], [API-DESIGN-006]
-
 ---
 
-### [API-DESIGN-006] Matrix vs Tree Structure Test
+### Matrix vs Tree Structure Test
 
 **Scope**: Choosing between outer-generic patterns (`Container<T>`) and namespace patterns (`Namespace.Type`).
 
@@ -429,12 +419,10 @@ struct Reference<Value> {
 The outer-generic pattern (`Reference<T>`) implies a tree: one root, with variations branching from it. Using this pattern for a matrix forces picking a "canonical" cell to serve as root—even when no cell is naturally canonical. This creates:
 
 - Artificial hierarchy (Box appears more fundamental than Indirect)
-- Hidden premises (see [API-DESIGN-005])
+- Hidden premises
 - Misleading API ergonomics
 
 **Rationale**: Namespace patterns correctly represent matrices by treating types as peers. Outer-generic patterns correctly represent trees by establishing a primary type with variations. Mismatching pattern to structure creates artificial hierarchy and obscures the actual type relationships.
-
-**Cross-references**: [API-DESIGN-004], [API-DESIGN-005], [API-NAME-001]
 
 ---
 
@@ -444,7 +432,7 @@ The outer-generic pattern (`Reference<T>`) implies a tree: one root, with variat
 
 ---
 
-### [API-DESIGN-007] Adversarial Review as Design Mechanism
+### Adversarial Review as Design Mechanism
 
 **Scope**: Design review process for significant architectural decisions.
 
@@ -458,7 +446,7 @@ The outer-generic pattern (`Reference<T>`) implies a tree: one root, with variat
 | 2. Counterargument | Reviewer with different priors challenges |
 | 3. Premises exposed | Challenge forces articulation of hidden assumptions |
 | 4. Testability gained | Exposed premises become falsifiable claims |
-| 5. Verification | Claims can be measured (see [API-DESIGN-004]) |
+| 5. Verification | Claims can be measured |
 
 **Correct**:
 ```
@@ -507,11 +495,9 @@ The value of adversarial review is not that reviewers are smarter—it's that th
 
 **Rationale**: "Debate with yourself" advice fails because you cannot simultaneously hold competing optimization targets with equal weight. Genuine adversarial pressure requires a party who will actually push back. The resulting design may not match where analysis started—but it will be arrived at through iterative refinement under pressure, not persuasion.
 
-**Cross-references**: [API-DESIGN-004], [API-DESIGN-005], [API-DESIGN-006]
-
 ---
 
-### [API-DESIGN-008] Detecting Over-Engineering During Implementation
+### Detecting Over-Engineering During Implementation
 
 **Scope**: Recognizing when implementation reveals incorrect planning assumptions.
 
@@ -565,11 +551,9 @@ The plan was written before full context. It optimized for a problem that subseq
 
 **Rationale**: Plans are written with incomplete information. Implementation provides new information. Treating plans as immutable leads to over-engineering. The correct response to "this doesn't fit" is often "it wasn't needed," not "make it fit."
 
-**Cross-references**: [API-DESIGN-004], [API-DESIGN-007]
-
 ---
 
-### [API-DESIGN-009] Research Papers as Architecture Validation Instruments
+### Research Papers as Architecture Validation Instruments
 
 **Scope**: Using technical research to validate existing architectural decisions.
 
@@ -660,11 +644,9 @@ The correct frame: research produces information. That information might indicat
 
 **Rationale**: Well-designed architecture anticipates constraints that haven't yet been encountered. Research that validates existing design confirms the architecture's quality. Research that invalidates existing design reveals improvement opportunities. Both outcomes require the same analytical investment and produce equivalent value.
 
-**Cross-references**: [API-DESIGN-004], [API-DESIGN-007], [DOC-CODE-004]
-
 ---
 
-## [API-DESIGN-009] Structural Parity for Collection Primitives
+## Structural Parity for Collection Primitives
 
 **Scope**: API design consistency across collection primitive packages.
 
@@ -708,8 +690,6 @@ List:   List, List.Singly  ❌ Different taxonomy entirely
 
 **Rationale**: Structural parity reduces cognitive load. Developers learn the variant system once and apply it everywhere. Inconsistency requires learning special cases for each collection.
 
-**Cross-references**: [API-DESIGN-002], [API-NAME-001]
-
 ---
 
 ## Techniques
@@ -718,7 +698,7 @@ List:   List, List.Singly  ❌ Different taxonomy entirely
 
 ---
 
-### [API-DESIGN-010] Fallback as Feature, Not Compromise
+### Fallback as Feature, Not Compromise
 
 **Scope**: APIs with optimized paths that may not handle all cases.
 
@@ -743,11 +723,9 @@ public static func parseCompact(_ string: String) -> UUID?
 
 **Rationale**: Internal routing simplifies caller code and ensures all valid inputs are accepted. The optimization is an implementation detail.
 
-**Cross-references**: [TEST-PERF-006], [API-ERR-003]
-
 ---
 
-### [API-DESIGN-011] Type Aliases as Architectural Boundaries
+### Type Aliases as Architectural Boundaries
 
 **Scope**: Localizing decisions about type usage, especially unsafe escapes.
 
@@ -769,11 +747,9 @@ let storage: Reference.Indirect<MyIterator>.Unchecked
 
 **Rationale**: Centralized typealiases make architectural decisions visible and changeable in one place.
 
-**Cross-references**: [API-CONC-005], [API-IMPL-006]
-
 ---
 
-### [API-DESIGN-012] Bound vs Independent Typealias Parameters
+### Bound vs Independent Typealias Parameters
 
 **Scope**: Typealiases in generic type extensions.
 
@@ -797,11 +773,9 @@ extension Cache {
 
 **Rationale**: Bound parameters ensure type relationships are preserved and usage is unambiguous.
 
-**Cross-references**: [API-NAME-001], [API-NAME-007a]
-
 ---
 
-### [API-DESIGN-013] Typealiases as the Reuse Primitive
+### Typealiases as the Reuse Primitive
 
 **Scope**: Sharing types between facade packages and their implementation dependencies.
 
@@ -836,11 +810,9 @@ Swift 6's `MemberImportVisibility` feature requires that types used in `@inlinab
 
 **Rationale**: Typealiases preserve type identity while providing local names. Zero-cost abstraction.
 
-**Cross-references**: [API-DESIGN-011], [API-DESIGN-012]
-
 ---
 
-### [API-DESIGN-014] Never as Closed Default for Extension Points
+### Never as Closed Default for Extension Points
 
 **Scope**: Designing generic types that allow facade-specific extensions without code duplication.
 
@@ -870,8 +842,6 @@ case .extra:
 ```
 
 **Rationale**: The `Extra` parameter pattern enables shared types to serve multiple facades. Facades that don't need extensions use `Never` and get compile-time elimination.
-
-**Cross-references**: [API-DESIGN-013], [API-DESIGN-011]
 
 ---
 

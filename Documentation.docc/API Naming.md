@@ -16,7 +16,7 @@ This document defines naming requirements for all public APIs.
 
 ---
 
-## [API-NAME-001] Namespace Structure: Nest.Name Pattern
+## Namespace Structure: Nest.Name Pattern
 
 **Scope**: All type declarations.
 
@@ -132,11 +132,9 @@ Nested `Tag` enums are only needed when:
 2. The namespace is a generic type (can't use generic types as tags)
 3. The tag needs to carry type-level information (associated types)
 
-**Cross-references**: [API-NAME-002], [API-NAME-008], [API-IMPL-005]
-
 ---
 
-## [API-NAME-002] No Compound Identifiers
+## No Compound Identifiers
 
 **Scope**: All identifiers including types, functions, methods, properties, variables, and enum cases.
 
@@ -158,11 +156,9 @@ NonBlockingSelector        // ❌ Compound type name
 
 **Rationale**: Compound names defeat discoverability and create inconsistent naming patterns. Path-like composition allows autocomplete to guide users through the API.
 
-**Cross-references**: [API-NAME-001], [API-NAME-003]
-
 ---
 
-## [API-NAME-003] Specification-Mirroring Type Names
+## Specification-Mirroring Type Names
 
 **Scope**: Types implementing external specifications (RFCs, ISOs, W3C, etc.).
 
@@ -185,11 +181,9 @@ PDFPage                    // ❌ Compound name, no spec namespace
 
 **Rationale**: Each type maps directly to a specification section, enabling compliance verification.
 
-**Cross-references**: [API-NAME-001], [API-NAME-004]
-
 ---
 
-## [API-NAME-004] Flat Namespace Constants
+## Flat Namespace Constants
 
 **Scope**: Static constants and well-known values on types.
 
@@ -218,11 +212,9 @@ extension RFC_4122.UUID {
 // .dns shorthand won't work
 ```
 
-**Cross-references**: [API-NAME-001], [API-NAME-002]
-
 ---
 
-## [API-NAME-005] Nested Accessor Pattern
+## Nested Accessor Pattern
 
 **Scope**: Instance methods that group related operations.
 
@@ -252,11 +244,9 @@ dir.walkFiles()
 dir.walkDirectories()
 ```
 
-**Cross-references**: [API-NAME-002], [API-IMPL-008]
-
 ---
 
-## [API-NAME-006] API Minimalism
+## API Minimalism
 
 **Scope**: All public APIs.
 
@@ -266,11 +256,9 @@ dir.walkDirectories()
 - Lower-level targets SHOULD prefer `init(...)`, static factory functions, and pure transformations.
 - Methods are allowed only when required by the language, modeling essential mutation, or when ergonomics cannot be achieved otherwise.
 
-**Cross-references**: [API-NAME-004], [API-IMPL-001]
-
 ---
 
-## [API-NAME-007] Name Evaluation: Information Gained vs Lost
+## Name Evaluation: Information Gained vs Lost
 
 **Scope**: Evaluating proposed name changes and choosing between name candidates.
 
@@ -283,11 +271,9 @@ dir.walkDirectories()
 
 Only rename when information gain clearly exceeds transition costs.
 
-**Cross-references**: [API-NAME-001], [API-NAME-002], [API-NAME-003]
-
 ---
 
-## [API-NAME-007a] Generic Parameter Naming
+## Generic Parameter Naming
 
 **Scope**: Generic type parameters on types that conform to protocols with associated types.
 
@@ -308,11 +294,9 @@ struct __CacheEvict<Key, Value>: Effect.Protocol {
 }
 ```
 
-**Cross-references**: [API-NAME-001], [API-NAME-007]
-
 ---
 
-## [API-NAME-007b] Module-Scoped Name Resolution
+## Module-Scoped Name Resolution
 
 **Scope**: Naming types within modules that use standard library names.
 
@@ -323,11 +307,9 @@ struct __CacheEvict<Key, Value>: Effect.Protocol {
 - `Equatable` → Use `Equality` instead
 - `Error` → Use `Errors` instead
 
-**Cross-references**: [PATTERN-019], [API-NAME-001]
-
 ---
 
-## [API-NAME-008] Verbosity as Self-Documentation
+## Verbosity as Self-Documentation
 
 **Scope**: Type names and type signatures that embed architectural decisions.
 
@@ -360,11 +342,9 @@ Code SHOULD be searchable for its own characteristics:
 | Reference semantics | `Reference\.Indirect` |
 | Hoisted protocols | `^public protocol __` |
 
-**Cross-references**: [API-NAME-001], [API-CONC-005], [PATTERN-005b], [PATTERN-014]
-
 ---
 
-## [API-NAME-009] Names as Constraints
+## Names as Constraints
 
 **Scope**: Module, package, and type naming decisions.
 
@@ -437,8 +417,6 @@ Names that invite accumulation (avoid):
 | `Common` | Anything "shared" fits | Name the specific contract |
 
 **Rationale**: Module names that resist inappropriate additions are self-maintaining. Developers adding code ask "does this fit?" and the name provides the answer. Names that describe usage ("interop") don't constrain because everything could plausibly be described that way.
-
-**Cross-references**: [API-NAME-001], [API-NAME-002], [API-NAME-008]
 
 ---
 

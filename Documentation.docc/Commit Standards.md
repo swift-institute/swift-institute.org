@@ -23,7 +23,7 @@ This document defines the commit standards for all Swift Institute packages. The
 
 ---
 
-## [CONTRIB-007] Selective Staging for Focused Commits
+## Selective Staging for Focused Commits
 
 **Scope**: Staging changes for commit.
 
@@ -52,11 +52,9 @@ Selective staging is documentation through git. Future readers (and bisectors) b
 
 **Rationale**: Focused commits create a navigable history. When debugging, `git bisect` works best when each commit represents a single logical change.
 
-**Cross-references**: [CONTRIB-008]
-
 ---
 
-## [CONTRIB-008] Commit Message Contracts
+## Commit Message Contracts
 
 **Scope**: Commit message content.
 
@@ -89,11 +87,9 @@ git commit -m "Performance improvements"
 
 **Rationale**: Mechanisms matter for debugging. If a platform has issues, the commit message tells maintainers exactly where to investigate.
 
-**Cross-references**: [CONTRIB-007], [CONTRIB-009]
-
 ---
 
-## [CONTRIB-009] Multi-Package Commit Ordering
+## Multi-Package Commit Ordering
 
 **Scope**: Commits spanning multiple packages.
 
@@ -113,8 +109,6 @@ git commit -m "Integrate native UUID parsing in RFC 4122"
 Platform primitives are architectural peers—they don't depend on each other. Standards packages depend on primitives but conditionally (builds succeed even if some primitives aren't committed yet). The primitives-first order matches the dependency graph.
 
 **Rationale**: Following dependency order ensures the build remains valid at each commit point, supporting bisection and rollback.
-
-**Cross-references**: [CONTRIB-007], [CONTRIB-008]. See also the Primitives Tiers documentation in swift-primitives.
 
 ---
 

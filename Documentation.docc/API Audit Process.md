@@ -23,7 +23,7 @@ This document defines the documentation-driven audit process for reviewing exist
 
 ---
 
-## [CONTRIB-010] Documentation-Driven API Audit
+## Documentation-Driven API Audit
 
 **Scope**: Systematic review of package APIs against Swift Institute requirements.
 
@@ -43,9 +43,9 @@ This document defines the documentation-driven audit process for reviewing exist
 **Correct**:
 ```text
 Question: "Should we remove withSpan(_:)?"
-Process: Check Memory Copyable.md -> [MEM-SPAN-001] mandates property-based access
+Process: Check Memory Copyable.md -> mandates property-based access
          Check SE-0456 -> "Closure-taking API can be difficult to compose"
-Result: Remove withSpan(_:), cite [MEM-SPAN-001] and SE-0456
+Result: Remove withSpan(_:), cite and SE-0456
 ```
 
 **Incorrect**:
@@ -103,7 +103,7 @@ Use this checklist when auditing a package:
 
 | Symbol | Status | Issue | Requirement | Recommended Action |
 |--------|--------|-------|-------------|-------------------|
-| `Foo.bar()` | Violation | Compound method name | [API-NAME-002] | Rename to `Foo.bar.action()` |
+| `Foo.bar()` | Violation | Compound method name | | Rename to `Foo.bar.action()` |
 | `Baz.Error` | Compliant | — | — | — |
 
 ### Summary
@@ -114,8 +114,6 @@ Use this checklist when auditing a package:
 ```
 
 **Rationale**: Documentation-driven audits produce consistent, justifiable API surfaces. The audit trail enables future maintainers to understand decisions without re-investigating.
-
-**Cross-references**: <doc:API-Requirements>, <doc:API-Naming>, <doc:API-Implementation>, <doc:Memory-Copyable>
 
 ---
 

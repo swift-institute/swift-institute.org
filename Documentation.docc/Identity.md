@@ -16,7 +16,7 @@ This document establishes the organizational identity of the Swift Institute. It
 
 ---
 
-## [IDENT-001] The Naming Problem
+## The Naming Problem
 
 **Scope**: Umbrella organization naming for Swift infrastructure.
 
@@ -30,11 +30,9 @@ The Swift ecosystem presents specific constraints:
 
 The name functions as the top-level namespace for all work. It appears in package names, documentation, and community discussions. A poor choice creates friction; a good choice becomes invisible infrastructure.
 
-**Cross-references**: [IDENT-002], [IDENT-003]
-
 ---
 
-## [IDENT-002] Requirements for the Umbrella Name
+## Requirements for the Umbrella Name
 
 **Scope**: Evaluation criteria for naming candidates.
 
@@ -47,17 +45,15 @@ The umbrella name must satisfy multiple requirements:
 | **Architectural Fit** | Compatible with layered architecture; support future expansion |
 | **Legal Safety** | No collision with Apple, OpenAI, or Swift core terminology |
 | **Ecosystem Signaling** | Neutral, non-corporate, academically credible |
-| **LLM Interpretability** | Map cleanly to "place where structured work lives" |
+| **Interpretability** | Map cleanly to "place where structured work lives" |
 | **Longevity** | Still make sense in 10-20 years |
 | **Tone** | Serious but approachable; authoritative but inviting |
 
 The name must *not* imply: a framework, a product, a company, a monolithic stack, or a closed system.
 
-**Cross-references**: [IDENT-001], [IDENT-003]
-
 ---
 
-## [IDENT-003] Why "Institute" Satisfies All Requirements
+## Why "Institute" Satisfies All Requirements
 
 **Scope**: Justification for the chosen name.
 
@@ -80,11 +76,9 @@ The term "institute" has deep historical roots that align with the project's goa
 | **Company** | Companies have customers; institutes have contributors |
 | **Platform** | Platforms lock in; institutes remain open |
 
-**Cross-references**: [IDENT-002], [IDENT-004]
-
 ---
 
-## [IDENT-004] Canonical Definition
+## Canonical Definition
 
 **Scope**: The authoritative definition of the Swift Institute.
 
@@ -96,11 +90,9 @@ This definition establishes three core properties:
 2. **Layered**: Explicit architectural stratification with clear dependencies
 3. **Long-term**: Designed for decades of evolution, not immediate convenience
 
-**Cross-references**: [IDENT-003], [IDENT-005]
-
 ---
 
-## [IDENT-005] Stewardship Model
+## Stewardship Model
 
 **Scope**: Governance principles for the Swift Institute.
 
@@ -124,8 +116,6 @@ This model enables:
 - Clear boundaries that prevent scope creep
 - Sustainable growth without organizational bloat
 
-**Cross-references**: [IDENT-004], <doc:API-Requirements>
-
 ---
 
 ## Project Goals
@@ -136,7 +126,7 @@ This model enables:
 
 ---
 
-### [QG-GOAL-001] Timeless Infrastructure
+### Timeless Infrastructure
 
 **Scope**: Long-term design philosophy.
 
@@ -144,11 +134,9 @@ This model enables:
 
 **Rationale**: Infrastructure code has long operational lifetimes. Designing for timelessness reduces maintenance burden and extends useful life.
 
-**Cross-references**: [QG-GOAL-002], [QG-GOAL-005]
-
 ---
 
-### [QG-GOAL-002] Cross-Platform Correctness
+### Cross-Platform Correctness
 
 **Scope**: Platform support requirements.
 
@@ -156,11 +144,9 @@ This model enables:
 
 **Rationale**: Cross-platform correctness enables the ecosystem to serve all Swift developers regardless of their target platform.
 
-**Cross-references**: [QG-GOAL-001], [QG-GOAL-003]
-
 ---
 
-### [QG-GOAL-003] Explicit Dependency Direction
+### Explicit Dependency Direction
 
 **Scope**: Package and target architecture.
 
@@ -168,11 +154,9 @@ This model enables:
 
 **Rationale**: Explicit dependency direction enables independent testing, incremental adoption, and clear reasoning about change impact.
 
-**Cross-references**: [QG-GOAL-002]
-
 ---
 
-### [QG-GOAL-004] Sustainable Licensing Leverage
+### Sustainable Licensing Leverage
 
 **Scope**: License selection and management.
 
@@ -182,15 +166,13 @@ This model enables:
 
 ---
 
-### [QG-GOAL-005] AI-Friendly Architecture
+### AI-Friendly Architecture
 
 **Scope**: Documentation and code structure.
 
-**Statement**: Code SHOULD include explicit invariants and boundaries that improve automated reasoning. Documentation SHOULD follow LLM-optimization principles for machine comprehension.
+**Statement**: Code SHOULD include explicit invariants and boundaries that improve automated reasoning. 
 
 **Rationale**: AI-assisted development is increasingly common. Explicit invariants help both human and machine consumers understand system behavior.
-
-**Cross-references**: [QG-GOAL-001], <doc:LLM-Optimized-Documentation>
 
 ---
 
@@ -202,7 +184,7 @@ This model enables:
 
 ---
 
-### [QG-NONGOAL-001] No Convenience Competition
+### No Convenience Competition
 
 **Scope**: API design philosophy.
 
@@ -210,11 +192,9 @@ This model enables:
 
 **Rationale**: Attempting to match Apple's convenience APIs would require compromising on correctness guarantees and cross-platform support.
 
-**Cross-references**: [QG-GOAL-001], [QG-GOAL-002]
-
 ---
 
-### [QG-NONGOAL-002] No Monolithic Ecosystem
+### No Monolithic Ecosystem
 
 **Scope**: Package organization.
 
@@ -222,19 +202,15 @@ This model enables:
 
 **Rationale**: Independent packages enable incremental adoption and reduce the barrier to entry for new consumers.
 
-**Cross-references**: [QG-VER-001], [QG-GOAL-003]
-
 ---
 
-### [QG-NONGOAL-003] No Premature API Freezing
+### No Premature API Freezing
 
 **Scope**: API stability timeline.
 
 **Statement**: APIs SHOULD NOT be marked stable (1.0.0) until they have been validated through production use. Semantic versioning MUST be used to allow controlled evolution during the pre-1.0 period.
 
 **Rationale**: Premature freezing locks in design mistakes. The 0.x version range explicitly signals that breaking changes may occur.
-
-**Cross-references**: [QG-VER-001]
 
 ---
 

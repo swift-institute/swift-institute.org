@@ -14,7 +14,7 @@ This document defines reference primitives from `swift-reference-primitives`.
 
 ---
 
-## [MEM-REF-001] Reference Primitive Selection
+## Reference Primitive Selection
 
 **Scope**: Choosing the correct reference primitive.
 
@@ -40,7 +40,7 @@ This document defines reference primitives from `swift-reference-primitives`.
 
 ---
 
-## [MEM-REF-002] Reference.Box
+## Reference.Box
 
 **Scope**: Immutable heap-allocated values.
 
@@ -66,7 +66,7 @@ public final class Box<Value: ~Copyable & Sendable>: @unchecked Sendable {
 
 ---
 
-## [MEM-REF-003] Reference.Indirect
+## Reference.Indirect
 
 **Scope**: Mutable shared state with reference semantics.
 
@@ -109,7 +109,7 @@ extension Reference.Indirect where Value: ~Copyable {
 
 ---
 
-## [MEM-REF-004] Reference.Transfer
+## Reference.Transfer
 
 **Scope**: Cross-boundary ownership transfer.
 
@@ -149,7 +149,7 @@ let value = storage.take()  // Consumer
 
 ---
 
-## [MEM-REF-005] Reference.Slot
+## Reference.Slot
 
 **Scope**: Reusable heap slot with move semantics.
 
@@ -180,7 +180,7 @@ public enum Store: ~Copyable {
 
 ## Lifetime Primitives
 
-### [MEM-LIFE-001] Lifetime.Scoped
+### Lifetime.Scoped
 
 **Scope**: RAII-style deterministic cleanup.
 
@@ -208,7 +208,7 @@ func process() {
 
 ---
 
-### [MEM-LIFE-002] Lifetime.Lease
+### Lifetime.Lease
 
 **Scope**: Borrowed values that must be returned.
 
@@ -229,7 +229,7 @@ let returned = lease.release()  // Must call to get value back
 
 ---
 
-### [MEM-LIFE-003] Lifetime.Disposable
+### Lifetime.Disposable
 
 **Scope**: Types requiring explicit cleanup.
 

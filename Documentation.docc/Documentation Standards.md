@@ -28,7 +28,7 @@ This document is complementary to <doc:Implementation> and MUST be interpreted c
 
 ---
 
-### [DOC-SCOPE-001] Documentation Purpose
+### Documentation Purpose
 
 **Scope**: All documentation artifacts.
 
@@ -43,9 +43,7 @@ Documentation MUST NOT serve as:
 - Roadmap or planning document
 - Tutorial series or educational content
 
-**Rationale**: Focused documentation enables accurate LLM retrieval and prevents scope creep that dilutes technical precision.
-
-**Cross-references**: [DOC-README-001], [API-DOC-001]
+**Rationale**: Focused documentation prevents scope creep that dilutes technical precision.
 
 ---
 
@@ -57,7 +55,7 @@ Documentation MUST NOT serve as:
 
 ---
 
-### [DOC-README-001] Required Sections
+### Required Sections
 
 **Scope**: All package README.md files.
 
@@ -99,13 +97,11 @@ A high-performance async I/O executor for Swift.
 ## Key Features  <!-- ❌ Wrong section order -->
 ```
 
-**Rationale**: Predictable structure enables reliable LLM section retrieval and consistent developer experience.
-
-**Cross-references**: [DOC-README-002], [DOC-SCOPE-001]
+**Rationale**: Predictable structure consistent developer experience.
 
 ---
 
-### [DOC-README-002] Optional Sections
+### Optional Sections
 
 **Scope**: Package README.md files requiring additional content.
 
@@ -127,8 +123,6 @@ A high-performance async I/O executor for Swift.
 
 **Rationale**: Flexibility for package-specific needs while maintaining core structure consistency.
 
-**Cross-references**: [DOC-README-001]
-
 ---
 
 ## Badges
@@ -139,7 +133,7 @@ A high-performance async I/O executor for Swift.
 
 ---
 
-### [DOC-BADGE-001] Required Development Status Badge
+### Required Development Status Badge
 
 **Scope**: All README.md files.
 
@@ -164,13 +158,11 @@ A high-performance async I/O executor for Swift.
 ![Status](https://img.shields.io/badge/status-beta-yellow.svg)  <!-- ❌ Non-standard status -->
 ```
 
-**Rationale**: Consistent status vocabulary enables accurate LLM assessment of package maturity.
-
-**Cross-references**: [DOC-BADGE-002]
+**Rationale**: Consistent status vocabulary enables accurate assessment of package maturity.
 
 ---
 
-### [DOC-BADGE-002] Optional CI Badges
+### Optional CI Badges
 
 **Scope**: CI status badges.
 
@@ -188,8 +180,6 @@ A high-performance async I/O executor for Swift.
 
 **Rationale**: Failing CI badges signal technical debt; absent CI should not display as present.
 
-**Cross-references**: [DOC-BADGE-001], [DOC-MAINT-001]
-
 ---
 
 ## One-Liner Description
@@ -198,7 +188,7 @@ A high-performance async I/O executor for Swift.
 
 ---
 
-### [DOC-ONELINER-001] One-Liner Requirements
+### One-Liner Requirements
 
 **Scope**: Package description one-liners.
 
@@ -233,9 +223,7 @@ A Swift package for doing I/O operations.  <!-- ❌ Starts with "A Swift package
 The best I/O library you'll ever use!  <!-- ❌ Marketing without substance -->
 ```
 
-**Rationale**: Technical precision in descriptions enables accurate LLM package selection and comparison.
-
-**Cross-references**: [DOC-README-001]
+**Rationale**: Technical precision in descriptions enables accurate package selection and comparison.
 
 ---
 
@@ -245,7 +233,7 @@ The best I/O library you'll ever use!  <!-- ❌ Marketing without substance -->
 
 ---
 
-### [DOC-FEATURES-001] Key Features Format
+### Key Features Format
 
 **Scope**: Key Features bullet lists.
 
@@ -270,9 +258,7 @@ The best I/O library you'll ever use!  <!-- ❌ Marketing without substance -->
 - Fast  <!-- ❌ No explanation -->
 ```
 
-**Rationale**: Consistent bullet format enables LLM feature extraction and comparison across packages.
-
-**Cross-references**: [DOC-README-001]
+**Rationale**: Consistent bullet format enables feature extraction and comparison across packages.
 
 ---
 
@@ -282,7 +268,7 @@ The best I/O library you'll ever use!  <!-- ❌ Marketing without substance -->
 
 ---
 
-### [DOC-INSTALL-001] Installation Format
+### Installation Format
 
 **Scope**: Package installation instructions.
 
@@ -307,9 +293,7 @@ dependencies: [
 
 Requirements MUST be listed immediately after installation blocks when applicable.
 
-**Rationale**: Copy-paste-ready installation blocks reduce integration friction and LLM generation errors.
-
-**Cross-references**: [DOC-MAINT-001]
+**Rationale**: Copy-paste-ready installation blocks reduce integration friction.
 
 ---
 
@@ -319,7 +303,7 @@ Requirements MUST be listed immediately after installation blocks when applicabl
 
 ---
 
-### [DOC-QUICKSTART-001] Quick Start Requirements
+### Quick Start Requirements
 
 **Scope**: Quick Start code examples.
 
@@ -347,9 +331,7 @@ print(result)
 let result = try await executor.read(from: path)  // ❌ Missing import, setup
 ```
 
-**Rationale**: Runnable examples enable immediate verification and accurate LLM code generation.
-
-**Cross-references**: [DOC-CODE-001]
+**Rationale**: Runnable examples enable immediate verification.
 
 ---
 
@@ -359,7 +341,7 @@ let result = try await executor.read(from: path)  // ❌ Missing import, setup
 
 ---
 
-### [DOC-ARCH-001] Layer Diagram Requirement
+### Layer Diagram Requirement
 
 **Scope**: Multi-module or layered packages.
 
@@ -378,9 +360,7 @@ let result = try await executor.read(from: path)  // ❌ Missing import, setup
 
 Simpler packages MAY instead include a table of key public types with one-line descriptions.
 
-**Rationale**: Visual architecture aids LLM comprehension of package structure and appropriate usage patterns.
-
-**Cross-references**: [API-LAYER-001]
+**Rationale**: Visual architecture aids comprehension of package structure and appropriate usage patterns.
 
 ---
 
@@ -390,7 +370,7 @@ Simpler packages MAY instead include a table of key public types with one-line d
 
 ---
 
-### [DOC-PLATFORM-001] Platform Support Table
+### Platform Support Table
 
 **Scope**: Platform compatibility documentation.
 
@@ -414,9 +394,7 @@ Simpler packages MAY instead include a table of key public types with one-line d
 | `Possible` | Could be supported with work |
 | `Not supported` | Fundamental limitation |
 
-**Rationale**: Standardized platform tables enable LLM platform compatibility queries.
-
-**Cross-references**: [API-PLAT-001]
+**Rationale**: Standardized platform tables enable platform compatibility queries.
 
 ---
 
@@ -428,7 +406,7 @@ Simpler packages MAY instead include a table of key public types with one-line d
 
 ---
 
-### [DOC-PERF-001] Performance Methodology
+### Performance Methodology
 
 **Scope**: Performance data and benchmarks.
 
@@ -455,11 +433,9 @@ This library is very fast.  <!-- ❌ No methodology, no data -->
 
 **Rationale**: Reproducible benchmarks enable accurate performance comparisons and prevent misleading claims.
 
-**Cross-references**: [DOC-PERF-002]
-
 ---
 
-### [DOC-PERF-002] Performance Data Format
+### Performance Data Format
 
 **Scope**: Performance comparisons and metrics.
 
@@ -469,9 +445,7 @@ This library is very fast.  <!-- ❌ No methodology, no data -->
 - Latency (p50, p95, p99)
 - Memory (steady-state and peak)
 
-**Rationale**: Tabular data is machine-parseable and enables LLM extraction of specific metrics.
-
-**Cross-references**: [DOC-PERF-001]
+**Rationale**: Tabular data is machine-parseable and enables extraction of specific metrics.
 
 ---
 
@@ -481,7 +455,7 @@ This library is very fast.  <!-- ❌ No methodology, no data -->
 
 ---
 
-### [DOC-ERR-001] Error Hierarchy Documentation
+### Error Hierarchy Documentation
 
 **Scope**: Packages with typed error hierarchies.
 
@@ -500,13 +474,11 @@ IO.Lifecycle.Error<E>
         └── .lane(...)     // Lane errors
 ```
 
-**Rationale**: Visual error hierarchies enable LLM-generated exhaustive error handling code.
-
-**Cross-references**: [API-ERR-001], [DOC-ERR-002]
+**Rationale**: Visual error hierarchies enable exhaustive error handling code.
 
 ---
 
-### [DOC-ERR-002] Exhaustive Matching Example
+### Exhaustive Matching Example
 
 **Scope**: Error handling examples.
 
@@ -529,9 +501,7 @@ do {
 }
 ```
 
-**Rationale**: Exhaustive examples demonstrate proper typed error handling and guide LLM code generation.
-
-**Cross-references**: [DOC-ERR-001], [API-ERR-001]
+**Rationale**: Exhaustive examples demonstrate proper typed error handling and guide code generation.
 
 ---
 
@@ -541,7 +511,7 @@ do {
 
 ---
 
-### [DOC-RELATED-001] Related Packages Organization
+### Related Packages Organization
 
 **Scope**: Package relationship documentation.
 
@@ -562,9 +532,7 @@ do {
 - [org/package-name](url): One-line description.
 ```
 
-**Rationale**: Structured dependency documentation enables LLM package graph traversal.
-
-**Cross-references**: [DOC-README-002]
+**Rationale**: Structured dependency documentation enables package graph traversal.
 
 ---
 
@@ -574,7 +542,7 @@ do {
 
 ---
 
-### [DOC-CODE-001] Import Requirements
+### Import Requirements
 
 **Scope**: All code blocks.
 
@@ -592,13 +560,11 @@ let executor = try IO.Executor()
 let executor = try IO.Executor()  // ❌ Missing import
 ```
 
-**Rationale**: Complete imports enable copy-paste execution and accurate LLM code generation.
-
-**Cross-references**: [DOC-QUICKSTART-001], [DOC-CODE-002]
+**Rationale**: Complete imports enable copy-paste execution.
 
 ---
 
-### [DOC-CODE-002] Realistic Naming
+### Realistic Naming
 
 **Scope**: Identifiers in code examples.
 
@@ -614,13 +580,11 @@ let connection = try Network.Connection(host: "api.example.com", port: 443)
 let foo = try Bar(x: "...", y: 123)  // ❌ Meaningless identifiers
 ```
 
-**Rationale**: Realistic names demonstrate actual usage patterns and prevent LLM-generated placeholder code.
-
-**Cross-references**: [DOC-CODE-001], [DOC-CODE-003]
+**Rationale**: Realistic names demonstrate actual usage patterns and prevent placeholder code.
 
 ---
 
-### [DOC-CODE-003] Error Handling in Examples
+### Error Handling in Examples
 
 **Scope**: Non-trivial code examples.
 
@@ -638,11 +602,9 @@ do {
 
 **Rationale**: Error handling examples establish proper patterns for production code.
 
-**Cross-references**: [DOC-ERR-002], [DOC-CODE-004]
-
 ---
 
-### [DOC-CODE-004] Comment Purpose
+### Comment Purpose
 
 **Scope**: Comments in code examples.
 
@@ -662,11 +624,9 @@ let selector = IO.NonBlocking.Selector()  // ❌ Describes what, not why
 
 **Rationale**: Purpose-driven comments add information the code cannot convey.
 
-**Cross-references**: [DOC-CODE-001], [DOC-CODE-005]
-
 ---
 
-### [DOC-CODE-005] Anticipatory Documentation
+### Anticipatory Documentation
 
 **Scope**: Code patterns that may surprise future readers.
 
@@ -734,9 +694,7 @@ When constraints are expected to lift, comments become migration guides:
 //            and update call sites to use borrowed parsing.
 ```
 
-**Rationale**: The type system cannot express "Swift 6.2 doesn't support this." Comments can. Well-written anticipatory comments encode design decisions for future readers (including LLMs), reducing the time spent rediscovering answers to questions that were already resolved.
-
-**Cross-references**: [DOC-CODE-004], [DOC-CONTENT-001], [DOC-CONTENT-002], [API-DESIGN-009]
+**Rationale**: The type system cannot express "Swift 6.2 doesn't support this." Comments can. Well-written anticipatory comments encode design decisions for future readers, reducing the time spent rediscovering answers to questions that were already resolved.
 
 ---
 
@@ -746,7 +704,7 @@ When constraints are expected to lift, comments become migration guides:
 
 ---
 
-### [DOC-DOCC-001] Public API Documentation
+### Public API Documentation
 
 **Scope**: All public APIs.
 
@@ -773,13 +731,11 @@ These requirements extend <doc:Implementation> (Documentation and Comments secti
 public func submit<T>(_ work: @Sendable () throws -> T) async throws(IO.Lifecycle.Error<IO.Error>) -> T
 ```
 
-**Rationale**: Complete API documentation enables accurate LLM code generation and usage guidance.
-
-**Cross-references**: [API-DOC-001], [DOC-DOCC-002]
+**Rationale**: Complete API documentation enables accurate code generation and usage guidance.
 
 ---
 
-### [DOC-DOCC-002] Avoiding Redundancy
+### Avoiding Redundancy
 
 **Scope**: Trivial API members.
 
@@ -793,8 +749,6 @@ var x: Double  // ❌ Documentation adds no information
 
 **Rationale**: Redundant documentation creates noise that dilutes meaningful content.
 
-**Cross-references**: [DOC-DOCC-001]
-
 ---
 
 ## Formatting Rules
@@ -803,7 +757,7 @@ var x: Double  // ❌ Documentation adds no information
 
 ---
 
-### [DOC-FORMAT-001] Section Separators and Headings
+### Section Separators and Headings
 
 **Scope**: Document structure.
 
@@ -814,13 +768,11 @@ var x: Double  // ❌ Documentation adds no information
 - H2/H3 only; deeper nesting discouraged
 - Always specify code block language
 
-**Rationale**: Consistent formatting enables predictable LLM document parsing.
-
-**Cross-references**: [DOC-FORMAT-002]
+**Rationale**: Consistent formatting enables predictable document parsing.
 
 ---
 
-### [DOC-FORMAT-002] Table Formatting
+### Table Formatting
 
 **Scope**: All tables.
 
@@ -833,13 +785,11 @@ var x: Double  // ❌ Documentation adds no information
 | Short    | Longer value  | Description |
 ```
 
-**Rationale**: Aligned tables are easier for both humans and LLMs to parse accurately.
-
-**Cross-references**: [DOC-FORMAT-001]
+**Rationale**: Aligned tables are easier to parse accurately.
 
 ---
 
-### [DOC-FORMAT-003] Documentation File Naming
+### Documentation File Naming
 
 **Scope**: Markdown files in Documentation.docc, Research, Blog, and Implementation directories.
 
@@ -874,8 +824,6 @@ Modern file systems, shells, and tools handle spaces. Quoting paths (`"Research/
 
 This exception exists because SPM and tooling have stronger expectations for code directory naming.
 
-**Cross-references**: [DOC-FORMAT-001], [EXP-002]
-
 ---
 
 ## Maintenance Obligations
@@ -884,7 +832,7 @@ This exception exists because SPM and tooling have stronger expectations for cod
 
 ---
 
-### [DOC-MAINT-001] Content Currency
+### Content Currency
 
 **Scope**: All documentation content.
 
@@ -894,9 +842,7 @@ This exception exists because SPM and tooling have stronger expectations for cod
 - Installation snippets MUST match latest release
 - All links MUST be valid; prefer relative links
 
-**Rationale**: Stale documentation generates incorrect LLM responses and erodes user trust.
-
-**Cross-references**: [DOC-INSTALL-001], [DOC-BADGE-002]
+**Rationale**: Stale documentation generates incorrect responses and erodes user trust.
 
 ---
 
@@ -906,7 +852,7 @@ This exception exists because SPM and tooling have stronger expectations for cod
 
 ---
 
-### [DOC-EXCLUDE-001] Prohibited Content
+### Prohibited Content
 
 **Scope**: All documentation.
 
@@ -920,8 +866,6 @@ This exception exists because SPM and tooling have stronger expectations for cod
 
 **Rationale**: Excluded content either belongs elsewhere or degrades documentation quality.
 
-**Cross-references**: [DOC-SCOPE-001], [DOC-BADGE-002]
-
 ---
 
 ## Content Quality
@@ -932,7 +876,7 @@ This exception exists because SPM and tooling have stronger expectations for cod
 
 ---
 
-### [DOC-CONTENT-001] Learning Path Preservation
+### Learning Path Preservation
 
 **Scope**: Documentation for unfamiliar territory, new features, or complex patterns.
 
@@ -993,11 +937,9 @@ This principle applies when:
 
 **Rationale**: Most developers don't read documentation until their intuitive approach fails. Documentation that starts with "here's what you probably tried and why it doesn't work" meets developers where they are, not where we wish they started.
 
-**Cross-references**: [DOC-CODE-004], [PATTERN-005b], [PATTERN-030]
-
 ---
 
-### [DOC-CONTENT-002] Compromise Documentation Value
+### Compromise Documentation Value
 
 **Scope**: Documentation for workarounds and non-ideal solutions.
 
@@ -1016,7 +958,7 @@ When writing papers or documentation that will outlive the code, explicitly docu
 ### Current Implementation
 
 Uses `Reference.Box<Resource>` because Swift's associated types
-implicitly require `Copyable`. See [PATTERN-033].
+implicitly require `Copyable`. See.
 
 ### Migration Path
 
@@ -1029,11 +971,9 @@ Without this documentation, the workaround might be preserved out of caution eve
 
 **Rationale**: Workarounds documented with migration paths are technical debt with known payoff dates. Workarounds without documentation become permanent.
 
-**Cross-references**: [PATTERN-033], [DOC-CONTENT-001]
-
 ---
 
-### [DOC-CONTENT-003] Empirical Verification as Documentation Source
+### Empirical Verification as Documentation Source
 
 **Scope**: Documentation for unfamiliar compiler features or tools.
 
@@ -1065,20 +1005,16 @@ This requirement was absent from official documentation. The error message was t
 
 > **Full methodology**: See [Experiment](../Experiments/Experiment.md) for complete experiment package creation protocol, including location conventions (`/tmp`), reduction methodology, and result documentation.
 
-**Cross-references**: [ECO-TECH-001], [MEM-SAFE-002], [Experiment](../Experiments/Experiment.md)
-
 ---
 
-### [DOC-CONTENT-004] Structured Rule Identifiers
+### Structured Rule Identifiers
 
 **Scope**: Technical documentation requiring precise cross-referencing.
-
-**Statement**: Technical documentation SHOULD use rule identifiers (`[XXX-YYY-NNN]`) for machine-readable cross-referencing and compliance checking.
 
 #### The Pattern
 
 ```markdown
-### [EMB-FLAG-002] Whole Module Optimization
+### Whole Module Optimization
 
 **Scope**: Compiler flags for Embedded Swift compilation.
 
@@ -1089,19 +1025,16 @@ This requirement was absent from official documentation. The error message was t
 
 | Benefit | Description |
 |---------|-------------|
-| Precise references | "See [EMB-FLAG-002]" is unambiguous |
+| Precise references | "See" is unambiguous |
 | Grep-based compliance | `grep -r "EMB-FLAG"` finds all Embedded requirements |
-| LLM retrieval | Identifiers enable exact section extraction |
 
 The pattern mirrors `[API-*]` from API Requirements—same principle, different domain.
 
 **Rationale**: Machine-readable identifiers enable automated compliance checking and precise cross-referencing. Identifiers work for compilation procedures as well as API requirements.
 
-**Cross-references**: [API-NAME-008], [DOC-FORMAT-001]
-
 ---
 
-### [DOC-CONTENT-005] Escape Hatch Counter-Marketing
+### Escape Hatch Counter-Marketing
 
 **Scope**: Documentation for unsafe escapes, workarounds, and "sharp edges."
 
@@ -1139,8 +1072,6 @@ The type's value is grep-ability, not safety. Honest documentation admits this.
 
 **Rationale**: Most documentation sells its subject. Escape hatch documentation must do the opposite—discourage use when alternatives exist and honestly state limitations.
 
-**Cross-references**: [DOC-CONTENT-002], [API-NAME-008]
-
 ---
 
 ## Topics
@@ -1153,4 +1084,4 @@ The type's value is grep-ability, not safety. Honest documentation admits this.
 
 ### Process Documents
 
-- <doc:Documentation-Process>
+- <doc:Documentation-Maintenance>

@@ -25,7 +25,7 @@ This document defines the architectural principles and requirements for systems 
 
 ---
 
-### [SYS-PLAT-001] Weakest-Semantics Guarantee
+### Weakest-Semantics Guarantee
 
 **Scope**: Portable operations including CPU barriers, spin hints, and timestamps.
 
@@ -48,11 +48,9 @@ sharedState = newValue  // No barrier - undefined on ARM
 
 **Rationale**: This conservative approach prevents subtle bugs where code works on strongly-ordered x86 but fails on weakly-ordered ARM. The portable API exposes the intersection of platform capabilities, not the union.
 
-**Cross-references**: [SYS-PLAT-002], [API-PLAT-001]
-
 ---
 
-### [SYS-PLAT-002] Platform-Specific Extensions
+### Platform-Specific Extensions
 
 **Scope**: Architecture-unique operations not available on all platforms.
 
@@ -88,19 +86,17 @@ public struct CPU {
 
 **Rationale**: Separation enables platform-specific optimizations without requiring `#if` conditionals in user code. Users import platform packages explicitly when needed.
 
-**Cross-references**: [SYS-PLAT-001], [API-PLAT-001]
-
 ---
 
 ## Kernel Abstraction Layer
 
 **Applies to**: swift-kernel-primitives and all syscall-wrapping code.
 
-**Does not apply to**: Userspace library wrappers (see [SYS-LOAD-001]).
+**Does not apply to**: Userspace library wrappers.
 
 ---
 
-### [SYS-KERN-001] Kernel API Scope
+### Kernel API Scope
 
 **Scope**: All types and functions in swift-kernel-primitives.
 
@@ -134,11 +130,9 @@ Kernel.File.read(into: foundationData)           // Foundation dependency
 
 **Rationale**: The kernel layer remains a thin wrapper over syscalls without imposing architectural decisions. Higher layers in application packages implement policy, retry logic, and discovery.
 
-**Cross-references**: [SYS-KERN-002], [API-LAYER-001], [API-LAYER-002]
-
 ---
 
-### [SYS-KERN-002] Kernel Layer Restrictions
+### Kernel Layer Restrictions
 
 **Scope**: Implementation of kernel primitives.
 
@@ -173,8 +167,6 @@ struct ReadError: Error {
 
 **Rationale**: Separation ensures the kernel layer remains testable and reusable across different runtime contexts. Lifecycle, cancellation, and rich errors belong in higher layers.
 
-**Cross-references**: [SYS-KERN-001], [API-LAYER-002], [API-ERR-002]
-
 ---
 
 ## Loader vs Kernel Distinction
@@ -185,7 +177,7 @@ struct ReadError: Error {
 
 ---
 
-### [SYS-LOAD-001] Loader Primitives Separation
+### Loader Primitives Separation
 
 **Scope**: Dynamic linker operations.
 
@@ -215,8 +207,6 @@ let handle = try Kernel.dlopen("libfoo.so")  // Not a syscall
 | Kernel | swift-kernel-primitives | mmap, read, write, socket, epoll |
 | Loader | swift-loader-primitives | dlopen, dlsym, LoadLibrary |
 
-**Cross-references**: [SYS-KERN-001], [API-LAYER-001]
-
 ---
 
 ## Memory Safety Architecture
@@ -229,39 +219,33 @@ let handle = try Kernel.dlopen("libfoo.so")  // Not a syscall
 
 ---
 
-### [SYS-MEM-001] Strict Memory Safety Mode
+### Strict Memory Safety Mode
 
 **Scope**: Memory-critical packages.
 
 **Statement**: Memory-critical packages MUST enable strict memory safety mode via `.strictMemorySafety()` in the package manifest.
 
-> **Full details**: See <doc:Memory> section [MEM-SAFE-001] for configuration and feature flags.
-
-**Cross-references**: [SYS-MEM-002], [SYS-MEM-003], <doc:Memory>
+> **Full details**: See <doc:Memory> for configuration and feature flags.
 
 ---
 
-### [SYS-MEM-002] Noncopyable Resource Handles
+### Noncopyable Resource Handles
 
 **Scope**: Resource handles (buffers, file descriptors, allocated memory).
 
 **Statement**: Resource handles MUST use noncopyable types (`~Copyable`) to enforce unique ownership.
 
-> **Full details**: See <doc:Memory> section [MEM-COPY-001] for patterns and code examples.
-
-**Cross-references**: [SYS-MEM-001], [SYS-MEM-003], [API-ERR-005], <doc:Memory>
+> **Full details**: See <doc:Memory> for patterns and code examples.
 
 ---
 
-### [SYS-MEM-003] Lifetime Annotations
+### Lifetime Annotations
 
 **Scope**: APIs exposing temporary pointers or references.
 
 **Statement**: APIs that expose pointers or references with limited lifetime MUST use lifetime annotations (`@_lifetime`) to ensure the compiler enforces scope constraints.
 
-> **Full details**: See <doc:Memory> section [MEM-UNSAFE-002] for lifetime annotation patterns.
-
-**Cross-references**: [SYS-MEM-001], [SYS-MEM-002], [API-IMPL-003], <doc:Memory>
+> **Full details**: See <doc:Memory> for lifetime annotation patterns.
 
 ---
 

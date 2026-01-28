@@ -8,7 +8,7 @@ Index of implementation patterns for Swift Institute packages.
 
 ## Overview
 
-This document serves as an index to implementation patterns. Each pattern category is documented in its own focused document for optimal LLM consumption and maintainability.
+This document serves as an index to implementation patterns. Each pattern category is documented in its own focused document for maintainability.
 
 **Normative language**: All pattern documents use RFC 2119 conventions:
 - **MUST** / **MUST NOT**: Absolute requirement or prohibition
@@ -37,7 +37,7 @@ This document serves as an index to implementation patterns. Each pattern catego
 
 ## Quick Reference: Most-Used Patterns
 
-### [PATTERN-001] C Shim Layer Structure
+### C Shim Layer Structure
 
 Packages requiring platform-specific functionality MUST use minimal C shim targets isolated from Swift code.
 
@@ -45,7 +45,7 @@ Packages requiring platform-specific functionality MUST use minimal C shim targe
 
 ---
 
-### [PATTERN-004] SwiftPM Platform Conditions
+### SwiftPM Platform Conditions
 
 Platform-specific dependencies MUST use SwiftPM condition directives.
 
@@ -53,7 +53,7 @@ Platform-specific dependencies MUST use SwiftPM condition directives.
 
 ---
 
-### [PATTERN-005] Swift 6 Language Mode
+### Swift 6 Language Mode
 
 All packages MUST require Swift 6.2+ and use Swift 6 language mode.
 
@@ -61,7 +61,7 @@ All packages MUST require Swift 6.2+ and use Swift 6 language mode.
 
 ---
 
-### [PATTERN-009] No Foundation Types
+### No Foundation Types
 
 Primitive and standard packages MUST NOT use Foundation types.
 
@@ -69,7 +69,7 @@ Primitive and standard packages MUST NOT use Foundation types.
 
 ---
 
-### [MEM-LINEAR-001] Linear Types for Invariant Enforcement
+### Linear Types for Invariant Enforcement
 
 Types encoding exactly-once or at-most-once semantics MUST be `~Copyable`.
 

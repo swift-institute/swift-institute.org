@@ -14,7 +14,7 @@ This document defines patterns for noncopyable types.
 
 ---
 
-## [MEM-COPY-001] Noncopyable Type Declaration
+## Noncopyable Type Declaration
 
 **Scope**: Types requiring single-ownership semantics.
 
@@ -51,11 +51,9 @@ struct FileDescriptor {
 
 **Rationale**: Move-only semantics prevent use-after-free and double-free at compile time. The type system enforces that exactly one owner manages each resource.
 
-**Cross-references**: [PATTERN-014], [SYS-MEM-002], [API-ERR-005]
-
 ---
 
-## [MEM-COPY-002] Noncopyable in Error Types
+## Noncopyable in Error Types
 
 **Scope**: Error type design involving `~Copyable` values.
 
@@ -79,11 +77,9 @@ func register(_ token: consuming UnregisteredToken) throws -> RegisteredToken
 
 **Rationale**: Prevents accidental loss of move-only resources when errors are thrown.
 
-**Cross-references**: [API-ERR-005], [API-ERR-006]
-
 ---
 
-## [MEM-COPY-003] Noncopyable in Collections
+## Noncopyable in Collections
 
 **Scope**: Storing `~Copyable` types in collections.
 
@@ -113,11 +109,9 @@ var cache: [Key: State] = [:]  // Compiler error: State is ~Copyable
 
 **Rationale**: Swift's ownership system doesn't yet support move-only dictionary values. Classes provide the reference semantics needed for collection storage while preserving move-only content semantics through encapsulation.
 
-**Cross-references**: [PATTERN-021]
-
 ---
 
-## [MEM-COPY-004] Extension Constraints for ~Copyable Types
+## Extension Constraints for ~Copyable Types
 
 **Scope**: Writing extensions on generic types with `~Copyable` type parameters.
 
@@ -186,13 +180,11 @@ extension Container where Element: ~Copyable {
 
 **Rationale**: This is a fundamental asymmetry in Swift's noncopyable generics model. Developers expecting constraint propagation from protocol conformances will be surprised. Explicit constraints are required for every extension.
 
-**Cross-references**: [MEM-COPY-001], [PATTERN-005-004]
-
 ---
 
-## [MEM-COPY-005] Nested Accessor Pattern Incompatibility
+## Nested Accessor Pattern Incompatibility
 
-**Scope**: Using the nested accessor pattern ([API-NAME-005]) with `~Copyable` containers.
+**Scope**: Using the nested accessor pattern () with `~Copyable` containers.
 
 **Statement**: Non-consuming nested accessor patterns are fundamentally incompatible with `~Copyable` containers. The accessor struct must store a reference to the container, which requires copying—impossible for `~Copyable` types.
 
@@ -239,13 +231,11 @@ For `~Copyable` containers requiring the nested accessor pattern, choose one:
 
 **Exception**: Consuming accessors (one-shot operations like endpoint extraction) work and are legitimate.
 
-**Rationale**: This is not a bug—it's a fundamental constraint of Swift's current ownership model. [API-NAME-005] must be applied with awareness that it excludes `~Copyable` container support for non-consuming patterns.
-
-**Cross-references**: [API-NAME-005], [MEM-COPY-001], [MEM-COPY-004]
+**Rationale**: This is not a bug—it's a fundamental constraint of Swift's current ownership model. must be applied with awareness that it excludes `~Copyable` container support for non-consuming patterns.
 
 ---
 
-## [MEM-COPY-006] ~Copyable Propagation Gotchas
+## ~Copyable Propagation Gotchas
 
 **Scope**: All scenarios where `~Copyable` constraint suppression fails to propagate.
 
@@ -266,7 +256,7 @@ extension Outer {
 
 ### Category 2: Implicit Copyable in Extensions
 
-Extensions on `~Copyable` types implicitly add `where Element: Copyable`. See [MEM-COPY-004] for full details.
+Extensions on `~Copyable` types implicitly add `where Element: Copyable`. See for full details.
 
 ```swift
 extension Container {  // Implicitly: where Element: Copyable
@@ -340,7 +330,7 @@ This compiles during parse and type-check, but fails during module emission:
 error: type 'Element' does not conform to protocol 'Copyable'
 ```
 
-**Workaround**: Consolidate all source code into a single file. When all code is in one file, the constraint solver sees the complete picture in a single pass. See [PATTERN-016] for documentation requirements.
+**Workaround**: Consolidate all source code into a single file. When all code is in one file, the constraint solver sees the complete picture in a single pass. See for documentation requirements.
 
 **Tracking**: Swift issue #86669
 
@@ -400,13 +390,11 @@ The nested type pattern (Priority 1) is the only reliable workaround for contain
 
 **Rationale**: Until Swift fixes these at the language level, the workarounds are essential knowledge for any code using `~Copyable` generics.
 
-**Cross-references**: [MEM-COPY-004], [MEM-COPY-005]
-
 ---
 
 ## Linear and Affine Types
 
-### [MEM-LINEAR-001] Exactly-Once Types
+### Exactly-Once Types
 
 **Scope**: Values that must be used exactly once.
 
@@ -437,11 +425,9 @@ func example(_ cont: consuming Continuation<Int>) {
 
 **Rationale**: The compiler becomes a proof assistant for exactly-once usage, eliminating double-resume and forgotten-resume bugs.
 
-**Cross-references**: [PATTERN-014], [PATTERN-016]
-
 ---
 
-### [MEM-LINEAR-002] At-Most-Once Types
+### At-Most-Once Types
 
 **Scope**: Values that may be used at most once.
 
@@ -468,11 +454,9 @@ public struct Token: ~Copyable, Sendable {
 | Exactly-once (linear) | `preconditionFailure` - must be used |
 | At-most-once (affine) | Silent - unused is valid |
 
-**Cross-references**: [PATTERN-014]
-
 ---
 
-### [MEM-LINEAR-003] Proof Categories
+### Proof Categories
 
 **Scope**: Using the ownership system as a proof assistant.
 
@@ -487,13 +471,11 @@ public struct Token: ~Copyable, Sendable {
 
 **Rationale**: Recognizing `~Copyable` as a proof assistant rather than just memory optimization changes API design approach.
 
-**Cross-references**: [PATTERN-016]
-
 ---
 
 ## Span Access Patterns
 
-### [MEM-SPAN-001] Property-Based Span Access
+### Property-Based Span Access
 
 **Scope**: APIs that provide `Span` or `MutableSpan` views.
 
@@ -541,8 +523,6 @@ The closure pattern (`withUnsafeBufferPointer(_:)`) exists because `UnsafeBuffer
 
 **Rationale**: SE-0456 explicitly recommends property-based span access: "Closure-taking API can also be difficult to compose with new features and with one another." Primitives packages should lead ecosystem convergence toward canonical patterns.
 
-**Cross-references**: [MEM-COPY-001], SE-0456
-
 ---
 
 ## Techniques
@@ -551,7 +531,7 @@ The closure pattern (`withUnsafeBufferPointer(_:)`) exists because `UnsafeBuffer
 
 ---
 
-### [MEM-COPY-010] Noncopyable Workarounds for Associated Types
+### Noncopyable Workarounds for Associated Types
 
 **Scope**: Protocols where associated types should be `~Copyable` but Swift doesn't yet support this.
 
@@ -571,11 +551,9 @@ protocol ResourceManager {
 
 **Rationale**: Language limitations shouldn't prevent expressing the correct semantic contract. Document the workaround and the intended semantics.
 
-**Cross-references**: [MEM-LINEAR-001], [MEM-COPY-003]
-
 ---
 
-### [MEM-COPY-011] Two-World Separation for Owned and Borrowed Types
+### Two-World Separation for Owned and Borrowed Types
 
 **Scope**: APIs where both owned (escapable) and borrowed (`~Escapable`) variants exist.
 
@@ -653,8 +631,6 @@ A unified type would either:
 The two-world model makes these trade-offs explicit and provides controlled bridge points.
 
 **Rationale**: When language limitations prevent unification, the correct response is honest separation—not abstraction that hides the trade-offs. The limitation makes two worlds *mandatory*; the semantic distinction makes them *correct*.
-
-**Cross-references**: [MEM-COPY-010], [MEM-LINEAR-001], [API-DESIGN-002]
 
 ---
 

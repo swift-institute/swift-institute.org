@@ -21,7 +21,7 @@ This document provides a visual aid for layer assignment decisions within the Fi
 
 The following flowchart guides layer assignment through a sequence of five questions. Start at the top and follow the branches based on your package's characteristics.
 
-### [FLOW-001] Layer Assignment Flowchart
+### Layer Assignment Flowchart
 
 ```
 START: Does the package implement an external specification?
@@ -53,7 +53,7 @@ START: Does the package implement an external specification?
 
 ### Textual Decision Logic
 
-For LLM parsing and accessibility, here is the decision tree expressed as sequential logic:
+For accessibility, here is the decision tree expressed as sequential logic:
 
 1. **Question 1**: Does the package implement an external specification (RFC, ISO, IEEE)?
    - If YES: Assign to **STANDARDS** layer. Stop.
@@ -77,7 +77,7 @@ For LLM parsing and accessibility, here is the decision tree expressed as sequen
 
 This matrix compares all five layers across key classification criteria. Use it to verify layer assignment or to understand the distinguishing characteristics of each layer.
 
-### [FLOW-002] Criteria Comparison
+### Criteria Comparison
 
 | Criterion | Primitives | Standards | Foundations | Components | Applications |
 |-----------|------------|-----------|-------------|------------|--------------|
@@ -101,7 +101,7 @@ This matrix compares all five layers across key classification criteria. Use it 
 
 Use this table for rapid layer identification based on the conceptual role of a package.
 
-### [FLOW-003] Layer Identification Guide
+### Layer Identification Guide
 
 | Layer | Guiding Question | Package Example |
 |-------|------------------|-----------------|
@@ -117,7 +117,7 @@ Use this table for rapid layer identification based on the conceptual role of a 
 
 For packages within the **Primitives** layer, use this additional flowchart to determine the correct tier (0-9).
 
-### [FLOW-004] Tier Assignment Flowchart
+### Tier Assignment Flowchart
 
 ```
 START: Does the package have zero primitive dependencies?
@@ -192,7 +192,7 @@ For detailed tier definitions and package assignments, see the Primitives Tiers 
 
 When contributing new code to the Swift Institute, use the following decision tree to determine the correct target repository and layer.
 
-### [CONTRIB-001] Contributor Layer Decision Tree
+### Contributor Layer Decision Tree
 
 **Scope**: Determining where a contribution belongs.
 
@@ -225,8 +225,6 @@ Is it a type that standards require but do not define?
 ```
 
 **Rationale**: Starting at the lowest applicable layer ensures maximum reusability and prevents coupling to higher-level concerns.
-
-**Cross-references**: [FLOW-001], <doc:API-Requirements> [API-LAYER-001], <doc:Ecosystem-Process#ECO-EXTR-002>
 
 ---
 

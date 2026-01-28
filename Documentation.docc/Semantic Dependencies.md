@@ -38,7 +38,7 @@ SDG edges bridge this gap by declaring relationships that are architecturally co
 
 ---
 
-## [SEM-DEP-001] Dependency Classification
+## Dependency Classification
 
 **Scope**: All package dependency declarations.
 
@@ -64,11 +64,9 @@ dependencies: [
 
 **Rationale**: Explicit classification prevents accidental dependencies while documenting architectural intent. The structured marker serves as both documentation and a placeholder for future activation.
 
-**Cross-references**: [SEM-DEP-002], [PRIM-ARCH-002]
-
 ---
 
-## [SEM-DEP-002] Marker Format and Rationale Requirement
+## Marker Format and Rationale Requirement
 
 **Scope**: All SDG edge declarations.
 
@@ -120,11 +118,9 @@ dependencies: [
 
 **Rationale**: The structured marker enables machine extraction (regex: `// SDG\(([^)]+)\):`) while forcing explicit reasoning about domain relationships. The closed relation set prevents vocabulary drift.
 
-**Cross-references**: [SEM-DEP-001], [SEM-DEP-006]
-
 ---
 
-## [SEM-DEP-003] Tier Constraint Preservation
+## Tier Constraint Preservation
 
 **Scope**: SDG edge tier relationships.
 
@@ -147,11 +143,9 @@ dependencies: [
 
 **Rationale**: SDG edges represent intended architecture. If the intended architecture violates tier constraints, either the semantic relationship is incorrect or the package is misplaced.
 
-**Cross-references**: [PRIM-ARCH-002], [SEM-DEP-005]
-
 ---
 
-## [SEM-DEP-004] Activation Protocol
+## Activation Protocol
 
 **Scope**: Transitioning SDG edges to IDG edges.
 
@@ -174,11 +168,9 @@ SDG edges SHOULD be reviewed whenever the package's public API surface changes m
 
 **Rationale**: SDG edges are placeholders for architectural intent. Once implemented, they become IDG edges and the semantic marker is no longer needed. Regular review prevents comment drift.
 
-**Cross-references**: [SEM-DEP-001], [SEM-DEP-008]
-
 ---
 
-## [SEM-DEP-005] Lateral Dependency Warning
+## Lateral Dependency Warning
 
 **Scope**: SDG edges between same-tier packages.
 
@@ -212,13 +204,11 @@ A common manifestation of lateral pressure is **string-primitives becoming an im
 
 **Rationale**: Lateral dependencies—SDG or IDG—flatten the tier hierarchy and suggest incomplete domain analysis.
 
-**Cross-references**: [PRIM-ARCH-002], [PRIM-SCOPE-003], [SEM-DEP-008]
-
 ---
 
 ## The Domain Ordering Principle
 
-### [SEM-DEP-006] Larger Domain Depends on Smaller
+### Larger Domain Depends on Smaller
 
 **Scope**: Determining SDG edge direction.
 
@@ -266,11 +256,9 @@ When evaluating `operates-on`, distinguish **essential** from **incidental** rel
 
 **Rationale**: Domain ordering reflects conceptual containment. The essential/incidental distinction prevents SDG edge inflation.
 
-**Cross-references**: [PRIM-SCOPE-001], [PRIM-ORG-001]
-
 ---
 
-## [SEM-DEP-007] SDG Closure Review
+## SDG Closure Review
 
 **Scope**: Package creation and major refactoring.
 
@@ -288,11 +276,9 @@ When evaluating `operates-on`, distinguish **essential** from **incidental** rel
 
 **Rationale**: Upfront SDG analysis prevents architectural drift and ensures domain relationships are captured before implementation obscures them.
 
-**Cross-references**: [SEM-DEP-002], [SEM-DEP-006]
-
 ---
 
-## [SEM-DEP-008] Join-Point Resolution
+## Join-Point Resolution
 
 **Scope**: Resolving SDG conflicts where two domains have mutual semantic relevance.
 
@@ -320,7 +306,7 @@ Join-point packages are justified when:
 
 ### SDG-First Join-Points
 
-Join-point packages MAY start as SDG-only intent (commented edges declaring the planned integration) and activate IDG edges when integration code lands. This keeps [SEM-DEP-004] and [SEM-DEP-008] aligned.
+Join-point packages MAY start as SDG-only intent (commented edges declaring the planned integration) and activate IDG edges when integration code lands. This keeps and aligned.
 
 ### Example: Error Formatting
 
@@ -347,8 +333,6 @@ Solution: diagnostic-primitives (Tier 2) as join-point
 ```
 
 **Rationale**: Join-points prevent lateral dependency webs and keep base domains focused. The criteria constrain when package proliferation is justified.
-
-**Cross-references**: [SEM-DEP-005], [SEM-DEP-006], [PRIM-SCOPE-003]
 
 ---
 

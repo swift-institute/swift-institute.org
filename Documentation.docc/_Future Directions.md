@@ -18,7 +18,7 @@ This document outlines planned expansions and future work for the Swift Institut
 
 ## Swift Embedded
 
-### [FUTURE-001] Swift Embedded Platform Support
+### Swift Embedded Platform Support
 
 **Scope**: All primitives packages for deployment on embedded targets.
 
@@ -41,13 +41,11 @@ The Foundation-free design ensures primitives are ready for these constrained en
 2. Document platform-specific compilation requirements
 3. Provide example projects for common embedded targets (RP2040, ESP32, STM32)
 
-**Cross-references**: <doc:Package-Inventory>, <doc:Five-Layer-Architecture>
-
 ---
 
 ## Mathematical Foundations
 
-### [FUTURE-002] Complex Number Migration
+### Complex Number Migration
 
 **Scope**: Complex number primitives (`swift-complex-primitives`) and downstream consumers.
 
@@ -64,13 +62,11 @@ While generic trigonometry is now achieved for real-valued geometry (see <doc:Ma
 3. Migrate `swift-complex-primitives` to generic constraints
 4. Update downstream consumers (signal processing, control theory packages)
 
-**Cross-references**: <doc:Mathematical-Foundations>
-
 ---
 
 ## Standards Expansion
 
-### [FUTURE-003] Additional Standard Implementations
+### Additional Standard Implementations
 
 **Scope**: New specification packages in swift-standards.
 
@@ -88,13 +84,11 @@ As primitives stabilize, swift-standards will expand to additional specification
 
 **Blocking factors**: Priority is given to specifications required by downstream consumers. ISO 8601 is high priority because `swift-http` and other networking packages require standardized date parsing without Foundation's `DateFormatter`.
 
-**Cross-references**: <doc:Package-Inventory>, <doc:Layer-Flowchart>
-
 ---
 
 ## Community and Ecosystem
 
-### [FUTURE-004] Community Adoption
+### Community Adoption
 
 **Scope**: External projects and Swift community practices.
 
@@ -120,13 +114,11 @@ The primitives model may influence broader Swift community practices:
 2. Speak at Swift conferences about the primitives model
 3. Port existing projects to depend on primitives
 
-**Cross-references**: <doc:Five-Layer-Architecture>, <doc:Glossary>
-
 ---
 
 ## Design Evolution
 
-### [FUTURE-005] Deletion as Refinement
+### Deletion as Refinement
 
 **Scope**: Package and API evolution across all repositories.
 
@@ -148,11 +140,9 @@ When exploring a new abstraction:
 - Existing concepts gain capability without new types
 - Code becomes more obvious, not more clever
 
-**Cross-references**: <doc:API-Requirements>, <doc:Primitives-Architecture>
-
 ---
 
-### [FUTURE-006] Language Features for Ergonomic Type-Keyed Access
+### Language Features for Ergonomic Type-Keyed Access
 
 **Scope**: Witness access patterns and dependency injection ergonomics.
 
@@ -189,7 +179,7 @@ func syncData() async throws { ... }
 
 #### Current Reality
 
-Swift provides none of these mechanisms. The subscript syntax `values[Key.self]` is the correct idiom—the type parameter serves as the identifier. See [API-DESIGN-001] for detailed analysis of why alternatives fail.
+Swift provides none of these mechanisms. The subscript syntax `values[Key.self]` is the correct idiom—the type parameter serves as the identifier. See for detailed analysis of why alternatives fail.
 
 **Blocking factors**: Each feature would require Swift Evolution proposals and significant compiler work. Implicit resolution particularly conflicts with Swift's philosophy of explicitness. Effect types may eventually appear in a different form (via typed throws evolution or macro-based solutions).
 
@@ -199,11 +189,9 @@ Swift provides none of these mechanisms. The subscript syntax `values[Key.self]`
 2. Consider macro-based solutions for dependency documentation (not resolution)
 3. Continue refining subscript-based patterns for ergonomics within constraints
 
-**Cross-references**: [API-DESIGN-001], <doc:API-Requirements>
-
 ---
 
-### [FUTURE-007] Input Protocol Unification
+### Input Protocol Unification
 
 **Scope**: Unifying parallel input abstractions across swift-input-primitives, swift-binary-primitives, and swift-parser-primitives.
 
@@ -242,13 +230,11 @@ The non-borrowed `Binary.Bytes.Input` could conform today. The unification would
 3. Monitor Swift Evolution for `~Escapable` protocol support
 4. Document the two-world pattern (owned/borrowed) until unification is complete
 
-**Cross-references**: [MEM-COPY-011], [API-DESIGN-013], <doc:Memory-Copyable>
-
 ---
 
 ## Collection Primitives Evolution
 
-### [FUTURE-008] Arena-Based Linked Lists
+### Arena-Based Linked Lists
 
 **Scope**: `List` primitive storage strategy to support `~Copyable` elements.
 
@@ -291,7 +277,7 @@ Now the element is stored in a struct (which can have `~Copyable` generic parame
 | Insertion/deletion | Complex (free list management) | Simple (pointer swap) |
 | Capacity management | Must pre-allocate or resize | Grows one node at a time |
 
-The trade-off is clearly favorable for a primitives library targeting modern use cases. The arena approach aligns with [API-DESIGN-009] Structural Parity, enabling `List.Bounded`, `List.Inline`, and `List.Small` variants.
+The trade-off is clearly favorable for a primitives library targeting modern use cases. The arena approach aligns with Structural Parity, enabling `List.Bounded`, `List.Inline`, and `List.Small` variants.
 
 **Blocking factors**: List refactoring must be completed first. The arena storage design is documented in `List-Refactoring-Brief.md`.
 
@@ -301,8 +287,6 @@ The trade-off is clearly favorable for a primitives library targeting modern use
 2. Implement arena-based storage with free list management
 3. Add `Bounded`, `Inline`, and `Small` variants
 4. Validate `~Copyable` element support across all variants
-
-**Cross-references**: [API-DESIGN-009], [MEM-COPY-001], <doc:_Reflections>
 
 ---
 
