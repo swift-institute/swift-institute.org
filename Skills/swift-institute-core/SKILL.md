@@ -36,7 +36,10 @@ This is the root meta-skill for the Swift Institute ecosystem.
 - **naming** - [API-NAME-*] Type and method naming
 - **errors** - [API-ERR-*] Error handling
 - **code-organization** - [API-IMPL-*] File structure
-- **anti-patterns** - [PATTERN-*] Common mistakes to avoid
+- **anti-patterns** - [PATTERN-009–016] Common mistakes to avoid
+- **platform** - [PATTERN-001–008] Build, platform, Swift 6, C shims
+- **design** - [API-LAYER-*, PATTERN-017–050] API design, layering, concurrency
+- **advanced-patterns** - [PATTERN-014–048] Memory ownership, unsafe ops, refactoring
 - **memory** - [MEM-COPY-*, MEM-OWN-*, MEM-LINEAR-*] Ownership, copyability
 - **memory-safety** - [MEM-SAFE-*, MEM-SEND-*, MEM-REF-*, MEM-LIFE-*] Strict safety, reference primitives
 - **copyable-remediation** - [COPY-FIX-*, COPY-REM-*] ~Copyable constraint fixes
@@ -57,11 +60,14 @@ Skills are loaded based on their `requires:` DAG. The order is:
 3. `naming` (requires: swift-institute)
 4. `errors` (requires: swift-institute)
 5. `code-organization` (requires: naming, errors)
-6. `memory` (requires: naming, errors)
-7. `memory-safety` (requires: swift-institute, memory)
-8. `copyable-remediation` (requires: memory)
-9. `anti-patterns` (requires: naming, errors, code-organization)
-10. Process skills (requires: swift-institute)
+6. `platform` (requires: swift-institute)
+7. `memory` (requires: naming, errors)
+8. `memory-safety` (requires: swift-institute, memory)
+9. `design` (requires: swift-institute, naming)
+10. `copyable-remediation` (requires: memory)
+11. `anti-patterns` (requires: naming, errors, code-organization)
+12. `advanced-patterns` (requires: memory, memory-safety, design)
+13. Process skills (requires: swift-institute)
 
 ---
 
