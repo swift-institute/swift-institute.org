@@ -48,9 +48,6 @@ Before implementing, read the Implementation Checklist:
 |----------|-------|
 | <doc:Memory> | Memory patterns overview |
 | <doc:Memory-Ownership> | [MEM-OWN-*] Borrowing, consuming |
-| <doc:Memory-Copyable> | [MEM-COPY-*] ~Copyable types |
-| <doc:Memory-Safety> | [MEM-SAFE-*] Safety patterns |
-| <doc:Copyable-Remediation> | [COPY-*] Bug workarounds |
 
 ---
 
@@ -90,8 +87,6 @@ Before implementing, read the Implementation Checklist:
 
 ### Memory
 - <doc:Memory>
-- <doc:Memory-Copyable>
-- <doc:Copyable-Remediation>
 
 ### Process
 - <doc:Experiment>

@@ -8,12 +8,12 @@ Workflow for creating minimal reproduction packages and submitting Swift compile
 
 ## Overview
 
-This document defines the *issue submission workflow*—the process followed after an experiment (per [Experiment Investigation](../Experiments/Experiment%20Investigation.md)) surfaces behavior that appears to be a genuine Swift compiler bug. Issue packages are created in `/Users/coen/Developer/coenttb/` under the `coenttb` GitHub organization.
+This document defines the *issue submission workflow*—the process followed after an experiment (per the **experiment-process** skill (investigation workflow)) surfaces behavior that appears to be a genuine Swift compiler bug. Issue packages are created in `/Users/coen/Developer/coenttb/` under the `coenttb` GitHub organization.
 
 **Entry point**: An experiment concluded with `Result: REFUTED` or unexpected behavior that appears to be a compiler bug, not user error.
 
 **Prerequisites**:
-1. Completed experiment per [Experiment](../Experiments/Experiment.md)
+1. Completed experiment per the **experiment-process** skill
 2. Verified the behavior is not documented/expected
 3. Reduced the reproduction to minimal form per
 
@@ -1154,12 +1154,12 @@ Help needed with typed throws   # ❌ Sounds like question, not bug report
 
 ### Foundation Document
 
-- [Experiment](../Experiments/Experiment.md) — Shared infrastructure for experiments
+- the **experiment-process** skill — Shared infrastructure for experiments
 
 ### Related Workflows
 
-- [Experiment Investigation](../Experiments/Experiment%20Investigation.md) — How experiments identify bugs
-- [Experiment Discovery](../Experiments/Experiment%20Discovery.md) — Proactive package audits
+- the **experiment-process** skill (investigation workflow) — How experiments identify bugs
+- the **experiment-process** skill (discovery workflow) — Proactive package audits
 
 ### Cross-Reference Index
 

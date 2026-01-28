@@ -423,7 +423,7 @@ The problem is *having* the pointer, not *using* it.
 **Statement**: Use relative paths for internal links.
 
 ```markdown
-See [Blog Post Process](_Blog%20Post%20Process.md) for the workflow.
+See the **blog-process** skill for the workflow.
 ```
 
 ### External links

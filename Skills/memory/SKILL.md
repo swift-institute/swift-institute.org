@@ -122,6 +122,18 @@ extension Container {
 
 Applies to **all extension content**: methods, computed properties, nested types, and typealiases.
 
+```swift
+// ❌ Typealias with implicit Copyable constraint
+extension Container {
+    typealias Error = ContainerError  // Only visible when Element: Copyable!
+}
+
+// ✓ Typealias available for all Element types
+extension Container where Element: ~Copyable {
+    typealias Error = ContainerError
+}
+```
+
 **Cross-references**: [MEM-COPY-001]
 
 ---
@@ -241,6 +253,11 @@ func withSpan<R>(_ body: (Span<Element>) -> R) -> R
 ```
 
 `Span` is `~Escapable` — the type system enforces scoping, making closures unnecessary.
+
+| Type | Escapable | Scoping Mechanism |
+|------|-----------|-------------------|
+| `UnsafeBufferPointer` | Yes | Closure scope |
+| `Span` | No (`~Escapable`) | Type system |
 
 **Cross-references**: [MEM-COPY-001], SE-0456
 

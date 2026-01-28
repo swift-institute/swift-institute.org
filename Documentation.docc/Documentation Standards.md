@@ -1003,7 +1003,7 @@ This requirement was absent from official documentation. The error message was t
 
 **Rationale**: Thirty minutes of research produces general understanding. Five minutes of compilation produces working commands. Final documentation includes exact commands because they were executed, not because they were found.
 
-> **Full methodology**: See [Experiment](../Experiments/Experiment.md) for complete experiment package creation protocol, including location conventions (`/tmp`), reduction methodology, and result documentation.
+> **Full methodology**: See the **experiment-process** skill for complete experiment package creation protocol, including location conventions (`/tmp`), reduction methodology, and result documentation.
 
 ---
 

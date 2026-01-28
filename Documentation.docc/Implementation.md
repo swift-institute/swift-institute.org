@@ -26,11 +26,9 @@ This document serves as an index to implementation patterns. Each pattern catego
 | <doc:Platform-Compilation> | PATTERN-004, 004a-c, PATTERN-019, PATTERN-036 | Platform conditionals, module naming, linker flags |
 | <doc:Swift-6> | PATTERN-005, 005a-b, PATTERN-006-008, PATTERN-035 | Language mode, upcoming features, parameter packs |
 | <doc:Anti-Patterns> | PATTERN-009-013, PATTERN-015 | Common mistakes, Foundation ban, macro naming |
-| <doc:Memory-Copyable> | MEM-COPY-010, 011 | Noncopyable associated types, two-world separation |
 | <doc:API-Concurrency> | API-CONC-010-012 | Lock-free resumption, inout-await, type erasure |
 | <doc:Ecosystem-Process> | ECO-TECH-001-003 | Minimal reproduction, migration boundaries, audit patterns |
 | <doc:API-Design> | API-DESIGN-010-014 | Fallbacks, typealiases, extension points |
-| <doc:Memory-Safety> | MEM-SAFE-010-014 | Dual overloads, span interface, closure scope |
 | <doc:Experiment> | EXP-001–010d | Minimal reproduction packages, empirical verification |
 
 ---
@@ -73,7 +71,7 @@ Primitive and standard packages MUST NOT use Foundation types.
 
 Types encoding exactly-once or at-most-once semantics MUST be `~Copyable`.
 
-> **Full details**: <doc:Memory-Copyable>
+> **Full details**: the **memory** skill
 
 ---
 
@@ -111,7 +109,7 @@ Types encoding exactly-once or at-most-once semantics MUST be `~Copyable`.
 
 ### Ownership Patterns
 
-> **Full document**: <doc:Memory-Copyable>
+> **Full document**: the **memory** skill
 
 | Pattern | Summary |
 |---------|---------|
@@ -156,7 +154,7 @@ Types encoding exactly-once or at-most-once semantics MUST be `~Copyable`.
 
 ### Safety Patterns
 
-> **Full document**: <doc:Memory-Safety>
+> **Full document**: the **memory-safety** skill
 
 | Pattern | Summary |
 |---------|---------|
@@ -180,11 +178,9 @@ Types encoding exactly-once or at-most-once semantics MUST be `~Copyable`.
 
 ### Domain Pattern Documents
 
-- <doc:Memory-Copyable>
 - <doc:API-Concurrency>
 - <doc:Ecosystem-Process>
 - <doc:API-Design>
-- <doc:Memory-Safety>
 
 ### Related Documents
 

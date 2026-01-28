@@ -387,6 +387,88 @@ struct TrackedElement: ~Copyable {
 
 ---
 
+## Common Mistakes
+
+### Mistake 1: Forgetting Extension Constraints
+
+```swift
+// WRONG
+extension Container { func operation() { } }
+// RIGHT
+extension Container where Element: ~Copyable { func operation() { } }
+```
+
+### Mistake 2: Storage at Wrong Nesting Level
+
+```swift
+// WRONG - Storage at Variant level
+struct Container<Element: ~Copyable>: ~Copyable {
+    struct Variant: ~Copyable {
+        final class Storage: ManagedBuffer<Int, Element> { }  // FAILS
+    }
+}
+
+// RIGHT - Storage at Container level
+struct Container<Element: ~Copyable>: ~Copyable {
+    final class Storage: ManagedBuffer<Int, Element> { }  // WORKS
+    struct Variant: ~Copyable {
+        var _storage: Container<Element>.Storage
+    }
+}
+```
+
+### Mistake 3: Conformance in Separate File
+
+```swift
+// WRONG - Causes poisoning
+// File: Container+Sequence.swift
+extension Container: Sequence where Element: Copyable { }
+
+// RIGHT - Same file as type definition
+// File: Container.swift
+struct Container<Element: ~Copyable>: ~Copyable { ... }
+extension Container: Sequence where Element: Copyable { }
+```
+
+### Mistake 4: Forgetting Pointer Update After CoW
+
+```swift
+// WRONG
+mutating func makeUnique() {
+    if !isKnownUniquelyReferenced(&_storage) {
+        _storage = _storage.copy()
+        // MISSING: _cachedPtr update
+    }
+}
+
+// RIGHT
+mutating func makeUnique() {
+    if !isKnownUniquelyReferenced(&_storage) {
+        _storage = _storage.copy()
+        unsafe (_cachedPtr = _storage._elementsPointer)  // CRITICAL
+    }
+}
+```
+
+### Mistake 5: Missing Deinit Workaround for InlineArray + Value Generic
+
+```swift
+// WRONG - Elements will leak
+struct Container<Element: ~Copyable, let capacity: Int>: ~Copyable {
+    var _storage: InlineArray<capacity, (Int, Int, Int, Int, Int, Int, Int, Int)>
+    var _count: Int
+}
+
+// RIGHT - Reference property forces correct deinit dispatch
+struct Container<Element: ~Copyable, let capacity: Int>: ~Copyable {
+    var _storage: InlineArray<capacity, (Int, Int, Int, Int, Int, Int, Int, Int)>
+    var _count: Int
+    var _deinitWorkaround: AnyObject? = nil
+}
+```
+
+---
+
 ## Remediation Workflow
 
 ### Phase 1: Analysis

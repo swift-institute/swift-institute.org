@@ -181,5 +181,3 @@ The closer analogs in the ecosystem:
 ### Related Documents
 
 - <doc:Memory>
-- <doc:Memory-Copyable>
-- <doc:Memory-Safety>
