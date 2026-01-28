@@ -1,125 +1,151 @@
 # Five Layer Architecture
 
-<!--
----
-title: Five Layer Architecture
-version: 1.0.0
-last_updated: 2026-01-28
-applies_to: [swift-primitives, swift-standards, swift-foundations, swift-components]
-normative: true
----
--->
-
 @Metadata {
     @TitleHeading("Swift Institute")
 }
 
-The foundational architecture for all Swift Institute packages.
+The core organizational model: primitives, standards, foundations, components, and applications.
 
 ## Overview
 
-Swift Institute organizes code into five distinct layers, each with clear responsibilities and dependency rules.
+The Swift Institute is organized as a five-layer architecture along two orthogonal axes: **semantic irreducibility** (what cannot be decomposed further) and **policy introduction** (where defaults, opinions, and workflows begin).
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    swift-institute                       │
+│         Stewarded body of layered Swift infrastructure   │
+├─────────────────────────────────────────────────────────┤
+│                                                         │
+│   ┌─────────────────────────────────────────────────┐   │
+│   │  Applications     Commercial / Proprietary      │   │
+│   │  (Email clients, Calendar systems)              │   │
+│   │  End-user products                              │   │
+│   └─────────────────────────────────────────────────┘   │
+│                          ↑                              │
+│   ┌─────────────────────────────────────────────────┐   │
+│   │  Components        Flexible licensing           │   │
+│   │  (PDF rendering, HTTP servers, Jobs)            │   │
+│   │  Opinionated assemblies                         │   │
+│   └─────────────────────────────────────────────────┘   │
+│                          ↑                              │
+│   ┌─────────────────────────────────────────────────┐   │
+│   │  Foundations       Apache 2.0 + selective       │   │
+│   │  (File I/O, JSON, TLS, Logging)                 │   │
+│   │  Composed building blocks                       │   │
+│   └─────────────────────────────────────────────────┘   │
+│                          ↑                              │
+│   ┌─────────────────────────────────────────────────┐   │
+│   │  Standards         Apache 2.0 only              │   │
+│   │  (ISO 32000, RFC 3986, IEEE 754)                │   │
+│   │  Specification implementations                  │   │
+│   └─────────────────────────────────────────────────┘   │
+│                          ↑                              │
+│   ┌─────────────────────────────────────────────────┐   │
+│   │  Primitives        Apache 2.0 only              │   │
+│   │  (Buffer, Geometry, Algebra, Time)              │   │
+│   │  Atomic building blocks                         │   │
+│   └─────────────────────────────────────────────────┘   │
+│                                                         │
+└─────────────────────────────────────────────────────────┘
+```
 
 ---
 
-## Layer Diagram
+## Layer Summary
 
-```
-Layer 5: Applications    (Commercial)   - End-user products
-              ↑
-Layer 4: Components      (Flexible)     - Opinionated assemblies
-              ↑
-Layer 3: Foundations     (Apache 2.0)   - Composed building blocks
-              ↑
-Layer 2: Standards       (Apache 2.0)   - Specification implementations
-              ↑
-Layer 1: Primitives      (Apache 2.0)   - Atomic building blocks
-```
+| Layer | Question Answered | Policy Content |
+|-------|-------------------|----------------|
+| **Primitives** | What must exist? | None |
+| **Standards** | What is specified externally? | None (externally dictated) |
+| **Foundations** | What can be composed safely? | Minimal |
+| **Components** | What is reusable with defaults? | Moderate |
+| **Applications** | What is an end-user system? | High |
 
 ---
 
 ## Layer Definitions
 
-### [ARCH-LAYER-001] Dependency Direction
+### Primitives
 
-**Statement**: Packages MUST depend only on layers below them. Upward and lateral dependencies are forbidden.
+**Role**: Irreducible, policy-free substrate.
 
-### Layer Descriptions
+Primitives are types that standards require but do not define. Memory abstractions, atomics, async primitives, kernel/OS shims, buffers, geometric types, algebraic structures. They have minimal surface area, no defaults, and are designed to be timeless.
 
-| Layer | Question Answered | Examples |
-|-------|-------------------|----------|
-| Primitives | What must exist? | Buffer, Geometry, Time |
-| Standards | What is specified externally? | ISO 32000, RFC 3986 |
-| Foundations | What can be composed safely? | File I/O, JSON, TLS |
-| Components | What is reusable with defaults? | PDF rendering, HTTP servers |
-| Applications | What is an end-user system? | Products |
+### Standards
 
----
+**Role**: Faithful implementations of external normative specifications.
 
-## Primitives (Layer 1)
+RFCs, ISO standards, protocol formats, wire encodings, cryptographic specs, file formats. Semantics are dictated externally; correctness is defined by conformance.
 
-Atomic, policy-free building blocks.
+### Foundations
 
-**Characteristics**:
-- No Foundation imports ([PRIM-FOUND-001])
-- Mechanism over policy
-- Zero external dependencies within tier 0
-- Nine-tier internal hierarchy
+**Role**: Composed building blocks from primitives + standards, still policy-light.
 
-**Package Location**: `/Users/coen/Developer/swift-primitives/`
+File systems, IO abstractions, HTTP types, JSON, TLS plumbing, diagnostics, configuration parsing, logging backends, scheduling primitives. Reusable across domains, infrastructure-level, minimal defaults, no application workflows.
 
----
+**Distinction from Standards**: Foundations are *compositions*, not implementations of external specifications. A JSON parser implements RFC 8259 (standards layer), but a configuration system that uses JSON is a foundation—it composes the standard with file I/O, validation, and type coercion.
 
-## Standards (Layer 2)
+**Distinction from Primitives**: Foundations have dependencies on standards. A TLS foundation depends on cryptographic standards; a logging foundation may depend on timestamp standards. Primitives depend only on other primitives.
 
-Implementations of external specifications.
+### Components
 
-**Characteristics**:
-- Mirror specification terminology exactly
-- Reference specification section numbers
-- May depend on primitives only
+**Role**: Reusable, opinionated assemblies built on foundations.
 
-**Package Location**: `/Users/coen/Developer/swift-standards/`
+Servers, PDF rendering engines, job systems, protocol adapters, integration layers, "batteries included" subsystems. Defaults are present, trade-offs are encoded. Still reusable, but no longer irrefutable.
+
+**The Policy Boundary**: Components introduce opinions. A foundation provides HTTP types; a component provides an HTTP server with a specific concurrency model, timeout policy, and middleware architecture.
+
+### Applications
+
+**Role**: End-user systems and domain workflows.
+
+Calendar systems, reminders, email clients/services, CLIs, vertical products. Domain-specific, user-facing, branding and UX matter. Not intended as general infrastructure.
 
 ---
 
-## Foundations (Layer 3)
+## Repository Organization
 
-Composed building blocks without policy.
+The Swift Institute comprises multiple GitHub organizations, one per layer:
 
-**Characteristics**:
-- Compose primitives and standards
-- Provide ergonomic APIs
-- Remain policy-free
+| Layer | GitHub Organization | Repository Pattern | Example |
+|-------|---------------------|-------------------|---------|
+| **Primitives** | `swift-primitives` | `swift-*-primitives` | `swift-geometry-primitives` |
+| **Standards** | `swift-standards` | `swift-{spec-id}` | `swift-iso-32000`, `swift-rfc-3986` |
+| **Foundations** | `swift-foundations` | `swift-*` (clean names) | `swift-json`, `swift-logging` |
+| **Components** | `swift-components` | `swift-*` or product names | `swift-pdf-rendering` |
+| **Applications** | Product-specific | Product names | Domain-specific |
 
-**Package Location**: `/Users/coen/Developer/swift-foundations/`
+The `swift-institute` organization itself serves as the umbrella identity and documentation home, not a package publisher. This separation ensures:
 
----
-
-## Components (Layer 4)
-
-Opinionated, reusable assemblies.
-
-**Characteristics**:
-- Make policy decisions
-- Provide defaults
-- Ready for integration
+- **Clear layer boundaries**: Organization membership immediately signals layer
+- **Independent versioning**: Each layer can evolve at its own pace
+- **Focused governance**: Layer-specific maintainers and review standards
 
 ---
 
-## Applications (Layer 5)
+## Licensing Strategy
 
-End-user products.
+The five-layer model enables precise licensing strategy aligned with semantic responsibility:
 
-**Characteristics**:
-- Commercial licensing allowed
-- Full policy decisions
-- Complete systems
+| Layer | Primary License | Commercial Option | Rationale |
+|-------|-----------------|-------------------|-----------|
+| **Primitives** | Apache 2.0 | No | Maximum embeddability |
+| **Standards** | Apache 2.0 | No | Ubiquity and trust |
+| **Foundations** | Apache 2.0 | Selective | Adoption + leverage |
+| **Components** | Flexible | Yes | Monetization boundary |
+| **Applications** | Commercial | N/A | Products, not infrastructure |
 
----
+**Key insight**: Licensing leverage increases as policy content increases.
 
-## Topics
+**Primitives and Standards** must be embeddable everywhere. Any restriction at these layers would fragment the ecosystem and undermine composability. These are infrastructure in the strongest sense—value comes from ubiquity, not scarcity.
 
-### Related
-- <doc:Semantic-Dependencies>
-- <doc:Implementation>
+**Foundations** are where real value accumulates, but reuse must remain frictionless. An Apache baseline ensures adoption; optional commercial terms preserve long-term leverage for embedding, redistribution, or enterprise guarantees.
+
+**Components** are the natural monetization boundary. They are valuable precisely because they encode decisions worth paying for. Keeping them distinct from foundations avoids contaminating lower layers with policy.
+
+**Applications** are products, not infrastructure. They benefit from being built on a permissive stack but do not need to be permissive themselves.
+
+This alignment avoids two failure modes:
+1. **Over-restriction at the base**: Licensing primitives restrictively fragments the ecosystem
+2. **Under-monetization at the top**: Giving away all components forfeits sustainable leverage
+
