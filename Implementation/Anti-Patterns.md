@@ -1,7 +1,319 @@
-# PLACEHOLDER
+# Anti-Patterns
 
-This document needs content recovery or rewriting.
+<!--
+---
+title: Anti-Patterns
+version: 1.0.0
+last_updated: 2026-01-19
+applies_to: [swift-primitives, swift-institute, swift-standards]
+normative: true
+---
+-->
+
+@Metadata {
+    @TitleHeading("Swift Institute")
+}
+
+Common mistakes to avoid when implementing Swift Institute packages.
+
+## Overview
+
+This document documents common mistakes to avoid when implementing Swift Institute packages.
+
+**Applies to**: All implementation code in Swift Institute packages.
+
+**Does not apply to**: External dependencies or third-party code.
+
+---
+
+## [PATTERN-009] No Foundation Types
+
+**Scope**: All primitive and standard packages.
+
+**Statement**: Primitive and standard packages MUST NOT use Foundation types.
+
+**Correct**:
+```swift
+import Buffer_Primitives
+import Temporal_Primitives
+func parse(_ buffer: Buffer) -> Instant { ... }
+```
+
+**Incorrect**:
+```swift
+// ❌ Foundation dependency
+import Foundation
+func parse(_ data: Data) -> Date { ... }
+```
+
+**Rationale**: Foundation types prevent Swift Embedded deployment and introduce platform-specific behavior differences.
+
+**Cross-references**: [API-NAME-001], [API-PLAT-001]
+
+---
+
+## [PATTERN-010] Nested Type Names
+
+**Scope**: All type declarations.
+
+**Statement**: Types MUST use nested namespaces, not compound names.
+
+**Correct**:
+```swift
+enum PDF {
+    struct Page { }
+    struct Document { }
+}
+// Usage: PDF.Page, PDF.Document
+```
+
+**Incorrect**:
+```swift
+// ❌ Compound names
+struct PDFPage { }
+struct PDFDocument { }
+```
+
+**Rationale**: Nested types provide namespace organization and read as `PDF.Page`, matching specification terminology. Type `PDF.` and autocomplete reveals the entire domain.
+
+**Cross-references**: [API-NAME-001], [API-NAME-002]
+
+---
+
+## [PATTERN-011] Typed Error Enums
+
+**Scope**: All error types.
+
+**Statement**: Errors MUST be typed enums with associated values, not string-based errors.
+
+**Correct**:
+```swift
+enum ParseError: Error {
+    case invalidHeader(expected: UInt32, found: UInt32)
+}
+throw ParseError.invalidHeader(expected: 0x25504446, found: header)
+```
+
+**Incorrect**:
+```swift
+// ❌ String errors
+throw NSError(domain: "Parser", code: 1, userInfo: [NSLocalizedDescriptionKey: "Invalid header"])
+```
+
+**Rationale**: Typed errors enable exhaustive switch handling and preserve diagnostic information for programmatic error recovery.
+
+**Cross-references**: [API-ERR-001], [API-ERR-004]
+
+---
+
+## [PATTERN-012] Initializers as Canonical Implementation
+
+**Scope**: Type transformations and conversions.
+
+**Statement**: Canonical implementation for type transformations MUST live in initializers or static methods on the target type. Instance methods are convenience wrappers only.
+
+**Correct**:
+```swift
+extension Radian {
+    init(_ degrees: Degree) { ... }  // Canonical
+}
+extension Degree {
+    var asRadians: Radian { Radian(self) }  // Convenience only
+}
+```
+
+**Incorrect**:
+```swift
+// ❌ Method as canonical
+extension Angle {
+    func toRadians() -> Double { ... }  // Where is the real logic?
+}
+```
+
+**Rationale**: Initializers on the target type make the transformation discoverable via autocomplete on the target type. The canonical implementation has a single, predictable location.
+
+**Cross-references**: [API-IMPL-001], [API-NAME-004]
+
+---
+
+## [PATTERN-013] Concrete Types Before Abstraction
+
+**Scope**: Protocol and generic type design.
+
+**Statement**: Abstractions MUST emerge from concrete implementations. Protocols MUST NOT be designed before having 3+ concrete conformers.
+
+**Correct**:
+```swift
+// Start concrete
+struct Circle<T: BinaryFloatingPoint> {
+    var center: Point<2, T>
+    var radius: T
+}
+// Abstract only when you have 3+ concrete conformers
+```
+
+**Incorrect**:
+```swift
+// ❌ Abstract for hypotheticals
+protocol GeometricShape {
+    associatedtype Coordinate
+    func contains(_ point: Coordinate) -> Bool
+    func intersects(_ other: Self) -> Bool
+    // ... 20 more requirements
+}
+```
+
+**Rationale**: Premature abstraction creates protocols that do not fit real use cases. Concrete implementations reveal actual requirements before abstracting.
+
+**Cross-references**: [API-NAME-004], [API-IMPL-002]
+
+---
+
+## [PATTERN-015] Macro Naming Exception
+
+**Scope**: Swift macro declarations.
+
+**Statement**: Swift macros MUST be declared at file scope. Macros CANNOT be nested in extensions or types. When the nesting convention [API-NAME-001] would produce `@Namespace.MacroName`, the macro MUST instead use a compound name: `@NamespaceMacroName`.
+
+This is a language limitation that overrides the design convention. Documentation MUST acknowledge such exceptions explicitly rather than pretending the nesting convention is universal.
+
+**Correct**:
+```swift
+// Macro at file scope with compound name
+@attached(member, names: named(init), named(scope))
+public macro WitnessScope() = #externalMacro(...)
+
+// Usage
+@WitnessScope
+struct MyDependencies { ... }
+```
+
+**Incorrect**:
+```swift
+// ❌ Cannot nest macro in extension - compiler rejects this
+extension Witness {
+    @attached(member, names: named(init), named(scope))
+    public macro Scope() = #externalMacro(...)  // Error: macro must be at file scope
+}
+```
+
+### Why Nesting Fails
+
+Swift's macro declarations require file-scope visibility for:
+1. Compiler plugin resolution
+2. Module-level symbol registration
+3. Cross-module macro availability
+
+The `@attached` and `@freestanding` attributes work only on file-scope declarations.
+
+### Naming Guidance for Macros
+
+| Intended Namespace | Macro Name | Rationale |
+|--------------------|------------|-----------|
+| `Witness.Scope` | `@WitnessScope` | Compound name required |
+| `Effect.Generator` | `@EffectGenerator` | Compound name required |
+| `Codable.Custom` | `@CodableCustom` | Compound name required |
+
+The compound name preserves the namespace association while satisfying the language constraint.
+
+**Rationale**: Language limitations sometimes override design conventions. Acknowledging these exceptions explicitly—with documented rationale—maintains convention integrity while accommodating compiler requirements. The exception is narrow (macros only) and the rationale is clear (language constraint).
+
+**Cross-references**: [API-NAME-001], [API-EXC-001]
+
+---
+
+## [PATTERN-016] Conscious Technical Debt
+
+**Scope**: Intentional deviations from best practices due to compiler limitations or other constraints.
+
+**Statement**: Code that violates a pattern (e.g., duplication, merged files) MAY be acceptable when it meets ALL of these criteria:
+
+| Criterion | Description | Required |
+|-----------|-------------|----------|
+| **Intentional** | Chosen after evaluating alternatives | Yes |
+| **Documented** | Explicit comments explain the situation | Yes |
+| **Bounded** | Limited to specific files or types | Yes |
+| **Removal criteria** | Specific conditions for when to remove | Yes |
+
+When these criteria are met, the code is **conscious technical debt**, not accidental debt from neglect.
+
+**Correct**:
+```swift
+// ============================================================================
+// TEMPORARY WORKAROUND - DO NOT MODIFY WITHOUT CHECKING COMPILER STATUS
+// ============================================================================
+//
+// WHY THIS EXISTS:
+// Swift compiler bug [MEM-COPY-006] Category 3 prevents using
+// List<Element>.Linked<1> as storage when Element: ~Copyable.
+//
+// WHEN TO REMOVE:
+// Delete these types when compiler fixes cross-module ~Copyable propagation.
+// Track: swift/issues/86xxx
+//
+// MAINTENANCE:
+// If List.Linked storage changes, these MUST be updated to match.
+// Source of truth: swift-list-primitives/Sources/List Primitives/List.Linked.swift
+// ============================================================================
+
+// Duplicated storage types below...
+```
+
+**Incorrect**:
+```swift
+// Just copied this because I couldn't get the import working
+// TODO: fix later
+struct Storage { ... }  // ❌ No criteria documented
+```
+
+### When Duplication Is The Right Choice
+
+Duplication is acceptable when:
+
+1. **The alternative is worse**: Restructuring code to avoid duplication would break the semantic model or create architectural inversions worse than the duplication itself.
+
+2. **The duplication is bounded**: Limited to a single file, class hierarchy, or well-defined scope. The maintenance burden is explicit and manageable.
+
+3. **The duplication is temporary**: Tied to a specific external constraint (compiler bug, language limitation) that will be resolved. Not a permanent architectural decision.
+
+4. **The duplication is documented**: Comments explain WHY it exists, WHEN to remove it, and WHERE to track the blocking issue.
+
+### Distinguishing Conscious from Accidental Debt
+
+| Property | Conscious Debt | Accidental Debt |
+|----------|----------------|-----------------|
+| Origin | Deliberate decision | Expedience or neglect |
+| Documentation | Explicit header block | None or "TODO: fix" |
+| Scope | Precisely bounded | Undefined spread |
+| Exit plan | Specific removal criteria | "Someday" |
+| Tracking | Issue reference | None |
+
+### Why Undocumented Workarounds Become Permanent
+
+Undocumented workarounds are time bombs. Six months from now, someone may try to "clean up" code that looks wrong—splitting a monolithic file, removing "duplicate" types—not knowing the structure is load-bearing. The build breaks, and they spend hours rediscovering what you learned today.
+
+The documentation comment doesn't explain the code. It explains why the code looks wrong but shouldn't be changed.
+
+**Minimal inline format**:
+```swift
+// WORKAROUND: [What this works around]
+// WHY: [Why normal approach doesn't work]
+// WHEN TO REMOVE: [Specific removal criteria]
+// TRACKING: [Issue URL or internal reference]
+```
+
+This transforms workarounds from invisible technical debt into managed constraints with clear lifecycles.
+
+**Rationale**: Not all technical debt is bad. Conscious debt with clear boundaries and removal criteria is a legitimate engineering tool. The documentation ensures future maintainers understand the intent and can act when conditions change.
+
+**Cross-references**: [MEM-COPY-006], [API-IMPL-005]
+
+---
 
 ## Topics
 
-- TODO
+### Related Documents
+
+- <doc:Implementation>
+- <doc:API-Requirements>
+- <doc:API-Errors>
