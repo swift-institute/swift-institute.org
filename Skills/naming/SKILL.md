@@ -32,6 +32,16 @@ All types, methods, and properties MUST follow these naming rules.
 
 All types MUST use the `Nest.Name` pattern. Compound type names are FORBIDDEN.
 
+**Semantic rule**: In `Nest.Name`, the Nest is the broader domain and Name is the specific concept within it. Read `A.B.C` as "C within B within A" — each level narrows the scope.
+
+| Path | Reading | Hierarchy |
+|------|---------|-----------|
+| `File.Directory.Walk` | A walk operation, for directories, in the file domain | Domain → Subdomain → Operation |
+| `IO.NonBlocking.Selector` | A selector, for non-blocking I/O, in the IO domain | Domain → Variant → Type |
+| `Memory.Address.Offset` | An offset, for addresses, in the memory domain | Domain → Concept → Aspect |
+
+**Decision test**: If you can say "X is a kind of Y" or "X belongs to Y", then Y nests X.
+
 ```swift
 // CORRECT
 File.Directory.Walk
