@@ -551,6 +551,40 @@ This suggests that infrastructure design is really language design. We're not wr
 
 ---
 
+## 2026-01-29: The Natural Split in Storage Primitives
+
+*After investigating Span access for inline storage and discovering the answer was "don't."*
+
+### The Question That Answered Itself
+
+`Storage.Inline` uses 64-byte slots. `Span` expects dense packing at `MemoryLayout<Element>.stride` intervals. The mismatch means Span doesn't work with inline storage. Three experiments explored workarounds: byte-based storage, optional wrapping, conditional Copyable constraints. Each confirmed the fundamental limitation.
+
+The instinct was to solve it—add `Storage.Inline.Dense` for Copyable elements with Span support. The insight came from stepping back: *if you need Span, why use inline storage at all?*
+
+Inline storage exists to avoid heap allocation. Span exists to provide safe contiguous access. These are orthogonal concerns with different priorities. The user who needs Span can afford heap allocation—`Storage` already provides it. The user who needs inline storage is optimizing for stack allocation and can accept strided access.
+
+### Complexity That Doesn't Exist
+
+`Storage.Inline.Dense` would have added:
+- A new type to learn and choose between
+- Documentation explaining when to use which
+- Maintenance burden for a variant
+- The requirement that Copyable elements provide a default value
+
+All to serve a use case that doesn't exist. No one simultaneously needs: (1) inline storage, (2) Span access, and (3) ~Copyable support. The first two are achieved by using heap storage. The first and third are achieved by accepting strided access. The Venn diagram has an empty intersection.
+
+The best code is code you don't write. The best type is a type you don't define. The natural split between `Storage.Inline` and `Storage` already covers all real use cases. Adding a third variant would create complexity without capability.
+
+### Swift's Constraints as Design Guidance
+
+The experiments revealed that `InlineArray.init(repeating:)` requires Copyable—there's no uninitialized inline array for ~Copyable elements in Swift 6.2. This isn't a bug; it's a reflection of the ownership model. Uninitialized memory is inherently unsafe. ~Copyable types track ownership precisely. The combination requires explicit unsafe operations.
+
+The 64-byte slot design in `Storage.Inline` is the principled workaround: oversized slots that are always "initialized" (with zeros) but only logically used up to count. It's wasteful in space but correct in ownership semantics. Span-compatible dense storage for ~Copyable would require `InlineArray.init(uninitializedCapacity:)`—an API that doesn't exist yet.
+
+When Swift adds it, the design can evolve. Until then, fighting the constraint produces complexity without benefit. The language's limitations aren't obstacles; they're design guidance.
+
+---
+
 ## Topics
 
 ### Related Documents
