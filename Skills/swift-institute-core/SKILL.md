@@ -49,6 +49,8 @@ This is the root meta-skill for the Swift Institute ecosystem.
 - **experiment-process** - [EXP-*] Experiment workflows
 - **blog-process** - [BLOG-*] Blog post workflows
 - **skill-creation** - [SKILL-CREATE-*] Adding new skills to the ecosystem
+- **package-export** - [PKG-EXPORT-*] Export packages for LLM consumption
+- **collaborative-discussion** - [COLLAB-*] Claude-ChatGPT collaborative discussions
 
 ---
 
