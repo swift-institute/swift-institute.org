@@ -342,6 +342,53 @@ Tests/Support/
 
 ---
 
+### [TEST-018] Test Support Literal Conformances
+
+**Statement**: Tests MUST use literal conformances from Test Support for primitives type construction and comparison.
+
+**Source**: `Identity_Primitives_Test_Support` provides `ExpressibleByIntegerLiteral` for `Tagged`. This propagates via re-export chain:
+
+```
+Identity Primitives Test Support (source)
+    ↓
+Index Primitives Test Support (hub)
+    ↓
+Pointer/Memory/Storage Primitives Test Support
+```
+
+**Available when importing `{Package} Test Support`**:
+
+| Type | Literal Example |
+|------|-----------------|
+| `Index<T>` | `let index: Index<Int> = 5` |
+| `Index<T>.Offset` | `let offset: Index<Int>.Offset = -3` |
+| `Index<T>.Count` | `let count: Index<Int>.Count = 10` |
+
+**Correct**:
+```swift
+let index: Index<Int> = 5
+#expect(index == 5)
+#expect(index.position == 5)
+
+var i = 0
+(.zero..<count).forEach { index in
+    storage.initialize(to: i * 10, at: index)
+    i += 1
+}
+```
+
+**Incorrect**:
+```swift
+#expect(index.position.rawValue == 5)  // ❌ Unwrapping
+storage.initialize(to: Int(bitPattern: index.position.rawValue) * 10, at: index)  // ❌
+```
+
+**Rationale**: Test Support provides literal conformances for test convenience. Using rawValue chains when literals are available obscures intent.
+
+**Cross-references**: [PATTERN-017], [CONV-007], [CONV-008]
+
+---
+
 ## Testing ~Copyable Types
 
 ### [TEST-011] Observable Property Testing

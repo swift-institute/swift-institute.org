@@ -254,9 +254,94 @@ struct Storage { ... }
 
 ---
 
+## [PATTERN-017] rawValue Access Location
+
+**Scope**: All code using primitives types (Index, Ordinal, Cardinal, Memory.Address, etc.).
+
+**Statement**: `.rawValue` access MUST be confined to extension initializers and same-package implementations. Call-sites MUST use extension APIs that accept the higher-level type.
+
+```swift
+// CORRECT - Extension init hides rawValue access
+extension Int {
+    public init(bitPattern position: Ordinal) {
+        self = Int(bitPattern: position.rawValue)  // ✓ rawValue here only
+    }
+}
+
+// CORRECT - Clean call-site passes higher type
+let i = Int(bitPattern: index)
+
+// ANTI-PATTERN - rawValue chain at call-site
+let i = Int(bitPattern: index.position.rawValue)  // ❌ Never do this
+```
+
+**Multi-layer chains are always wrong at call-sites**:
+```swift
+// ANTI-PATTERN - All of these
+Int(bitPattern: index.position.rawValue)    // ❌
+address.rawValue.rawValue                    // ❌
+index.position.rawValue * 5                  // ❌
+```
+
+**Justified locations for rawValue access**:
+
+| Location | Example | Justified |
+|----------|---------|-----------|
+| Extension initializer | `Int.init(bitPattern: Ordinal)` | ✓ Yes |
+| Same-package implementation | `UnsafeRawPointer.init(_ address:)` | ✓ Yes |
+| Bit-pattern verification test (same package) | Memory primitives testing address arithmetic | ✓ Yes |
+| Higher-layer package test | Storage primitives tests | ✗ Never |
+| Application code | Any call-site | ✗ Never |
+
+**Rationale**: Extension inits encapsulate the layer boundary. Call-sites stay clean and type-safe. When APIs change, only extension inits need updates.
+
+**Cross-references**: [PATTERN-012] Initializers as Canonical Implementation, [CONV-001], [TEST-018]
+
+---
+
+## [PATTERN-017] rawValue Access Location
+
+**Scope**: All code using primitives types (Index, Ordinal, Cardinal, Memory.Address, etc.).
+
+**Statement**: `.rawValue` access MUST be confined to extension initializers and same-package implementations. Call-sites MUST use extension APIs.
+
+```swift
+// CORRECT - Extension init hides rawValue
+extension Int {
+    public init(bitPattern position: Ordinal) {
+        self = Int(bitPattern: position.rawValue)
+    }
+}
+
+// CORRECT - Clean call-site
+let i = Int(bitPattern: index)
+
+// ANTI-PATTERN - rawValue chain at call-site
+let i = Int(bitPattern: index.position.rawValue)  // ❌
+```
+
+**Justified locations**:
+
+| Location | Justified |
+|----------|-----------|
+| Extension initializer | Yes |
+| Same-package implementation | Yes |
+| Same-package bit-pattern test | Yes |
+| Higher-layer package | Never |
+| Application code | Never |
+
+**Rationale**: Extension inits encapsulate layer boundaries. When representations change, only extension inits need updates.
+
+**Cross-references**: [PATTERN-012], [CONV-001], [TEST-018]
+
+---
+
 ## Cross-References
 
 See also:
 - **naming** skill for correct naming patterns
 - **errors** skill for correct error handling
 - **memory** skill for correct ~Copyable patterns
+- **primitives-conversions** skill for conversion API reference
+- **primitives-conversions** skill for conversion API reference
+- **testing** skill for [TEST-018] Test Support literal conformances
