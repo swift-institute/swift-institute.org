@@ -38,6 +38,8 @@ This is the root meta-skill for the Swift Institute ecosystem.
 - **code-organization** - [API-IMPL-*] File structure
 - **anti-patterns** - [PATTERN-009–017] Common mistakes to avoid
 - **primitives-conversions** - [CONV-*] Conversion APIs and rawValue access rules
+- **memory-arithmetic** - [MEM-ARITH-*] Memory.Address typed arithmetic (in swift-memory-primitives)
+- **pointer-arithmetic** - [PTR-ARITH-*] Pointer<T> typed access patterns (in swift-pointer-primitives)
 - **platform** - [PATTERN-001–008] Build, platform, Swift 6, C shims
 - **design** - [API-LAYER-*, PATTERN-017–050] API design, layering, concurrency
 - **advanced-patterns** - [PATTERN-014–048] Memory ownership, unsafe ops, refactoring
