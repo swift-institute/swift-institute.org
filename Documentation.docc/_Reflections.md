@@ -585,6 +585,58 @@ When Swift adds it, the design can evolve. Until then, fighting the constraint p
 
 ---
 
+## 2026-01-29: The Question That Expanded Into Its Answer
+
+*After investigating whether `advance(by:)` should take Offset or Count, and discovering the real answer was about storage representation.*
+
+### The Local Question Had a Global Answer
+
+The investigation started small: `Input.Protocol.advance(by:)` takes `Index<T>.Offset`, but the precondition requires non-negative values. Should it take `Index<T>.Count` instead? The type would then enforce the precondition statically.
+
+The analysis said yes—Count. The implementation revealed a deeper issue: the conformances used `Int(bitPattern: count)` to convert typed counts back to scalars for stdlib's `Collection.index(_:offsetBy:)`. The conversion felt like ceremony. Could we eliminate it?
+
+The experiment `typed-index-boundary` tested variants: cursor wrappers, cached raw indices, protocol extensions. Each confirmed the same insight: *the conversion is unavoidable at the stdlib boundary, but its location is a choice.*
+
+The real answer wasn't "use Count instead of Offset." It was: **store typed `Index<Element>` as the primary representation, derive raw `Storage.Index` only at subscript boundaries.**
+
+### Arithmetic Stays Typed, Conversion Becomes Invisible
+
+The old pattern scattered conversions:
+```swift
+var position: Storage.Index
+position = storage.index(position, offsetBy: Int(bitPattern: count))  // Conversion here
+```
+
+The new pattern centralizes them:
+```swift
+var position: Index<Element>
+position = position + count  // Pure typed arithmetic
+
+var rawIndex: Storage.Index {
+    storage.index(storage.startIndex, offsetBy: Int(bitPattern: position))
+}
+```
+
+The `Int(bitPattern:)` still exists—it must, because `Storage.Index` is a stdlib type outside our control. But it appears exactly once, in an encapsulated getter. The arithmetic code never sees it. The subscript code doesn't care where the index came from.
+
+This is the "best of both worlds" the experiment sought: typed arithmetic without dual tracking, stdlib interop without scattered conversions.
+
+### The Question Was Too Small
+
+"Should `advance(by:)` take Offset or Count?" was the wrong question. It assumed `position` would remain `Storage.Index`, and asked only about the parameter type. The right question was: "What should `position` *be*?"
+
+Once position became typed, the parameter question answered itself. Of course `advance(by:)` takes Count—that's what adds to a typed index. The investigation-level question ("Offset vs Count?") was subsumed by the architectural answer ("typed position throughout").
+
+This pattern recurs: local design questions often have architectural answers. When a question feels stuck, expand the frame. The constraint you're fighting may not be fundamental—it may be an artifact of an assumption upstream.
+
+### Experiments Prove Syntax, Not Just Semantics
+
+The experiment wasn't just "does this work?" It was "does `position + count` compile and mean what we intend?" The answer was empirical: yes, `Index<T> + Index<T>.Count → Index<T>` is defined in ordinal-primitives, and it's total. The experiment confirmed the operator existed and behaved correctly under the new storage model.
+
+Knowing an operator *should* exist differs from knowing it *does* exist. The experiment bridged that gap. When the code compiled and ran, the design was validated—not just analyzed.
+
+---
+
 ## Topics
 
 ### Related Documents

@@ -21,7 +21,7 @@ applies_to:
 
 Conversion APIs and rawValue access rules for primitives types. These rules ensure clean call-sites and proper encapsulation of type layer boundaries.
 
-**Core Principle**: `.rawValue` access belongs in extension initializers only. Call-sites pass higher-level types.
+**Core Principle**: `.rawValue` and `.position` access belong in extension initializers only. Call-sites pass higher-level types.
 
 ---
 
@@ -64,22 +64,47 @@ let i = Int(bitPattern: index.position.rawValue)  // ❌ Never
 
 ---
 
+### [CONV-001a] Intermediate Property Access Location
+
+**Statement**: Intermediate property access (`.position`, `.rawValue`) MUST be confined to extension initializers and same-package implementations. Higher-layer packages and call-sites MUST compare at the semantic type level using literal conformances.
+
+**Incorrect** — property access at call-site:
+```swift
+#expect(element.position == 3)           // ❌ Crosses layer boundary
+#expect(index.rawValue == 3)             // ❌ Accesses internal representation
+#expect(cyclicIndex.rawValue == 3)       // ❌ Accesses internal representation
+#expect(cyclicIndex.rawValue.position == 3)  // ❌ Severe — multi-level unwrap
+```
+
+**Correct** — compare at semantic type level:
+```swift
+#expect(element == 3)           // ✓ Literal comparison
+#expect(index == 3)             // ✓ Literal comparison (Tagged)
+#expect(cyclicIndex == 3)       // ✓ Literal comparison (Tagged)
+```
+
+**Rationale**: `.rawValue` and `.position` are implementation details. Test Support provides `ExpressibleByIntegerLiteral` for Tagged types specifically so call-sites don't need property access.
+
+**Cross-references**: [CONV-007], [CONV-008]
+
+---
+
 ### [CONV-002] Justified rawValue Access
 
-**Statement**: Direct `.rawValue` access is justified ONLY in these locations:
+**Statement**: Direct `.rawValue` or `.position` access is justified ONLY in these locations:
 
 | Location | Example | Justified |
 |----------|---------|-----------|
 | Extension initializer | `Int.init(bitPattern: Ordinal)` | Yes |
-| Same-package implementation | `UnsafeRawPointer.init(_ address:)` | Yes |
-| Same-package bit-pattern test | Memory primitives testing arithmetic | Yes |
-| Higher-layer package | Storage primitives | Never |
+| Same-package implementation | `Cyclic.Group + operator using .position` | Yes |
+| Same-package bit-pattern test | Cyclic primitives testing Element internals | Yes |
+| Higher-layer package | Cyclic Index Primitives | Never |
 | Application code | Any call-site | Never |
 
 **Incorrect** — higher-layer package accessing dependency internals:
 ```swift
-// In storage-primitives tests — WRONG
-Int(bitPattern: index.position.rawValue) * 10
+// In cyclic-index-primitives tests — WRONG
+#expect(index.rawValue.position == 3)
 ```
 
 **Rationale**: Package boundaries should be respected. Higher packages use the APIs lower packages export, not their internal representations.
@@ -161,7 +186,7 @@ let int: Int = Int(bitPattern: index)
 
 ### [CONV-007] Test Support Chain
 
-**Statement**: Test Support modules provide `ExpressibleByIntegerLiteral` via re-export chain. Tests SHOULD use literal syntax.
+**Statement**: Test Support modules provide `ExpressibleByIntegerLiteral` via re-export chain. Tests SHOULD use literal syntax instead of property access.
 
 **Source**: `Identity_Primitives_Test_Support` provides:
 ```swift
@@ -172,11 +197,20 @@ where Tag: ~Copyable, RawValue: ExpressibleByIntegerLiteral {
 }
 ```
 
+**Cyclic Extension**: `Cyclic_Primitives_Test_Support` provides:
+```swift
+extension Cyclic.Group.Element: ExpressibleByIntegerLiteral {
+    public init(integerLiteral value: Int) { ... }
+}
+```
+
 **Re-export chain**:
 ```
 Identity Primitives Test Support (source)
     ↓
 Index Primitives Test Support (hub)
+    ↓
+Cyclic Primitives Test Support
     ↓
 Pointer/Memory/Storage Primitives Test Support
 ```
@@ -190,6 +224,7 @@ Pointer/Memory/Storage Primitives Test Support
 | `Index<T>.Count` | `let count: Index<Int>.Count = 10` |
 | `Ordinal` | `let pos: Ordinal = 5` |
 | `Cardinal` | `let card: Cardinal = 5` |
+| `Cyclic.Group<N>.Element` | `let elem: Cyclic.Group<5>.Element = 3` |
 
 **Note**: These are `@_disfavoredOverload` — test convenience only, not production.
 
@@ -199,7 +234,7 @@ Pointer/Memory/Storage Primitives Test Support
 
 ### [CONV-008] Test Value Patterns
 
-**Statement**: Tests MUST NOT derive values from index conversions. Use external counters.
+**Statement**: Tests MUST NOT derive values from index conversions. Use external counters. Tests MUST NOT access intermediate properties (`.position`, `.rawValue`) when literal comparisons work.
 
 **Correct**:
 ```swift
@@ -220,16 +255,21 @@ var i = 0
 
 **Correct comparison**:
 ```swift
-#expect(index == 5)           // ✓ Literal comparison
-#expect(index.position == 5)  // ✓ Ordinal literal
+#expect(index == 5)              // ✓ Literal comparison
+#expect(element == 3)            // ✓ Literal comparison
+#expect(cyclicIndex == 3)        // ✓ Literal comparison (Tagged)
 ```
 
 **Incorrect comparison**:
 ```swift
-#expect(index.position.rawValue == 5)  // ❌ Unwrapping
+#expect(index.position.rawValue == 5)      // ❌ Multi-level unwrap
+#expect(index.rawValue == 5)               // ❌ Accessing internal (for Index<T>)
+#expect(element.position == 3)             // ❌ Accessing internal representation
+#expect(cyclicIndex.rawValue == 3)         // ❌ Accessing internal (for Tagged)
+#expect(cyclicIndex.rawValue.position == 3)  // ❌ Multi-level unwrap
 ```
 
-**Rationale**: Literal conformances exist specifically for test convenience. Using rawValue chains when literals work is unnecessarily verbose.
+**Rationale**: Literal conformances exist specifically for test convenience. Using property access when literals work is unnecessarily verbose and couples tests to implementation details.
 
 ---
 

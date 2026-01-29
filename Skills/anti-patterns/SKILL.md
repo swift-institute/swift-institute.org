@@ -254,11 +254,11 @@ struct Storage { ... }
 
 ---
 
-## [PATTERN-017] rawValue Access Location
+## [PATTERN-017] rawValue and Property Access Location
 
-**Scope**: All code using primitives types (Index, Ordinal, Cardinal, Memory.Address, etc.).
+**Scope**: All code using primitives types (Index, Ordinal, Cardinal, Memory.Address, Cyclic.Group.Element, etc.).
 
-**Statement**: `.rawValue` access MUST be confined to extension initializers and same-package implementations. Call-sites MUST use extension APIs that accept the higher-level type.
+**Statement**: `.rawValue` and intermediate property access (`.position`) MUST be confined to extension initializers and same-package implementations. Call-sites MUST use extension APIs that accept the higher-level type.
 
 ```swift
 // CORRECT - Extension init hides rawValue access
@@ -279,60 +279,43 @@ let i = Int(bitPattern: index.position.rawValue)  // ❌ Never do this
 ```swift
 // ANTI-PATTERN - All of these
 Int(bitPattern: index.position.rawValue)    // ❌
-address.rawValue.rawValue                    // ❌
+element.position.rawValue                    // ❌
 index.position.rawValue * 5                  // ❌
 ```
 
-**Justified locations for rawValue access**:
+**Single-level property access is also wrong at call-sites**:
+```swift
+// ANTI-PATTERN - Accessing internal representation for comparison
+#expect(element.position == 3)               // ❌ Use literal: element == 3
+#expect(index.rawValue == 3)                 // ❌ Use literal: index == 3
+#expect(cyclicIndex.rawValue == 3)           // ❌ Use literal: cyclicIndex == 3
+```
+
+**Justified locations for rawValue/position access**:
 
 | Location | Example | Justified |
 |----------|---------|-----------|
 | Extension initializer | `Int.init(bitPattern: Ordinal)` | ✓ Yes |
-| Same-package implementation | `UnsafeRawPointer.init(_ address:)` | ✓ Yes |
-| Bit-pattern verification test (same package) | Memory primitives testing address arithmetic | ✓ Yes |
-| Higher-layer package test | Storage primitives tests | ✗ Never |
+| Same-package implementation | `Cyclic.Group + operator using .position` | ✓ Yes |
+| Bit-pattern verification test (same package) | Cyclic primitives testing Element internals | ✓ Yes |
+| Higher-layer package test | Cyclic Index Primitives tests | ✗ Never |
 | Application code | Any call-site | ✗ Never |
 
-**Rationale**: Extension inits encapsulate the layer boundary. Call-sites stay clean and type-safe. When APIs change, only extension inits need updates.
-
-**Cross-references**: [PATTERN-012] Initializers as Canonical Implementation, [CONV-001], [TEST-018]
-
----
-
-## [PATTERN-017] rawValue Access Location
-
-**Scope**: All code using primitives types (Index, Ordinal, Cardinal, Memory.Address, etc.).
-
-**Statement**: `.rawValue` access MUST be confined to extension initializers and same-package implementations. Call-sites MUST use extension APIs.
-
+**Special case for Index<T>.Cyclic<N>**:
 ```swift
-// CORRECT - Extension init hides rawValue
-extension Int {
-    public init(bitPattern position: Ordinal) {
-        self = Int(bitPattern: position.rawValue)
-    }
-}
+// ✓ CORRECT: Compare Tagged index directly to literal
+#expect(cyclicIndex == 3)
 
-// CORRECT - Clean call-site
-let i = Int(bitPattern: index)
+// ❌ WRONG: Access rawValue for comparison
+#expect(cyclicIndex.rawValue == 3)
 
-// ANTI-PATTERN - rawValue chain at call-site
-let i = Int(bitPattern: index.position.rawValue)  // ❌
+// ❌ WRONG: Peek at position (internal)
+#expect(cyclicIndex.rawValue.position == 3)
 ```
 
-**Justified locations**:
+**Rationale**: Extension inits encapsulate the layer boundary. Call-sites stay clean and type-safe. Test Support provides literal conformances specifically so tests don't need property access.
 
-| Location | Justified |
-|----------|-----------|
-| Extension initializer | Yes |
-| Same-package implementation | Yes |
-| Same-package bit-pattern test | Yes |
-| Higher-layer package | Never |
-| Application code | Never |
-
-**Rationale**: Extension inits encapsulate layer boundaries. When representations change, only extension inits need updates.
-
-**Cross-references**: [PATTERN-012], [CONV-001], [TEST-018]
+**Cross-references**: [PATTERN-012] Initializers as Canonical Implementation, [CONV-001], [CONV-001a], [TEST-018]
 
 ---
 
@@ -342,6 +325,5 @@ See also:
 - **naming** skill for correct naming patterns
 - **errors** skill for correct error handling
 - **memory** skill for correct ~Copyable patterns
-- **primitives-conversions** skill for conversion API reference
 - **primitives-conversions** skill for conversion API reference
 - **testing** skill for [TEST-018] Test Support literal conformances
