@@ -148,7 +148,7 @@ Facilitate structured collaborative discussions between Claude Code and ChatGPT 
 
 **Step 2: Claude's opening round**
 
-Claude analyzes the topic and produces Round 1:
+Claude analyzes the topic and produces Round 1 content:
 ```
 ## Round 1 - Claude
 
@@ -170,22 +170,28 @@ Claude analyzes the topic and produces Round 1:
 ### Status: EXPLORING
 ```
 
-**Step 3: Write to exchange file**
+**Step 3: Write combined file for ChatGPT**
+
+For Round 1 ONLY, Claude MUST write a combined file that includes:
+1. The opening prompt (from [COLLAB-006])
+2. Any context (exported package, document, etc.)
+3. Claude's Round 1
+
 ```
-Output to: /tmp/{topic-slug}-round-1-claude.md
+Output to: /tmp/{topic-slug}-round-1-for-chatgpt.md
 ```
 
 **Step 4: Instruct user**
 ```
-Copy the contents of /tmp/{topic-slug}-round-1-claude.md to ChatGPT.
-Use the opening prompt template below.
+Copy the contents of /tmp/{topic-slug}-round-1-for-chatgpt.md to ChatGPT.
+The file includes the collaboration protocol and Claude's opening position.
 ```
 
 ---
 
-### [COLLAB-006] ChatGPT Opening Prompt
+### [COLLAB-006] Round 1 Combined File Format
 
-**Statement**: When pasting Claude's first round to ChatGPT, prefix it with this prompt:
+**Statement**: The Round 1 file for ChatGPT MUST include the full opening prompt with Claude's round embedded:
 
 ```
 You are entering a collaborative design discussion with Claude (Anthropic).
@@ -228,13 +234,32 @@ Respond using this EXACT structure:
 ---
 
 ## Context
-{PASTE EXPORTED PACKAGE OR DOCUMENT HERE IF RELEVANT}
 
-## Claude's Round 1
-{PASTE CLAUDE'S ROUND 1 HERE}
+{EXPORTED PACKAGE OR DOCUMENT CONTENT HERE - omit section if none}
+
+---
+
+## Round 1 - Claude
+
+### Position
+{Claude's actual position}
+
+### Agreements
+(First round - none yet)
+
+### Concerns
+{Claude's actual concerns}
+
+### Proposals
+{Claude's actual proposals}
+
+### Questions
+{Claude's actual questions}
+
+### Status: EXPLORING
 ```
 
-**Rationale**: The opening prompt establishes the collaboration protocol and sets expectations for structured responses.
+**Rationale**: A single combined file eliminates manual assembly and ensures ChatGPT receives the complete protocol on first contact.
 
 ---
 
@@ -383,7 +408,8 @@ Participants: Claude (Anthropic), ChatGPT (OpenAI)
 
 | File | Purpose |
 |------|---------|
-| `/tmp/{topic-slug}-round-{N}-claude.md` | Claude's round N output (copy to ChatGPT) |
+| `/tmp/{topic-slug}-round-1-for-chatgpt.md` | Round 1 with opening prompt (copy to ChatGPT) |
+| `/tmp/{topic-slug}-round-{N}-claude.md` | Claude's round N output for N > 1 (copy to ChatGPT) |
 | `/tmp/{topic-slug}-transcript.md` | Full conversation history |
 | `/tmp/{topic-slug}-converged.md` | Final agreed plan (if converged) |
 
@@ -435,8 +461,8 @@ User: "Let's do a collaborative discussion with ChatGPT about the naming for our
 
 Claude: [Uses package-export to export relevant code]
         [Produces Round 1 with initial position]
-        [Writes to /tmp/cursor-api-naming-round-1-claude.md]
-        [Instructs user to copy to ChatGPT with opening prompt]
+        [Writes combined file to /tmp/cursor-api-naming-round-1-for-chatgpt.md]
+        [Instructs user to copy entire file to ChatGPT]
 ```
 
 **Continuing a discussion**:
