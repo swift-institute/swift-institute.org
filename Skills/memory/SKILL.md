@@ -38,12 +38,14 @@ Rules for ownership, copyability, linear types, and span access patterns.
 
 ```swift
 // CORRECT
-struct FileDescriptor: ~Copyable {
-    private let fd: CInt
-    deinit { close(fd) }
+enum File {
+    struct Descriptor: ~Copyable {
+        private let fd: CInt
+        deinit { close(fd) }
+    }
 }
 
-// INCORRECT - Allows double-free
+// INCORRECT - Allows double-free, compound name
 struct FileDescriptor {
     let fd: CInt
 }

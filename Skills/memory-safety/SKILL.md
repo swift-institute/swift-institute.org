@@ -38,7 +38,7 @@ Strict memory safety patterns per SE-0458, reference primitives, and lifetime ma
 ```swift
 // Package.swift
 .target(
-    name: "BufferPrimitives",
+    name: "Buffer Primitives",
     dependencies: [],
     swiftSettings: [
         .enableUpcomingFeature("ExistentialAny"),

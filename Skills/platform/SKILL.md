@@ -37,11 +37,12 @@ Build configuration, platform compilation, Swift 6 feature adoption, C shims, an
 
 ```text
 swift-numeric-primitives/
-├── _Shims/                          # C target
+├── _Shims/                           # C target
 │   └── include/
-│       └── shims.h                  # C declarations
-└── Real Primitives/
-    └── Numeric.Math.swift           # Swift wrapper
+│       └── shims.h                   # C declarations
+└── Sources/
+    └── Real Primitives/
+        └── Numeric.Math.swift        # Swift wrapper
 ```
 
 The C shim layer isolates platform-specific inline assembly, provides unified interface across Darwin (libm), Glibc, Musl, and remains internal.

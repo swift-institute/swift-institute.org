@@ -367,18 +367,24 @@ struct Token: ~Copyable { let id: Int }
 ### [COPY-TEST-004] Deinit Verification Test
 
 ```swift
-struct TrackedElement: ~Copyable {
+struct Element: ~Copyable {
     let id: Int
-    let tracker: Tracker
-    deinit { tracker.append(id) }
+}
+
+extension Element {
+    struct Tracked: ~Copyable {
+        let id: Int
+        let tracker: Tracker
+        deinit { tracker.append(id) }
+    }
 }
 
 @Test func inlineDeinitOrder() {
     let tracker = Tracker()
     do {
-        var container = Container<TrackedElement>.Inline<4>()
-        container.push(TrackedElement(0, tracker: tracker))
-        container.push(TrackedElement(1, tracker: tracker))
+        var container = Container<Element.Tracked>.Inline<4>()
+        container.push(Element.Tracked(id: 0, tracker: tracker))
+        container.push(Element.Tracked(id: 1, tracker: tracker))
     }
     #expect(!tracker.deinitOrder.isEmpty,
             "BUG: Elements leaked — apply [COPY-FIX-009] workaround")
