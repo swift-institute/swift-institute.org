@@ -65,6 +65,20 @@ This is "timeless infrastructure" quality. Treat every decision as permanent.
 
 ---
 
+## Semantic Dependencies
+
+Package dependencies are classified as Implementation (IDG) or Semantic (SDG). Key rules:
+
+| Rule | Statement |
+|------|-----------|
+| [SEM-DEP-006] | Distinguish essential vs incidental relationships |
+| [SEM-DEP-008] | Join-point packages resolve domain conflicts |
+| [SEM-DEP-009] | Package dependencies MUST be essential; orthogonal integrations require separate packages |
+
+For full rules, see `Documentation.docc/Semantic Dependencies.md`.
+
+---
+
 ## Cross-References
 
 Child skills:
@@ -72,6 +86,7 @@ Child skills:
 - **errors** - Error handling rules
 - **code-organization** - File structure rules
 - **memory** - Ownership and copyability rules
+- **design** - API design, layering, semantic dependencies
 
 Repository-specific:
 - **primitives** (in swift-primitives) - Primitives layer conventions

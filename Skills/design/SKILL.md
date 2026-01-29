@@ -272,6 +272,33 @@ Mitigation: Use local copies across suspension points, or restructure to avoid i
 
 ---
 
+---
+
+## Semantic Dependencies
+
+For detailed rules on semantic vs implementation dependencies, see `Documentation.docc/Semantic Dependencies.md`.
+
+### Key Rules Summary
+
+| Rule | Statement |
+|------|-----------|
+| [SEM-DEP-006] | Distinguish essential vs incidental relationships; only essential creates SDG edges |
+| [SEM-DEP-008] | Join-point packages resolve conflicts where two domains have mutual relevance |
+| [SEM-DEP-009] | Package dependencies MUST be essential; orthogonal integrations require separate packages |
+
+### [SEM-DEP-009] Integration Package Separation
+
+**Statement**: A package's dependencies MUST be essential to its own implementation. Integration between orthogonal concepts MUST be placed in a separate join-point package.
+
+| Relationship Type | Action |
+|-------------------|--------|
+| Refinement (A extends B) | Add B as dependency to A |
+| Orthogonal (A and B are independent) | Create join-point package |
+
+**Example**: Collection refines Sequence → collection-primitives depends on sequence-primitives (correct). Finite is orthogonal to Collection → swift-finite-collection-primitives as separate package (correct).
+
+---
+
 ## Cross-References
 
 See also:
@@ -280,3 +307,4 @@ See also:
 - **platform** skill for [PATTERN-004-008] build infrastructure
 - **advanced-patterns** skill for memory/ownership and unsafe operation patterns
 - **memory-safety** skill for Sendable conformance rules [MEM-SEND-*]
+- **Semantic Dependencies.md** for [SEM-DEP-*] dependency classification rules

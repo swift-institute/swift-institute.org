@@ -336,6 +336,67 @@ Solution: diagnostic-primitives (Tier 2) as join-point
 
 ---
 
+## Integration Package Separation
+
+**Scope**: Determining whether integration belongs in an existing package or a new package.
+
+**Statement**: A package's dependencies MUST be **essential to its own implementation**. Integration between orthogonal concepts MUST be placed in a separate join-point package, not added as a target within an existing package.
+
+### The Principle
+
+When considering whether package A should add a target that integrates with package B:
+
+| Question | If Yes | If No |
+|----------|--------|-------|
+| Does A need B to implement its core functionality? | Add as dependency | Separate package |
+| Would A exist meaningfully without B? | Separate package | Add as dependency |
+| Is the relationship a refinement (A extends B)? | Add as dependency | Separate package |
+| Is the relationship orthogonal (A and B are independent concepts)? | Separate package | Add as dependency |
+
+### Examples
+
+**Valid in-package dependency** (refinement):
+```
+collection-primitives → sequence-primitives
+
+Reason: Collection refines Sequence. Every collection IS a sequence.
+The dependency is essential to what Collection means.
+```
+
+**Invalid in-package integration** (orthogonal):
+```
+collection-primitives → finite-primitives  ❌
+
+Reason: Collection and Finite are orthogonal concepts.
+- Not all collections are finite (infinite streams)
+- Not all finite types are collections (finite groups)
+The "finite enumeration as collection" integration is incidental, not essential.
+```
+
+**Correct structure for orthogonal integration**:
+```
+swift-finite-collection-primitives (new package)
+├── depends on: finite-primitives
+├── depends on: collection-primitives
+└── provides: Finite.Enumeration: Collection conformance
+```
+
+### Rationale
+
+Adding non-essential dependencies to provide integration:
+1. **Pollutes the dependency graph** — downstream packages inherit dependencies they don't need
+2. **Inflates tiers** — the package rises to a higher tier than its core concept requires
+3. **Couples orthogonal concepts** — changes to one concept risk affecting the other
+4. **Violates single responsibility** — the package now serves two masters
+
+Separate join-point packages:
+1. **Keep core packages focused** — dependencies remain essential
+2. **Make integration explicit** — users opt-in by importing the join-point
+3. **Enable independent evolution** — core packages can change without affecting integration
+4. **Preserve tier accuracy** — packages sit at tiers matching their core concept
+
+---
+
 ## Verification and Audit
 
 ### SDG Audit Checklist

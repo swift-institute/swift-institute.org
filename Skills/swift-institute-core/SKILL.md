@@ -42,7 +42,7 @@ This is the root meta-skill for the Swift Institute ecosystem.
 - **pointer-arithmetic** - [PTR-ARITH-*] Pointer<T> typed access patterns (in swift-pointer-primitives)
 - **index** - [IDX-*] Index<T> phantom-typed index patterns (in swift-index-primitives)
 - **platform** - [PATTERN-001–008] Build, platform, Swift 6, C shims
-- **design** - [API-LAYER-*, PATTERN-017–050] API design, layering, concurrency
+- **design** - [API-LAYER-*, PATTERN-017–050, SEM-DEP-*] API design, layering, semantic dependencies
 - **advanced-patterns** - [PATTERN-014–048] Memory ownership, unsafe ops, refactoring
 - **memory** - [MEM-COPY-*, MEM-OWN-*, MEM-LINEAR-*] Ownership, copyability
 - **memory-safety** - [MEM-SAFE-*, MEM-SEND-*, MEM-REF-*, MEM-LIFE-*] Strict safety, reference primitives
