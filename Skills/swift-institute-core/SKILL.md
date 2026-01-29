@@ -45,9 +45,10 @@ This is the root meta-skill for the Swift Institute ecosystem.
 - **copyable-remediation** - [COPY-FIX-*, COPY-REM-*] ~Copyable constraint fixes
 
 ### Process Layer
-- **research-process** - Research workflows
-- **experiment-process** - Experiment workflows
-- **blog-process** - Blog post workflows
+- **research-process** - [RES-*] Research workflows
+- **experiment-process** - [EXP-*] Experiment workflows
+- **blog-process** - [BLOG-*] Blog post workflows
+- **skill-creation** - [SKILL-CREATE-*] Adding new skills to the ecosystem
 
 ---
 
