@@ -43,6 +43,7 @@ This is the root meta-skill for the Swift Institute ecosystem.
 - **memory** - [MEM-COPY-*, MEM-OWN-*, MEM-LINEAR-*] Ownership, copyability
 - **memory-safety** - [MEM-SAFE-*, MEM-SEND-*, MEM-REF-*, MEM-LIFE-*] Strict safety, reference primitives
 - **copyable-remediation** - [COPY-FIX-*, COPY-REM-*] ~Copyable constraint fixes
+- **testing** - [TEST-*] Test organization, Swift Testing patterns
 
 ### Process Layer
 - **research-process** - [RES-*] Research workflows
@@ -70,7 +71,8 @@ Skills are loaded based on their `requires:` DAG. The order is:
 10. `copyable-remediation` (requires: memory)
 11. `anti-patterns` (requires: naming, errors, code-organization)
 12. `advanced-patterns` (requires: memory, memory-safety, design)
-13. Process skills (requires: swift-institute)
+13. `testing` (requires: swift-institute, naming, code-organization)
+14. Process skills (requires: swift-institute)
 
 ---
 
