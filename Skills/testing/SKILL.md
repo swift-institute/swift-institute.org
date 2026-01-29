@@ -113,8 +113,8 @@ extension Memory.Buffer {
 }
 
 extension Memory.Buffer.Test.Unit {
-    @Test("init creates empty buffer")
-    func initEmpty() { }
+    @Test
+    func `init creates empty buffer`() { }
 }
 ```
 
@@ -150,8 +150,8 @@ struct IndexTests {
 }
 
 extension IndexTests.Unit {
-    @Test("init with valid position")
-    func initWithValidPosition() { }
+    @Test
+    func `init with valid position`() { }
 }
 ```
 
@@ -224,31 +224,36 @@ extension Pointer.Arithmetic.Test {
 
 ### [TEST-007] Test Naming Pattern
 
-**Statement**: Test functions MUST use action-outcome naming with `@Test("description")` for display.
-
-**Pattern**: `<action><Outcome>`
+**Statement**: Test functions MUST use `@Test` without string parameter. Function names MUST use backticks with descriptive sentences.
 
 **Correct**:
 ```swift
-@Test("init creates empty buffer with sentinel")
-func initEmpty() { }
+@Test
+func `Memory.Address from UnsafeRawPointer preserves identity`() { }
 
-@Test("allocate updates offset")
-func allocateUpdatesOffset() { }
+@Test
+func `Advance address by positive offset`() { }
 
-@Test("slice returns nil for out-of-bounds")
-func sliceOutOfBounds() { }
+@Test
+func `Distance is antisymmetric: a→b == -(b→a)`() { }
+
+@Test
+func `Round-trip: address + distance(to: other) == other`() { }
 ```
 
 **Incorrect**:
 ```swift
-@Test
-func testThatInitCreatesEmptyBuffer() { }  // ❌ Verbose function name
+@Test("init creates empty buffer")  // ❌ String parameter
+func initEmpty() { }
 
-func initEmpty() { }  // ❌ Missing @Test attribute
+@Test
+func initEmpty() { }  // ❌ No backticks, not descriptive
+
+@Test
+func testThatInitCreatesEmptyBuffer() { }  // ❌ No backticks
 ```
 
-**Rationale**: Display name provides human readability; function name provides searchability.
+**Rationale**: Backtick names provide single source of truth — the function name IS the description. No duplication, fully searchable, readable in test output.
 
 ---
 
@@ -258,8 +263,8 @@ func initEmpty() { }  // ❌ Missing @Test attribute
 
 **Correct**:
 ```swift
-@Test("allocate creates buffer with specified size")
-func allocate() {
+@Test
+func `allocate creates buffer with specified size`() {
     // Arrange
     let count: Memory.Address.Count = 100
 
@@ -345,8 +350,8 @@ Tests/Support/
 
 **Correct**:
 ```swift
-@Test("init with capacity")
-func initWithCapacity() {
+@Test
+func `init with capacity`() {
     let arena = Memory.Arena(capacity: 1024)
 
     // Test via properties (non-consuming)
@@ -376,8 +381,8 @@ func arenaEquality() {
 
 **Correct**:
 ```swift
-@Test("reset restores full capacity")
-func reset() {
+@Test
+func `reset restores full capacity`() {
     var arena = Memory.Arena(capacity: 1024)
 
     _ = arena.allocate(count: 500, alignment: 8)
@@ -399,8 +404,8 @@ func reset() {
 
 **Correct**:
 ```swift
-@Test("move transfers value")
-func moveTransfersValue() {
+@Test
+func `move transfers value`() {
     let ptr = Pointer<Int>.Mutable.allocate(capacity: 1)
     defer { ptr.deallocate() }
 
@@ -414,8 +419,8 @@ func moveTransfersValue() {
 
 **Incorrect**:
 ```swift
-@Test("move and continue")
-func moveAndContinue() {
+@Test
+func `move and continue`() {
     let ptr = Pointer<Int>.Mutable.allocate(capacity: 1)
     ptr.initialize(to: 42)
     let moved = ptr.move()
@@ -463,13 +468,13 @@ func toArray<Element: Hashable>(
 
 **Correct**:
 ```swift
-@Test("sequential read", .timed(iterations: 100, warmup: 10))
-func sequentialRead() {
+@Test(.timed(iterations: 100, warmup: 10))
+func `sequential read`() {
     // Performance-critical code
 }
 
-@Test("must complete within 50ms", .timed(iterations: 50, threshold: .milliseconds(50)))
-func fastOperation() {
+@Test(.timed(iterations: 50, threshold: .milliseconds(50)))
+func `must complete within 50ms`() {
     // Fails if median exceeds 50ms
 }
 ```
@@ -493,8 +498,8 @@ func fastOperation() {
 
 **Correct**:
 ```swift
-@Test("slice creation")
-func sliceCreation() {
+@Test
+func `slice creation`() {
     let buffer = Memory.Buffer.Mutable.allocate(count: 1000, alignment: 1)
     defer { buffer.deallocate() }
 
@@ -537,8 +542,8 @@ struct OrderedSetModelTests {
         }
     }
 
-    @Test("random operations match model")
-    func randomOperations() {
+    @Test
+    func `random operations match model`() {
         var sut = Set<Int>.Ordered()
         var model = ReferenceModel<Int>()
 
