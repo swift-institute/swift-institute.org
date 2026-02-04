@@ -1129,6 +1129,449 @@ The reproduction often reveals that the question itself was wrong—testing the 
 
 ---
 
+### Intentional Code Duplication (DITBR)
+
+**Scope**: Situations where code duplication is chosen over shared abstractions due to compiler limitations.
+
+**Statement**: When the alternative to code duplication requires fighting compiler limitations (e.g., `~Copyable` constraint propagation failures), duplication MAY be accepted as conscious technical debt provided it meets all five DITBR criteria: **Documented**, **Intentional**, **Time-bounded**, **Bounded in scope**, and **Reversible**.
+
+**Correct**:
+```swift
+// ============================================================================
+// TEMPORARY WORKAROUND - DO NOT MODIFY WITHOUT CHECKING COMPILER STATUS
+// ============================================================================
+//
+// WHY THIS EXISTS:
+// Swift compiler bug Category 3 — cross-module ~Copyable constraint propagation.
+//
+// WHEN TO REMOVE:
+// Delete these types when compiler fixes cross-module ~Copyable propagation.
+//
+// MAINTENANCE:
+// If List.Linked storage changes, these MUST be updated to match.
+// Source of truth: swift-list-primitives/Sources/List Primitives/List.Linked.swift
+
+// Duplicated storage types nested inside Queue.Linked
+struct Header: ~Copyable { ... }  // Copy of List.Linked.Header
+struct Node: ~Copyable { ... }    // Copy of List.Linked.Node
+```
+
+**Incorrect**:
+```swift
+// ❌ Undocumented duplication — no explanation, no removal criteria
+struct Header: ~Copyable { ... }
+struct Node: ~Copyable { ... }
+// Future maintainers cannot tell this is intentional or accidental
+
+// ❌ Restructuring the design to work around a compiler bug
+enum Queue { }  // Making Queue an empty namespace just to avoid duplication
+// Inverts the semantic model: Queue IS a container, not a namespace
+```
+
+#### DITBR Criteria
+
+| Criterion | Requirement |
+|-----------|-------------|
+| **Documented** | Comments explain WHY duplication exists and WHERE the source of truth lives |
+| **Intentional** | Chosen after evaluating alternatives, not accumulated through neglect |
+| **Time-bounded** | Tied to a specific compiler fix or language evolution |
+| **Bounded in scope** | Limited to a single file or class hierarchy |
+| **Reversible** | Can be deleted and replaced with shared abstraction when the blocker resolves |
+
+**Rationale**: Not all technical debt is accidental. When a compiler limitation makes shared abstractions impossible, documented duplication with explicit removal criteria is a legitimate engineering tool. The documentation ensures the debt remains visible and actionable.
+
+---
+
+## ~Copyable Patterns
+
+**Applies to**: Types using `~Copyable` (move-only semantics) in Swift Institute packages.
+
+**Does not apply to**: Types that are unconditionally `Copyable`.
+
+---
+
+### Hierarchy of ~Copyable Workarounds
+
+**Scope**: Resolving cross-module `~Copyable` constraint propagation failures for generic container types.
+
+**Statement**: When a `~Copyable` generic type fails to compile due to cross-module constraint propagation bugs, workarounds MUST be attempted in the following order. Only the nested storage type approach reliably preserves generic parameter identity.
+
+#### Workaround Ordering (Failure to Success)
+
+| Approach | Result | Why |
+|----------|--------|-----|
+| Extension placement with explicit `where Element: ~Copyable` | FAILS | Extensions do not create new constraint contexts |
+| Module-level wrapper types (`__QueueLinkedStorage<Element: ~Copyable>`) | FAILS | Generic parameter is a different `Element` than the outer type's |
+| Module-level typealiases (`typealias __Storage<Element: ~Copyable> = ...`) | FAILS | Typealias parameter is not the same as the outer type's parameter |
+| `@_exported import` of the source module | NO EFFECT | The bug is about generic parameter identity, not module visibility |
+| Nested storage types inside the consuming type | SUCCESS | Inherits the `Element` parameter with constraint suppression intact |
+
+**Correct**:
+```swift
+struct Outer<T: ~Copyable>: ~Copyable {
+    // Nested type inherits T — same generic parameter, same identity
+    struct Inner: ~Copyable {
+        var value: T  // Same T as Outer
+    }
+}
+```
+
+**Incorrect**:
+```swift
+// ❌ Different generic parameters despite identical constraints
+struct Helper<T: ~Copyable>: ~Copyable { var value: T }
+
+struct Outer<T: ~Copyable>: ~Copyable {
+    var helper: Helper<T>  // Helper's T is a DIFFERENT parameter
+}
+// Constraint suppression on Outer's T does not transfer to Helper's T
+```
+
+**Rationale**: Swift's generics track parameter identity, not just constraints. Nesting preserves identity because the inner type's `T` is the same generic parameter as the outer type's. Cross-type instantiation creates a new parameter that happens to share constraints, which is insufficient for `~Copyable` constraint propagation.
+
+---
+
+### Category 4 ~Copyable Compiler Bug: Module Emission Phase
+
+**Scope**: `~Copyable` types with conditional `Sequence` conformance and borrowing closures across multiple files.
+
+**Statement**: A module emission phase constraint solver failure MAY occur when ALL of the following conditions are present simultaneously. This bug category MUST be documented alongside Categories 1-3 in any `~Copyable` constraint propagation reference.
+
+#### Required Conditions (All Six Must Be Present)
+
+| # | Condition |
+|---|-----------|
+| 1 | Compound generic constraint (`Element: ~Copyable & Protocol`) |
+| 2 | Nested type with `UnsafeMutablePointer<Element>` stored property |
+| 3 | Conditional `Sequence` conformance (`where Element: Copyable`) |
+| 4 | Extension file with `(borrowing Element)` closure parameter |
+| 5 | Library target (uses `-emit-module`) |
+| 6 | `-enable-experimental-feature Lifetimes` flag |
+
+**Correct**:
+```swift
+// Workaround: Consolidate all source into a single file
+// This bypasses the module emission phase cross-file constraint failure.
+// WORKAROUND: This Sequence conformance only compiles because all source code
+// is consolidated into a single file. When the compiler bug is fixed, this
+// package can be restructured into multiple files.
+```
+
+**Incorrect**:
+```swift
+// ❌ Splitting across files when all six conditions are present
+// Container.swift
+struct Container<Element: ~Copyable & Ordering>: ~Copyable { ... }
+extension Container: Sequence where Element: Copyable { ... }
+
+// Container+Borrowing.swift  ← separate file triggers emission bug
+extension Container where Element: ~Copyable {
+    func withMin(_ body: (borrowing Element) -> Void) { ... }
+}
+```
+
+**Rationale**: Category 4 bugs manifest only during `-emit-module`, not during parse or type-check. The six-condition specificity makes the bug difficult to reproduce in minimal reproductions and easy to trigger accidentally in production code. Single-file consolidation is the only known workaround.
+
+---
+
+### Accessor Patterns and ~Copyable Container Identity
+
+**Scope**: Determining whether container types support accessor patterns (chained `container.take.min`) vs compound methods (`container.takeMin()`).
+
+**Statement**: The choice between accessor patterns and compound methods MUST be determined by the container's `~Copyable` status and storage model. Accessor return types that hold a reference to the container require the container to be `Copyable`; `~Copyable` containers MUST use compound methods or borrowing closures instead.
+
+#### Container API Pattern Selection
+
+| Container Variant | Storage | ~Copyable? | API Pattern |
+|-------------------|---------|------------|-------------|
+| Base (CoW) | Class-based | Conditional | Accessor pattern when `Element: Copyable` |
+| Bounded | Class-based | Always | Compound methods |
+| Inline | Inline | Always | Compound methods |
+| Small | Hybrid | Always | Compound methods |
+
+**Correct**:
+```swift
+// Base container — conditional Copyable, supports accessors
+let min = heap.take.min       // Accessor pattern (Element: Copyable)
+
+// Bounded variant — always ~Copyable, uses compound methods
+heap.withMin { element in     // Borrowing closure pattern
+    process(element)
+}
+```
+
+**Incorrect**:
+```swift
+// ❌ Attempting accessor pattern on ~Copyable container
+let access = bounded.take     // Compiler error: accessor struct
+                              // cannot hold ~Copyable container
+```
+
+**Rationale**: Accessor structs (e.g., `Take`) are implicitly `Copyable` and must hold a reference to the container. When the container is `~Copyable`, this creates a contradiction: a `Copyable` accessor cannot store a `~Copyable` value. The API divergence between base and variant containers reflects this constraint, not inconsistency.
+
+---
+
+### Error Type Hoisting for ~Copyable Generics
+
+**Scope**: Error types that would otherwise be nested inside `~Copyable` generic types.
+
+**Statement**: Error types nested inside `~Copyable` generic types inherit the `~Copyable` constraint, making them unusable with `throws`. Error types MUST be hoisted to module scope with a double-underscore prefix to signal implementation-detail status.
+
+**Correct**:
+```swift
+// Hoisted to module scope — Copyable, usable with throws
+public struct __TreeNBoundedError: Error, Sendable {
+    // ...
+}
+public struct __TreeNInlineError: Error, Sendable {
+    // ...
+}
+
+// Usage in the ~Copyable container
+extension Tree.N.Bounded {
+    public mutating func insert(_ element: consuming Element) throws(__TreeNBoundedError) {
+        // ...
+    }
+}
+```
+
+**Incorrect**:
+```swift
+// ❌ Error type nested inside ~Copyable generic — inherits ~Copyable
+extension Tree.N.Bounded {
+    public struct Error: Swift.Error {  // Implicitly ~Copyable
+        // Cannot be thrown: throws requires Copyable
+    }
+}
+```
+
+#### Naming Convention for Hoisted Types
+
+| Intended Nesting | Hoisted Name | Purpose |
+|------------------|--------------|---------|
+| `Tree.N.Bounded.Error` | `__TreeNBoundedError` | Error for bounded tree operations |
+| `Tree.N.Inline.Error` | `__TreeNInlineError` | Error for inline tree operations |
+| `Stack.Small.Error` | `__StackSmallError` | Error for small stack operations |
+
+The double-underscore prefix signals "implementation detail hoisted for compiler constraint reasons." These types appear in public API (typed throws signatures) but are not intended as primary API surface.
+
+**Rationale**: Swift's `throws` mechanism requires errors to be `Copyable`. Types nested inside `~Copyable` generics inherit `~Copyable`, creating an irreconcilable constraint. Hoisting to module scope with a naming convention preserves the logical association while satisfying the compiler.
+
+---
+
+### Conditional @unchecked Sendable for ~Copyable Containers
+
+**Scope**: `~Copyable` container types with unsafe internal storage that must conform to `Sendable`.
+
+**Statement**: `~Copyable` containers with unsafe internals (raw pointers, optional class references) MUST use conditional `@unchecked Sendable` conformance constrained on `Element: Sendable`. The `@unchecked` annotation is justified when the container's ownership model prevents the scenarios where unsafety would manifest.
+
+**Correct**:
+```swift
+extension Tree.N.Small: @unchecked Sendable where Element: Sendable {}
+```
+
+**Incorrect**:
+```swift
+// ❌ Unconditional Sendable — allows non-Sendable elements through
+extension Tree.N.Small: @unchecked Sendable {}
+
+// ❌ Missing @unchecked — compiler rejects due to unsafe internals
+extension Tree.N.Small: Sendable where Element: Sendable {}
+```
+
+#### Justification Criteria for @unchecked
+
+The `@unchecked` annotation is correct when ALL of the following hold:
+
+| Criterion | Verification |
+|-----------|-------------|
+| Storage is exclusively owned | No copy-on-write sharing of the backing store |
+| Cached pointers are derived | Computed from owned storage, not independent references |
+| Access is synchronized by ownership | `~Copyable` prevents concurrent access to the same instance |
+
+The `where Element: Sendable` constraint is essential: a container of non-`Sendable` elements MUST NOT be `Sendable`, regardless of the container's own thread-safety properties.
+
+**Rationale**: `~Copyable` containers frequently contain unsafe pointers for performance. The `~Copyable` constraint itself provides the thread-safety guarantee (no aliasing), making `@unchecked Sendable` a correct annotation rather than a safety escape hatch.
+
+---
+
+### Value Generics and Conditional Copyable
+
+**Scope**: Types parameterized with value generics (`let N: Int`) that store only trivial data.
+
+**Statement**: Value generic parameters (`let N: Int`) MUST NOT be combined with `~Copyable` declarations when conditional `Copyable` conformance is the intent. Value generics provide no type parameter to constrain on, making conditional `Copyable` syntactically impossible.
+
+**Correct**:
+```swift
+// Value generic with trivial storage — omit ~Copyable entirely
+public struct Small<let inlineWordCount: Int>: Sendable {
+    var _inlineStorage: InlineArray<inlineWordCount, UInt>
+    var _heapStorage: ContiguousArray<UInt>?
+    var _capacity: Int
+    // All members are trivially Copyable
+}
+```
+
+**Incorrect**:
+```swift
+// ❌ Cannot add Copyable back to a ~Copyable type with only value generics
+public struct Small<let inlineWordCount: Int>: ~Copyable, Sendable { ... }
+extension Small: Copyable {}  // Error: no type parameter to constrain on
+```
+
+#### Type Generics vs Value Generics
+
+| Generic Kind | Example | Can Condition Copyable? |
+|--------------|---------|------------------------|
+| Type (`Element`) | `Stack<Element: ~Copyable>` | Yes: `where Element: Copyable` |
+| Value (`let N: Int`) | `Small<let N: Int>` | No: no type to constrain |
+
+When all stored members are unconditionally `Copyable` (e.g., `UInt`, `Int`, `ContiguousArray`), the type is unconditionally `Copyable`. Declaring `~Copyable` and attempting to restore `Copyable` conditionally creates a dead end.
+
+**Rationale**: `~Copyable` exists for types whose copyability depends on their generic element types. Value generics parameterize over quantities, not types. A `Small<4>` has no reason to differ in copyability from a `Small<8>`. When storage is trivial, `~Copyable` introduces complexity without benefit.
+
+---
+
+### The ~Copyable Decision Framework
+
+**Scope**: Deciding whether a new container type should be declared `~Copyable`.
+
+**Statement**: The decision to declare a type `~Copyable` MUST be based on the storage pattern and generic parameter configuration. Types with trivial storage and no generic element type SHOULD NOT be `~Copyable`.
+
+#### Decision Table
+
+| Storage Pattern | Generic Element? | Use ~Copyable? | Rationale |
+|-----------------|------------------|----------------|-----------|
+| `Element` (might be ~Copyable) | Yes | Yes + conditional Copyable | Element's copyability is unknown |
+| `[Element]` (array of elements) | Yes | Yes + conditional Copyable | Array inherits element's constraint |
+| `UInt` / trivial types only | No | No, use Sendable | Storage is unconditionally Copyable |
+| Value generic (`let N: Int`) only | No | No, cannot condition Copyable | No type parameter to constrain on |
+| Inline storage with deinit | Yes | Yes (deinit requirement) | Deinit must run to clean up elements |
+
+#### When ~Copyable Is Required
+
+1. The type stores generic elements that could be move-only
+2. The type has a `deinit` that must run (inline storage with element destruction)
+3. Copying would violate ownership semantics (file handles, locks, unique resources)
+
+#### When ~Copyable Is Wrong
+
+1. Storage is unconditionally trivial (all members are always `Copyable`)
+2. There is no generic element type to condition on
+3. Protocol conformances (`Sequence`, `Equatable`, `Hashable`) are needed and cannot be conditional
+4. Value semantics without manual `borrowing`/`consuming` handling is desired
+
+**Rationale**: `~Copyable` is a tool for types whose copyability depends on their contents. Applying it to types with unconditionally trivial storage creates unnecessary API complexity and may trigger compiler limitations (e.g., value generic incompatibility) with no corresponding benefit.
+
+---
+
+## Migration and Refactoring
+
+**Applies to**: Consolidating type variants, migrating position types, and evolving container APIs.
+
+**Does not apply to**: Greenfield implementation where no migration path is needed.
+
+---
+
+### Typealias Migration for Type Consolidation
+
+**Scope**: Replacing specialized type implementations with parameterized generics while preserving backward compatibility.
+
+**Statement**: When consolidating specialized types into parameterized generics, a typealias MUST be used as the migration bridge. The migration MUST follow delete-then-create sequencing: delete the old implementation first, then create the typealias file at the same path.
+
+**Correct**:
+```swift
+// After migration: Tree.Binary is a typealias for Tree.N<Element, 2>
+extension Tree {
+    public typealias Binary<Element: ~Copyable> = Tree.N<Element, 2>
+}
+
+// All existing Tree.Binary<Int> usage continues to work
+// No runtime cost, no wrapper overhead
+```
+
+**Incorrect**:
+```swift
+// ❌ Maintaining parallel implementations during transition
+struct Binary<Element: ~Copyable>: ~Copyable { ... }  // Old
+struct N<Element: ~Copyable, let n: Int>: ~Copyable { ... }  // New
+// Parallel implementations diverge, create confusion, double maintenance
+```
+
+#### Migration Sequencing
+
+| Step | Action | Purpose |
+|------|--------|---------|
+| 1 | Create all parameterized variants | New implementation exists |
+| 2 | Migrate tests to parameterized types | Verify behavioral equivalence |
+| 3 | Verify tests pass | Confirm correctness |
+| 4 | Delete old implementation files | Remove duplication |
+| 5 | Create typealias file at the old path | Preserve backward compatibility |
+
+#### Nested Type Migration
+
+Nested types do not alias automatically. Position types hoisted to a shared namespace require explicit migration in client code:
+
+```swift
+// Before migration
+var positions: [Tree.Binary<Int>.Position] = []
+
+// After migration — Position hoisted to Tree.Position
+var positions: [Tree.Position] = []
+```
+
+This change is mechanical but cannot be papered over with typealiases.
+
+**Rationale**: Typealiases are resolved at compile time with zero runtime cost. Delete-then-create sequencing forces complete migration rather than gradual rot from parallel implementations. The typealias file reuses the old implementation's path, preserving the logical association.
+
+---
+
+## Build Infrastructure
+
+**Applies to**: Monorepo development with local path dependencies.
+
+**Does not apply to**: Production builds with pinned version dependencies.
+
+---
+
+### Dependency Graph Fragility in Monorepos
+
+**Scope**: Build failures caused by local path dependencies in monorepo development.
+
+**Statement**: When using local path dependencies, developers MUST expect transient build failures from dependency graph interactions. Build errors that do not correspond to local changes SHOULD be resolved with `swift package clean` before investigating further.
+
+#### The Cascade Effect
+
+Local path dependencies cause `swift build` to compile the entire dependency graph. A bug or transient failure in any dependency blocks all downstream work, even when the dependency and the target package have no logical coupling.
+
+**Correct**:
+```bash
+# Build error doesn't match local changes — clean first
+swift package clean
+swift build
+
+# If error persists, investigate the dependency
+```
+
+**Incorrect**:
+```bash
+# ❌ Investigating errors in code you didn't change without cleaning first
+# Transient incremental build failures waste investigation time
+```
+
+#### Monorepo Development Guidelines
+
+| Concern | Guideline |
+|---------|-----------|
+| Transient failures | Not all build errors indicate code problems; clean and rebuild |
+| Dependency bugs | A broken dependency must be fixed before downstream progress |
+| Incremental builds | May corrupt state; `swift package clean` resolves mysteries |
+| Production isolation | Production builds SHOULD use pinned versions, not path dependencies |
+
+**Rationale**: Local path dependencies provide development velocity but introduce build fragility. Incremental build state corruption and parallel compilation race conditions can produce errors unrelated to the developer's changes. Recognizing transient failures as a monorepo characteristic prevents wasted investigation time.
+
+---
+
 ## Topics
 
 ### Related Documents

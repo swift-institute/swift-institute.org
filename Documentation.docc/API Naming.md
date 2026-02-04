@@ -246,6 +246,63 @@ dir.walkDirectories()
 
 ---
 
+## Semantic Naming vs Safety Qualifiers
+
+**Scope**: Method names on protocol primitives and low-level operations.
+
+**Statement**: Method names SHOULD describe what the method does, not what it does not do. The `__unchecked` qualifier SHOULD only appear when breaking overloads between checked and unchecked variants of semantically identical operations. Distinct semantic operations MUST have distinct names that describe their behavior.
+
+### The Category Error
+
+The `__unchecked` naming pattern describes what a method *lacks* rather than what it *performs*. This is a category error. Method names are positive descriptions of behavior, not negative assertions about absent validation.
+
+**Correct**:
+```swift
+// Names describe the physical operation
+func setPosition(to checkpoint: Checkpoint)  // Sets the cursor position
+func advance() -> Element                     // Advances the cursor
+func isValid(_ checkpoint: Checkpoint) -> Bool // Checks checkpoint validity
+```
+
+**Incorrect**:
+```swift
+// Names describe absent safety checks
+func __restoreUnchecked(to checkpoint: Checkpoint)  // What does it actually do?
+func __removeFirstUnchecked() -> Element             // What is the operation?
+func __isValidCheckpoint(_ checkpoint: Checkpoint) -> Bool  // Redundant qualifier
+```
+
+### API vs Primitive Layer Distinction
+
+These are not variations of the same operation. The API layer and the primitive layer serve different purposes:
+
+| Layer | Purpose | Example |
+|-------|---------|---------|
+| API | What the user wants | `restore.to(checkpoint)` — restore safely via accessor |
+| Primitive | How the cursor moves | `setPosition(to:)` — set internal position |
+
+The accessor (`restore.to()`) provides validation, then calls the primitive. Neither is "unchecked" — one validates, the other is an implementation mechanism that does not need to validate.
+
+### When `__unchecked` Is Appropriate
+
+The `__unchecked` qualifier is appropriate only when:
+
+1. Two methods perform the **same semantic operation**
+2. One validates inputs, the other trusts the caller
+3. Both need to coexist as overloads
+
+```swift
+// Appropriate: same operation, different safety guarantees
+public init?(_ rawValue: Int)                          // Validates
+public init(__unchecked: Void, _ rawValue: Int)        // Trusts caller
+```
+
+When methods have different semantic meanings, they MUST have different names describing those meanings, regardless of their relative safety profiles.
+
+**Rationale**: Safety qualifiers as method names create cognitive overhead at every usage site, every conformance, and every documentation reference. Semantic names transfer knowledge — a developer reading `setPosition(to:)` understands the operation immediately, while `__restoreUnchecked(to:)` requires understanding both the checked variant and what was removed.
+
+---
+
 ## API Minimalism
 
 **Scope**: All public APIs.

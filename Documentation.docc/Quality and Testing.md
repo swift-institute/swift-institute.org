@@ -529,6 +529,48 @@ extension File.System.Test.Performance {
 
 ---
 
+## Reproduction Methodology
+
+**Applies to**: All bug investigations and workaround validation.
+
+**Does not apply to**: Bugs with single-file reproductions that match production structure.
+
+---
+
+### Minimal Reproduction Limitations
+
+**Scope**: Using minimal reproductions for workaround validation.
+
+**Statement**: Minimal reproductions MUST NOT be the sole validation for workaround correctness. Workarounds MUST be verified in the actual codebase before being accepted.
+
+Minimal reproductions are effective for confirming that a bug exists. They are unreliable for confirming that a workaround works at scale. When a bug is context-sensitive — dependent on the number of source files, nested types, storage configurations, or conditional conformances — a minimal reproduction lacks the structural complexity that triggers the failure.
+
+**Decision procedure**:
+
+| Scenario | Action |
+|----------|--------|
+| Workaround passes in minimal reproduction | Verify in the full codebase before accepting |
+| Workaround passes in minimal reproduction but fails in production | The production code has structural properties the reproduction lacks — investigate what the real code has that the test code does not |
+| Experiment fails to reproduce the bug | Document the negative result — it narrows the search space for future investigation |
+
+### Reproducing Structural Complexity
+
+**Scope**: Bug investigations where isolated reproductions do not trigger the failure.
+
+**Statement**: When a minimal reproduction passes but the production build fails, the reproduction SHOULD be expanded to include the structural properties of the production code, not merely the specific pattern under test.
+
+Structural properties that affect compiler behavior include:
+
+- Multiple source files in the same target
+- Multiple nested types within a generic parent
+- Conditional conformances across separate extension files
+- Storage types with class inheritance (e.g., `ManagedBuffer`)
+- Unsafe pointer manipulation across file boundaries
+
+**Rationale**: Compiler behavior can differ between isolated and structurally complex codebases. Negative experimental results (experiments that fail to reproduce) are still valuable — they narrow the conditions required to trigger the bug. Both successful and failed reproduction attempts SHOULD be documented.
+
+---
+
 ## Complete Example
 
 **Scope**: Reference implementation combining all patterns.

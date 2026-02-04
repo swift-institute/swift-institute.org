@@ -846,6 +846,77 @@ This exception exists because SPM and tooling have stronger expectations for cod
 
 ---
 
+### Automated Verification of Derived Information
+
+**Scope**: Documentation properties that can be computed from source.
+
+**Statement**: For any property that can be computed from source (tier assignments, dependency counts, package inventories), documentation SHOULD be generated or verified automatically. Human curation of derived information cannot scale.
+
+#### Applicable Properties
+
+| Property | Source of Truth | Verification Method |
+|----------|----------------|---------------------|
+| Tier assignments | Package.swift dependency graphs | Compute `tier[pkg] = max(tier[dep] for dep in deps) + 1` |
+| Dependency counts | Package.swift files | Parse and count |
+| Package inventories | Directory listings | Enumerate targets |
+| Module names | Package.swift product declarations | Parse and extract |
+
+#### Recommended Practice
+
+Normative documents containing derived information SHOULD include a CI verification step: compute the property from source, compare to the documented value, and fail if they diverge. Human judgment belongs in naming and description, not in assignment of computable values.
+
+**Rationale**: Incremental changes to source are individually correct but produce systemic documentation drift when no global verification exists. A trivial computation can expose months of accumulated drift that manual review misses.
+
+---
+
+### Semantic Tier Names vs Mechanical Tier Numbers
+
+**Scope**: Tier-based documentation for layered package hierarchies.
+
+**Statement**: Tier names are descriptive snapshots of current semantic clustering, not prescriptive categories. When package dependencies change, tier numbers shift mechanically. Documentation MUST treat tier names as commentary, not as rules.
+
+#### Correct Framing
+
+```markdown
+As of this version, tier 7 contains linear algebra and input handling packages.
+```
+
+#### Incorrect Framing
+
+```markdown
+Tier 7 is for advanced numerical packages.
+```
+
+The first phrasing is a temporal observation; the second implies a constraint that does not exist. Tier numbers are computed from dependency graphs. Tier names are human-assigned labels that require periodic re-evaluation.
+
+When running full tier verification, tier names SHOULD also be verified against current tier contents. Names may need updating even when package assignments are correct.
+
+**Rationale**: Treating descriptive names as prescriptive rules creates false constraints and leads to confusion when mechanical tier shifts invalidate the names.
+
+---
+
+### Major Version Bumps for Structural Documentation
+
+**Scope**: Normative documents referenced by other documents or code.
+
+**Statement**: Normative documents that undergo structural revision (not just clarification) warrant major version bumps. A structural revision is one that changes the model described by the document, not merely its wording.
+
+#### Version Bump Criteria
+
+| Change Type | Version Increment | Example |
+|-------------|-------------------|---------|
+| Typo or wording fix | Patch (x.y.Z) | Fix a misspelling |
+| New section or clarification | Minor (x.Y.0) | Add a new subsection |
+| Structural model change | Major (X.0.0) | Nine tiers become sixteen |
+
+A major version signals to all consumers: "Re-read this document. The model changed and cross-references may be stale." Any code or documentation citing the previous structure is now outdated.
+
+For architectural documentation that other documents depend on, version numbers are communication infrastructure. The version number creates an audit trigger that makes structural changes visible across the dependency graph.
+
+**Rationale**: Without versioned documents, structural changes propagate silently. Consumers continue referencing an obsolete model until they discover the mismatch through failure. Major version bumps make the mismatch discoverable by inspection.
+
+---
+
 ## Explicit Exclusions
 
 **Applies to**: Content decisions.
@@ -970,6 +1041,87 @@ to `Value = Resource`.
 Without this documentation, the workaround might be preserved out of caution even when Swift evolves to support the ideal implementation.
 
 **Rationale**: Workarounds documented with migration paths are technical debt with known payoff dates. Workarounds without documentation become permanent.
+
+---
+
+### Workaround Documentation Template
+
+**Scope**: All workarounds in source code.
+
+**Statement**: Workarounds MUST be documented using a standard four-part template. Undocumented workarounds become permanent unknowns with no lifecycle management.
+
+#### Required Template
+
+```swift
+// WORKAROUND: [What this works around]
+// WHY: [Why the normal approach does not work]
+// WHEN TO REMOVE: [Specific condition under which the workaround can be removed]
+// TRACKING: [Issue URL or internal reference]
+```
+
+#### Example
+
+```swift
+// WORKAROUND: This Sequence conformance only compiles because all source code
+// is consolidated into a single file.
+// WHY: Compiler bug prevents multi-file compilation of this conformance.
+// WHEN TO REMOVE: When the compiler bug is fixed.
+// TRACKING: https://github.com/swiftlang/swift/issues/86669
+```
+
+Each field serves a distinct purpose:
+
+| Field | Purpose |
+|-------|---------|
+| `WORKAROUND` | Identifies the comment as a managed workaround, not a design choice |
+| `WHY` | Prevents future readers from "fixing" code that is intentionally shaped by a constraint |
+| `WHEN TO REMOVE` | Provides exit criteria so the workaround does not outlive its cause |
+| `TRACKING` | Links to an external issue for status checking |
+
+A workaround missing any of these fields is incomplete. Without `WHEN TO REMOVE`, no one knows when to revisit. Without `TRACKING`, no one can check upstream status. Without `WHY`, someone may attempt to "clean up" load-bearing structure.
+
+**Rationale**: Workarounds following a standard template are managed constraints with clear lifecycles. Workarounds without documentation are time bombs—they become permanent because no one knows whether they are still necessary.
+
+---
+
+### Deviation Documentation Template
+
+**Scope**: Types or patterns that intentionally differ from established patterns in the same codebase.
+
+**Statement**: When a type deviates from an established pattern in the same codebase, a standard documentation template MUST be used. The template acknowledges the pattern, explains the difference, and states the consequence.
+
+#### Required Template
+
+```swift
+/// ## [Property Name]
+///
+/// Unlike [Reference Type] which [does X] because [reason],
+/// [This Type] [does Y] because [different reason].
+/// Therefore it [has consequence].
+```
+
+#### Example
+
+```swift
+/// ## Copyable
+///
+/// Unlike `Stack.Small<Element>` which is `~Copyable` because it stores
+/// potentially move-only elements, `Set<Bit>.Packed.Small` stores only `UInt`
+/// words (always trivial) and has no generic element type. Therefore it is
+/// unconditionally `Copyable`, enabling `Sequence`, `Equatable`, and `Hashable`.
+```
+
+The template has three components:
+
+| Component | Purpose |
+|-----------|---------|
+| Acknowledge the pattern | Signals awareness of the expected behavior |
+| Explain the difference | Provides the concrete reason for deviation |
+| State the consequence | Shows the practical effect of the deviation |
+
+Without this documentation, a future maintainer may see the deviation, assume it is a bug, attempt to "fix" it, and spend hours rediscovering why the deviation is intentional.
+
+**Rationale**: Intentional deviations that are undocumented look identical to accidental deviations. The template short-circuits unnecessary investigation by making intent explicit.
 
 ---
 

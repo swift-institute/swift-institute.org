@@ -27,7 +27,7 @@ This document defines the implementation style requirements for Swift Institute 
 |---------|--------------|-------|
 | [Construction and Transformation](#construction-and-transformation) | 1 | Type construction patterns |
 | [Core Types](#core-types) | 2 | State machines, totality |
-| [Code Organization](#code-organization) | 4 | File structure, awaiting features, inlining |
+| [Code Organization](#code-organization) | 5 | File structure, awaiting features, inlining, error nesting |
 | [Global State and Helpers](#global-state-and-helpers) | 2 | No hidden state, no ad-hoc helpers |
 | [Advanced Patterns](#advanced-patterns) | 5 | Capability injection, effects, phantom types, value generics |
 
@@ -408,6 +408,60 @@ extension Point {
 4. **Separation of concerns**: "What this type IS" (declaration) vs "what it DOES" (extensions).
 5. **Constrained extensions**: Extensions can have `where` clauses; type declarations cannot.
 6. **Merge conflict reduction**: Parallel work on different aspects of a type doesn't conflict.
+
+---
+
+### Error Type Simplification via Direct Nesting
+
+**Scope**: Error types within namespace enums.
+
+**Statement**: When a namespace is a non-generic enum, error types SHOULD be nested directly within the namespace rather than hoisted to module level with a `__` prefix and typealias. Direct nesting is cleaner and eliminates indirection.
+
+**Correct**:
+```swift
+// Direct nesting - namespace is non-generic enum
+extension Input.Remove {
+    public enum Error: Swift.Error, Sendable, Equatable {
+        case empty
+        case insufficientElements(requested: Int, available: Int)
+    }
+}
+
+// Usage: clean, discoverable
+throw Input.Remove.Error.empty
+catch Input.Remove.Error.insufficientElements(let requested, let available)
+```
+
+**Incorrect**:
+```swift
+// Hoisting when unnecessary - Input.Remove is non-generic
+public enum __InputRemoveError: Error { ... }
+extension Input.Remove where Base: ~Copyable {
+    public typealias Error = __InputRemoveError
+}
+// Pollutes module namespace with __-prefixed type
+// Adds typealias indirection
+// Error type appears at Input.Remove<SomeBase>.Error instead of Input.Remove.Error
+```
+
+#### When Hoisting Is Still Required
+
+Hoisting with `__` prefix remains necessary when:
+
+1. The parent type is generic (`struct Foo<T>` cannot nest types without inheriting constraints)
+2. The error type needs to avoid inheriting the parent's generic parameters
+3. Multiple generic instantiations must share the same error type
+
+#### Simplification Benefits
+
+| Aspect | Hoisted Pattern | Direct Nesting |
+|--------|----------------|----------------|
+| Throw expression | `throw __InputRemoveError.empty` or via typealias | `throw Input.Remove.Error.empty` |
+| Catch pattern | Requires knowing the hoisted name or typealias | `catch Input.Remove.Error.empty` |
+| Documentation | Error lives at module level, aliased into namespace | Error lives in its semantic home |
+| Module namespace | Polluted with `__`-prefixed types | Clean |
+
+**Rationale**: Non-generic namespace enums can nest types directly. Using this capability for error types keeps the error in its semantic home, eliminates `__` prefix pollution, and removes typealias indirection. The error type reads as `Input.Remove.Error` — exactly where a developer would look for it.
 
 ---
 

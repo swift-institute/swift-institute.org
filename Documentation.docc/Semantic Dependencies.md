@@ -202,7 +202,17 @@ A common manifestation of lateral pressure is **string-primitives becoming an im
 - Consider whether the "string output" relationship is essential or incidental ([SEM-DEP-006])
 - Use join-points for integration semantics rather than forcing lateral edges
 
-**Rationale**: Lateral dependencies—SDG or IDG—flatten the tier hierarchy and suggest incomplete domain analysis.
+### Lateral SDG Edges as Architectural Intent
+
+A lateral SDG edge is a signal, not a violation. SDG edges document *architectural intent*, not current position. When a package declares a lateral SDG edge, it indicates that the package's current tier is temporary — the package will rise when implementation catches up to intent.
+
+**Interpretation**:
+- **IDG edge**: "What does this package currently use?"
+- **SDG edge**: "What would this package need if it fully realized its semantic purpose?"
+
+SDG review SHOULD treat lateral edges as tier placement predictions. A lateral SDG edge that documents planned future activation is valid. A lateral edge that is *not* intended for future activation indicates an architectural error — the packages should merge or a common ancestor should be extracted.
+
+**Rationale**: Lateral dependencies—SDG or IDG—flatten the tier hierarchy and suggest incomplete domain analysis. Lateral SDG edges that encode forward-looking intent are acceptable when they predict a future tier change.
 
 ---
 
@@ -254,7 +264,15 @@ When evaluating `operates-on`, distinguish **essential** from **incidental** rel
 
 **Reviewer guidance**: `operates-on` must be domain-essential, not "we happen to take a B parameter once." If the relationship is incidental, there is no SDG edge.
 
-**Rationale**: Domain ordering reflects conceptual containment. The essential/incidental distinction prevents SDG edge inflation.
+### SDG Edge Validation Filters
+
+SDG edges require passing three filters before inclusion:
+
+1. **Essential, not incidental**: Would removing B change A's semantic domain? If A defines its own domain-specific errors (conforming to `Swift.Error`) rather than wrapping error-primitives concepts, the relationship is incidental.
+2. **Not already IDG**: Is the dependency currently inactive? An active IDG dependency does not need an SDG placeholder. SDG edges are for relationships that *should* exist but *do not yet*.
+3. **Tier-respecting**: Does the edge flow downward or document future upward movement? A lateral SDG edge is valid only if it documents architectural intent for future activation (see "Lateral SDG Edges as Architectural Intent").
+
+**Rationale**: Domain ordering reflects conceptual containment. The essential/incidental distinction prevents SDG edge inflation. The three-filter procedure provides a concrete decision mechanism for SDG edge proposals.
 
 ---
 
@@ -274,7 +292,17 @@ When evaluating `operates-on`, distinguish **essential** from **incidental** rel
  SDG(wraps) to lifetime-primitives
  SDG(operates-on) to identity-primitives
 
-**Rationale**: Upfront SDG analysis prevents architectural drift and ensures domain relationships are captured before implementation obscures them.
+### Semantic Attractor Packages
+
+Certain Tier 0 packages function as **semantic attractors** — packages representing concepts so fundamental that most higher-level abstractions eventually reference them, even when no import exists yet. In swift-primitives, `error-primitives` and `lifetime-primitives` account for approximately 71% of all SDG edges.
+
+This concentration has the following implications:
+
+1. **Semantic attractor packages SHOULD be exceptionally stable.** Changes to attractor packages ripple semantically across the entire package hierarchy.
+2. **The SDG graph has a narrow waist.** Despite many Tier 0 packages, semantic dependencies converge on a small number of attractors. Most Tier 0 packages (decimal, random, positioning, etc.) are more self-contained.
+3. **Discovery questions SHOULD be weighted by attractor strength.** "What errors does this represent?" and "What lifetimes does this manage?" are the most productive discovery questions when auditing for missing SDG edges. These two questions alone account for the majority of discovered edges.
+
+**Rationale**: Upfront SDG analysis prevents architectural drift and ensures domain relationships are captured before implementation obscures them. Weighting discovery questions by attractor strength improves audit efficiency.
 
 ---
 

@@ -290,6 +290,59 @@ The trade-off is clearly favorable for a primitives library targeting modern use
 
 ---
 
+## BitwiseCopyable and Lifetime Inference
+
+### The Physical/Semantic Property Distinction
+
+**Scope**: All primitives types that are both bitwise-trivial and lifetime-bound. Affects `_read` accessor patterns, borrowing views, and pointer-holding structs.
+
+**Status**: Blocked by Swift language evolution. Verified experimentally in `re-accessor-bitwisecopyable`.
+
+`BitwiseCopyable` describes a physical property: a type's memory layout permits `memcpy`. Lifetime dependence describes a semantic property: a value is only valid while another value exists. These concerns are orthogonal. A `Span<T>` containing a pointer and an integer is 16 bytes that can be `memcpy`'d (physical), yet depends on the memory it references (semantic). Neither fact implies nor contradicts the other.
+
+The current compiler conflates them. When a type is inferred as `BitwiseCopyable`, the compiler blocks lifetime inference on `_read` accessors for that type. This collapses one quadrant of a four-quadrant design space that should be fully expressible:
+
+| | Lifetime-bound | Lifetime-independent |
+|---|----------------|----------------------|
+| **BitwiseCopyable** | Span, Buffer views (blocked) | Int, primitives |
+| **Not BitwiseCopyable** | MutableRef | Array, String |
+
+The top-left quadrant — types that are physically trivial but semantically lifetime-bound — is where primitives frequently operate. Lightweight accessor types that borrow from containers (`Input.Access`, `Input.Remove`, and similar) hold pointers to parent containers. These pointers are physically trivial (8 bytes, `memcpy`-able) but semantically constrained (valid only while the parent exists).
+
+### Implicit Inference as Hidden Constraint
+
+`BitwiseCopyable` conformance is inferred, not declared. The compiler examines a struct's stored properties, determines the type can be copied bitwise, and silently adds the conformance. This invisible conformance then triggers visible restrictions — lifetime inference is blocked, and an error demands an annotation that current syntax cannot provide.
+
+This is an instance of a general anti-pattern: implicit inference that creates user-facing constraints. Compare with `Sendable` inference, where the compiler also infers conformance for simple structs but the inference *enables* rather than *restricts*. An inferred `Sendable` struct can be used in more contexts. An inferred `BitwiseCopyable` struct can be used in fewer lifetime-dependent contexts.
+
+When inference creates restrictions, an opt-out mechanism is required. Swift provides `@unchecked Sendable` when the compiler's analysis is too conservative. No `~BitwiseCopyable` suppression exists. The only current workaround is structural — adding non-trivial stored properties (e.g., an unused `[Int]` member) that break inference — which pollutes the type's interface to work around a type-system limitation.
+
+### What BitwiseCopyable Actually Provides
+
+`BitwiseCopyable` delivers genuine optimization value:
+
+1. **Bulk copy optimization** — `memcpy` instead of element-wise initialization
+2. **Generic specialization** — Functions constrained to `BitwiseCopyable` generate tighter code
+3. **ABI documentation** — Stable memory layout for FFI and serialization
+4. **Unsafe code soundness** — `copyMemory` operations are provably correct
+
+None of these benefits require blocking lifetime inference. The optimization value is orthogonal to ownership semantics. A type can be both `memcpy`-optimizable and lifetime-constrained.
+
+### Current Workarounds
+
+Existing primitives avoid the issue accidentally. `Input.Buffer` stores `[Element]`, which prevents `BitwiseCopyable` inference, which in turn enables lifetime inference on its accessors. This is fragile: a future optimization to inline storage could break the entire accessor pattern without any obvious connection between the changes.
+
+**Blocking factors**: The compiler does not support `@_lifetime` annotations on `_read` accessors. It demands explicit lifetime annotation for `BitwiseCopyable` types but provides no syntax to supply it. Resolution requires one of three language changes: (1) extend `@_lifetime` annotation syntax to `_read` accessors, (2) relax the inference restriction so `BitwiseCopyable` does not block lifetime inference, or (3) introduce `~BitwiseCopyable` as an explicit opt-out parallel to `~Copyable` and `~Escapable`.
+
+**Next steps**:
+
+1. Monitor Swift Evolution for `~BitwiseCopyable` opt-out proposals
+2. Monitor Swift Evolution for `@_lifetime` syntax extensions to accessors
+3. Audit all primitives accessor types for fragile reliance on accidental non-trivial members
+4. Maintain the `re-accessor-bitwisecopyable` experiment as a living test of compiler behavior across Swift versions
+
+---
+
 ## Topics
 
 ### Reference

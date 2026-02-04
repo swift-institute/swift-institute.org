@@ -29,6 +29,7 @@ This document defines design validation requirements for Swift Institute package
 | [Language Constraints](#language-constraints) | 2 | Simplification when features don't compose |
 | [Design Principles](#design-principles) | 3 | Policy/storage separation, empirical measurement |
 | [Design Validation](#design-validation) | 2 | Surfacing hidden premises, adversarial review |
+| [The Generalized Accessor Pattern](#the-generalized-accessor-pattern) | 3 | Accessor<Base, Tag>, namespace-as-tag, clear vs removeAll |
 
 ---
 
@@ -643,6 +644,169 @@ Output: Refactor anyway to demonstrate research value
 The correct frame: research produces information. That information might indicate change is needed, or it might confirm the status quo. Both are valid outcomes—they differ only in what they reveal, not in their worth.
 
 **Rationale**: Well-designed architecture anticipates constraints that haven't yet been encountered. Research that validates existing design confirms the architecture's quality. Research that invalidates existing design reveals improvement opportunities. Both outcomes require the same analytical investment and produce equivalent value.
+
+---
+
+## The Generalized Accessor Pattern
+
+**Applies to**: APIs providing scoped, borrowing access to a type's operations.
+
+---
+
+### Accessor as Foundational Primitive
+
+**Scope**: Types that expose operation-scoped views discriminated by phantom type.
+
+**Statement**: When a type needs to expose groups of operations through scoped accessors, the generalized `Accessor<Base, Tag>` pattern MUST be used. `Accessor<Base, Tag>` is a `~Copyable`, `~Escapable` borrowing view where `Tag` discriminates which operations are available. Namespace enums serve double duty as both the operation namespace and the phantom type tag.
+
+#### The Pattern
+
+`Accessor<Base, Tag>` resolves a fundamental tension in Swift API design:
+
+1. **Namespace enums** provide clean `Nest.Name` hierarchies
+2. **Accessor structs** provide operation scoping via properties
+3. **Protocol nesting** is blocked in generic types
+
+The generalized accessor resolves all three. The namespace enum holds the protocol (directly nested when non-generic), the `Accessor` type is reusable across all domains, and operations are scoped by `Tag ==` constraints on extensions.
+
+**Correct**:
+```swift
+// Accessor<Base, Tag> in identity-primitives
+// ~Copyable, ~Escapable borrowing view discriminated by phantom type
+
+// Namespace enum serves as both namespace and tag
+extension Input {
+    public enum Access {
+        public protocol Random: Input.`Protocol`, ~Copyable { ... }
+    }
+}
+
+// Property exposes the accessor
+var access: Accessor<Self, Input.Access>
+
+// Tag constraint scopes operations
+extension Accessor where Tag == Input.Access, Base: Input.Access.Random {
+    public func element(at index: Base.Index) -> Base.Element { ... }
+}
+```
+
+**Incorrect**:
+```swift
+// Separate accessor struct per domain
+struct InputAccessAccessor<Base> { ... }   // Not reusable
+struct InputRemoveAccessor<Base> { ... }   // Duplicated structure
+
+// Single-generic accessor without tag discrimination
+struct Accessor<Base> { ... }
+// When Base conforms to multiple protocols, all operations appear
+// No compile-time discrimination between operation groups
+```
+
+#### Relationship to Tagged
+
+`Accessor<Base, Tag>` and `Tagged<Tag, RawValue>` are siblings in identity-primitives:
+
+| Aspect | Tagged | Accessor |
+|--------|--------|----------|
+| Purpose | Phantom-typed value | Phantom-typed borrow |
+| Storage | Owns the value | Borrows from the value |
+| Copyability | Copyable | ~Copyable, ~Escapable |
+| Lifetime | Independent | Bound to borrowed value |
+| Use case | Type-safe wrappers | Operation-scoped views |
+
+Both use the same phantom type pattern. Both can share tag types. They are siblings, not derivations of each other.
+
+#### Why Tag Discrimination Is Required
+
+A single-generic `Accessor<Base>` (without `Tag`) cannot discriminate operations. When `Base` conforms to multiple protocols, all operations from all conformances appear on the accessor. Only `Tag ==` constraints on extensions enable compile-time operation discrimination.
+
+**Rationale**: The generalized accessor pattern provides a single reusable type for all borrowing-view-with-phantom-discrimination use cases. Namespace enums eliminate redundant `Tag` sub-enums by serving as both the operation namespace and the phantom type tag.
+
+---
+
+### Namespace Enums as Phantom Type Tags
+
+**Scope**: Phantom type tags for `Accessor<Base, Tag>` and similar discriminated types.
+
+**Statement**: Dedicated `Tag` enums MUST NOT be created when the namespace enum itself can serve as the tag. The namespace enum already exists as a type and provides the semantic discrimination directly.
+
+**Correct**:
+```swift
+// Namespace IS the tag
+var access: Accessor<Self, Input.Access>
+extension Accessor where Tag == Input.Access, Base: Input.Access.Random { ... }
+
+// "Tagged with Input.Access" means "this is an access accessor"
+```
+
+**Incorrect**:
+```swift
+// Redundant Tag enum
+extension Input {
+    public enum Access {
+        public enum Tag {}  // UNNECESSARY — Access itself is the tag
+    }
+}
+var access: Accessor<Self, Input.Access.Tag>  // Pointless indirection
+```
+
+#### When Nested Tags Are Still Needed
+
+Nested `Tag` enums remain necessary when:
+1. The namespace needs multiple distinct tags (rare)
+2. The namespace is a generic type (generic types cannot serve as tags)
+3. The tag needs to carry type-level information (associated types)
+
+For typical accessor patterns, the namespace-as-tag approach is preferred.
+
+**Rationale**: Eliminating redundant `Tag` enums reduces indirection and improves conceptual clarity. The domain name provides discrimination directly without an additional nesting level.
+
+---
+
+### Clear vs RemoveAll for Small-Buffer Types
+
+**Scope**: Types with dual storage modes (inline and heap) that need emptying operations.
+
+**Statement**: For small-buffer-optimization types with dual storage modes, two distinct emptying operations MUST be provided: `clear()` resets to initial state (deallocates heap storage), `removeAll()` empties elements but preserves the current storage mode.
+
+**Correct**:
+```swift
+extension Set.Packed.Small {
+    /// Removes all elements and returns to inline storage mode.
+    public mutating func clear() {
+        _inlineStorage = .init(repeating: 0)
+        _heapStorage = nil
+        _capacity = Self.inlineCapacity
+    }
+
+    /// Removes all elements but keeps current storage mode.
+    public mutating func removeAll() {
+        if _heapStorage != nil {
+            for i in _heapStorage!.indices {
+                _heapStorage![i] = 0
+            }
+        } else {
+            _inlineStorage = .init(repeating: 0)
+        }
+        // _capacity unchanged, _heapStorage retained
+    }
+}
+```
+
+#### When Each Operation Applies
+
+| Operation | Use Case | Storage Effect |
+|-----------|----------|----------------|
+| `clear()` | Finished with current data; next use may be small | Deallocates heap, returns to inline mode |
+| `removeAll()` | Batch processing; each dataset likely similar size | Retains heap allocation, avoids spill/deallocate cycles |
+
+The distinction mirrors `Array.removeAll(keepingCapacity:)` but is split into two methods for clarity. The small-buffer optimization makes the distinction more significant: `clear()` changes the storage mode, not just the element count.
+
+#### Consistency Across Small-Variant Types
+
+This semantic distinction MUST be consistent across all small-variant types. `Stack.Small`, `Queue.Small`, `Set.Ordered.Small`, and similar types with dual storage modes SHOULD follow the same `clear()` / `removeAll()` pattern.
+
+**Rationale**: Single-word method names communicate the distinction clearly. `clear` implies a thorough, complete reset to initial state. `removeAll` implies element removal while potentially preserving structural properties. Consistency across small-variant types enables knowledge transfer.
 
 ---
 
