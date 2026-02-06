@@ -352,13 +352,114 @@ index.position.rawValue * 5                  // ❌
 
 ---
 
+## [PATTERN-019] No Blanket Tagged Init Constructors
+
+**Scope**: All `extension Tagged where RawValue == T` declarations.
+
+**Statement**: Extensions on `Tagged` constrained only by `RawValue` and `Tag: ~Copyable` MUST NOT provide public `init` constructors. Such inits are available on ALL `Tagged<_, T>` specializations, including bounded types that require stricter validation.
+
+```swift
+// ANTI-PATTERN — Blanket init bypasses bounded type invariants
+extension Tagged where RawValue == Ordinal, Tag: ~Copyable {
+    public init(_ count: Tagged<Tag, Cardinal>) {  // ❌ Available on Ordinal.Finite<N>
+        self.init(__unchecked: (), Ordinal(count.rawValue))
+    }
+}
+// Ordinal.Finite<5>(someCardinal) silently accepts values >= 5
+
+// CORRECT — Typed arithmetic (preferred when an operator exists)
+let endIndex: Index<Element> = .zero + header.count
+
+// CORRECT — __unchecked when no typed operator path exists
+let index = Index<Element>(__unchecked: (), Ordinal(header.count.rawValue))
+
+// CORRECT — Bounded types provide their own validated init
+extension Tagged where Tag == Finite.Bound<N>, RawValue == Ordinal {
+    public init?(_ position: Ordinal) { ... }  // Validates position < N
+}
+```
+
+**Victim types**: Any `Tagged<SpecificTag, T>` where `SpecificTag` constrains the valid range. Examples: `Ordinal.Finite<N>`, `Algebra.Z<n>`, `Memory.Address`.
+
+**Rationale**: Blanket inits on Tagged create a universal backdoor. Swift's overload resolution prefers non-optional, non-throwing overloads, so the blanket init wins over the bounded type's validated `init?`. The compiler will never warn about this — the bounded type's invariant is silently bypassed.
+
+**Cross-references**: [PATTERN-020], [CONV-001]
+
+---
+
+## [PATTERN-020] No False-Security Throwing Inits
+
+**Scope**: Blanket or base-type throwing initializers on wrapper types.
+
+**Statement**: A throwing init on a wrapper type MUST NOT validate only the base type's invariant when the wrapper may specialize to types with stricter invariants. The `try` keyword gives callers false confidence that full validation occurred.
+
+```swift
+// ANTI-PATTERN — Validates non-negativity but not upper bound
+extension Tagged where RawValue == Ordinal, Tag: ~Copyable {
+    public init(_ position: Int) throws(Ordinal.Error) {  // ❌
+        self.init(__unchecked: (), try Ordinal(position))
+    }
+}
+// try Ordinal.Finite<5>(10) succeeds — try gives false confidence
+
+// CORRECT — No blanket throwing init; bounded types validate fully
+extension Tagged where Tag == Finite.Bound<N>, RawValue == Ordinal {
+    public init(_ position: Int) throws(Ordinal.Finite<N>.Error) {
+        // Validates BOTH non-negativity AND < N
+    }
+}
+```
+
+**The false-security pattern**: The caller writes `try`, sees a potential error path, and reasonably concludes the value is validated. But the validation only checks the base type's invariant (non-negative), not the specialized type's invariant (< N). This is worse than no validation because it creates a false sense of safety.
+
+**Rationale**: Throwing inits on generic wrapper types conflate base-type validation with domain validation. Each bounded specialization must validate its own invariants through its own init.
+
+**Cross-references**: [PATTERN-019], [API-ERR-001]
+
+---
+
+## [PATTERN-021] Prefer Typed Arithmetic over __unchecked
+
+**Scope**: All construction of Index, Ordinal, and Tagged types.
+
+**Statement**: When a typed arithmetic operator exists for a conversion, it MUST be preferred over `__unchecked` with rawValue extraction. `__unchecked` is a last-resort construction path for same-package internals where no typed operator exists.
+
+```swift
+// CORRECT — Typed arithmetic (preferred)
+let endIndex: Index<Element> = .zero + count       // Count → Index via Ordinal.Protocol +
+let next = index + .one                            // Advance via Tagged + Cardinal
+let prev = try index - .one                        // Retreat via Tagged - Vector
+
+// AVOID — rawValue extraction when typed arithmetic is available
+let endIndex = Index<Element>(__unchecked: (), Ordinal(count.rawValue))  // ❌ Use .zero + count
+let next = Index<Element>(__unchecked: (), Ordinal(index.position.rawValue + 1))  // ❌ Use + .one
+```
+
+**When `__unchecked` IS justified**:
+- Same-package operator implementations that define the typed arithmetic
+- Construction from raw values at system boundaries (C interop, deserialization)
+- Cases where no typed operator path exists between source and target types
+
+**In test code**: Test Support provides `ExpressibleByIntegerLiteral` [CONV-007] for all Tagged types, so tests can construct values directly from literals:
+```swift
+let index: Index<Int> = 5           // Test only
+let count: Index<Int>.Count = 10    // Test only
+```
+This is the preferred construction in tests — neither `__unchecked` nor verbose typed arithmetic is needed.
+
+**Rationale**: Typed arithmetic stays within the type system, preserves invariants, and is self-documenting. `__unchecked` bypasses validation, exposes rawValue, and couples call-sites to internal representations. When the type system provides an operator, use it.
+
+**Cross-references**: [CONV-015], [CONV-010], [PATTERN-018]
+
+---
+
 ## Cross-References
 
 See also:
 - **naming** skill for correct naming patterns
 - **errors** skill for correct error handling
 - **memory** skill for correct ~Copyable patterns
-- **conversions** skill for conversion API reference and [CONV-010] typed arithmetic
+- **conversions** skill for [CONV-010] typed arithmetic, [CONV-015] prefer typed arithmetic over `__unchecked`, [IDX-006a] `.one` resolution
 - **memory-arithmetic** skill for [MEM-ARITH-001] typed address arithmetic
 - **pointer-arithmetic** skill for [PTR-ARITH-001] typed pointer arithmetic
 - **testing** skill for [TEST-018] Test Support literal conformances

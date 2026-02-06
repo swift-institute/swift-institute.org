@@ -162,14 +162,13 @@ let i = Int(bitPattern: index.position.rawValue)  // ❌ Never
 
 ### [CONV-003] Index Conversions
 
-**Statement**: Use these APIs for `Index<T>` (aka `Tagged<T, Ordinal>`) conversions. Prefer typed arithmetic over conversion to `Int`.
+**Statement**: Use these APIs for `Index<T>` (aka `Tagged<T, Ordinal>`) conversions. Prefer typed arithmetic over conversion to `Int`. Prefer typed arithmetic over `__unchecked` rawValue extraction.
 
 | From | To | API | Throws | Notes |
 |------|-----|-----|--------|-------|
-| `Ordinal` | `Index<T>` | `Index(ordinal)` | No | Total |
-| `Cardinal` | `Index<T>` | `Index(cardinal)` | No | Total |
-| `Int` | `Index<T>` | `try Index(int)` | Yes | Throws if negative |
-| `Int` | `Index<T>` | `Index(exactly: int)` | No | nil if negative |
+| `Ordinal` | `Index<T>` | `Index(ordinal)` | No | Total (from `Ordinal.Protocol`) |
+| `Index<T>.Count` | `Index<T>` | `.zero + count` | No | **Preferred** --- typed arithmetic |
+| Integer literal | `Index<T>` | `let i: Index<T> = 5` | No | **Test only** --- requires Test Support [CONV-007] |
 | `Index<T>` | `Ordinal` | `.position` | No | Property access |
 | `Index<T>` | `Int` | `try Int(index)` | Yes | Throws if > Int.max |
 | `Index<T>` | `Int` | `Int(exactly: index)` | No | nil if > Int.max |
@@ -177,11 +176,12 @@ let i = Int(bitPattern: index.position.rawValue)  // ❌ Never
 
 **Example**:
 ```swift
-let index: Index<Int> = try Index(5)
+let count: Index<Int>.Count = ...
 
 // Typed arithmetic --- PREFERRED
-let next = index + 1
-let distance = otherIndex - index
+let endIndex: Index<Int> = .zero + count  // Count → Index via typed +
+let next = index + .one                   // Advance by one
+let distance = otherIndex - index         // Displacement
 
 // Int conversion --- ONLY for interop
 array[Int(bitPattern: index)]  // Standard Library needs Int
@@ -270,10 +270,10 @@ let distance = Int(bitPattern: end) - Int(bitPattern: start)  // ❌
 **Statement**: Use `Index + Offset -> Index` and `Index - Index -> Offset`.
 
 ```swift
-let start: Index<Int> = try Index(5)
-let offset: Index<Int>.Offset = 3
+let start: Index<Int> = .zero + Index<Int>.Count(Cardinal(UInt(5)))
+let offset: Index<Int>.Offset = Index<Int>.Offset(3)
 
-// Advance by offset (may throw on underflow)
+// Advance by offset (may throw on underflow/overflow)
 let end = try start + offset  // Index at position 8
 
 // Compute displacement
@@ -288,42 +288,58 @@ let distance: Index<Int>.Offset = try end - start  // Offset of 3
 
 ---
 
-### [IDX-006a] Index Arithmetic with Count (Total)
+### [IDX-006a] Index Arithmetic with Count and Offset Literals
 
-**Statement**: Use `Index + Count -> Index` for forward advancement. This is **total** (non-throwing).
+**Statement**: Use `Index + Count -> Index` for forward advancement (total) and `Index - Offset -> Index` for retreat (throws).
 
 ```swift
 var position: Index<Int> = .zero
-let count: Index<Int>.Count = try Index<Int>.Count(3)
+let count: Index<Int>.Count = ...
 
-// Advance by count - pure typed arithmetic, total!
-position = position + count  // Index at position 3
+// Advance by count --- total, non-throwing
+position = position + count  // Index at position N
+position = position + .one   // .one resolves to Tagged<Int, Cardinal>.one
 
-// Single element increment
-position = position + .one   // Index at position 4
+// Retreat by offset --- throws on underflow
+position = try position - .one  // .one resolves to Tagged<Int, Affine.Discrete.Vector>.one
 ```
 
-**Arithmetic**:
-- `Index + Count -> Index` (total, from ordinal-primitives)
+**Advance arithmetic** (`+`):
+- `Index + Count -> Index` (total, from `Ordinal.Protocol`)
 - `Count + Index -> Index` (commutative)
+- `.one` resolves to `Tagged<Tag, Cardinal>.one` via the concrete `+` operator on `Tagged+Ordinal.swift`
 
-**Key insight**: `Index + Count` is total because both are non-negative. Prefer this over `Index + Offset` when the displacement is known to be non-negative.
+**Retreat arithmetic** (`-`):
+- `Index - Offset -> Index` (throws, from `Tagged+Affine.swift`)
+- `.one` resolves to `Tagged<Tag, Affine.Discrete.Vector>.one` via the concrete `-` operator on `Tagged+Affine.swift`
+
+**Key insight**: `+ .one` and `- .one` resolve `.one` through different types because `+` and `-` have different concrete operators. The `+` takes `Tagged<Tag, Cardinal>` (unsigned count); the `-` takes `Tagged<Tag, Affine.Discrete.Vector>` (signed displacement). Both are concrete types, so the compiler resolves `.one` unambiguously.
 
 ---
 
 ### [IDX-006c] Index <-> Count Conversions
 
-**Statement**: Convert between `Index<T>` and `Index<T>.Count` using initializers. Both directions are total because both represent non-negative values.
+**Statement**: Convert between `Index<T>` and `Index<T>.Count` using typed arithmetic. Both directions are total because both represent non-negative values.
 
 ```swift
-let position: Index<Int> = try Index(5)
+let position: Index<Int> = .zero + count
 
 // Index -> Count (total)
 let consumed: Index<Int>.Count = Index<Int>.Count(position)
 
-// Count -> Index (total)
-let count: Index<Int>.Count = try Index<Int>.Count(10)
-let endIndex: Index<Int> = Index<Int>(count)
+// Count -> Index (total) --- prefer .zero + count
+let count: Index<Int>.Count = ...
+let endIndex: Index<Int> = .zero + count
+```
+
+**Prefer `.zero + count` over `__unchecked`**: The `Ordinal.Protocol` defines `+ Count` as a total operator. Using `.zero + count` is typed arithmetic that stays within the type system. Avoid `Index(__unchecked: (), Ordinal(count.rawValue))` when `.zero + count` achieves the same result.
+
+```swift
+// CORRECT --- typed arithmetic
+let endIndex: Index<Element> = .zero + count
+
+// AVOID --- rawValue extraction (use only when no typed operator exists)
+let endIndex = Index<Element>(__unchecked: (), Ordinal(count.rawValue))
 ```
 
 ---
@@ -352,8 +368,8 @@ let remaining = total.subtract.saturating(consumed)  // Count of 7
 **Statement**: Use `Index < Count` for bounds validation.
 
 ```swift
-let index: Index<Int> = try Index(5)
-let count: Index<Int>.Count = 10
+let index: Index<Int> = .zero + Index<Int>.Count(Cardinal(UInt(5)))
+let count: Index<Int>.Count = Index<Int>.Count(Cardinal(UInt(10)))
 
 guard index < count else {
     return nil  // Out of bounds
@@ -393,8 +409,8 @@ let count: Index<Int>.Count = 8
 enum Bit {}
 enum Byte {}
 
-let bitIndex: Index<Bit> = try Index(5)
-let byteIndex: Index<Byte> = try Index(5)
+let bitIndex: Index<Bit> = .zero + Index<Bit>.Count(Cardinal(UInt(5)))
+let byteIndex: Index<Byte> = .zero + Index<Byte>.Count(Cardinal(UInt(5)))
 
 // Same position, different types
 bitIndex.position == byteIndex.position  // true (Ordinal comparison)
@@ -426,17 +442,17 @@ let byteOffset: Index<Byte>.Offset = bitOffset.retag(Byte.self)
 
 **Pattern** (one-liner):
 ```swift
-Self(Index<A>.Count(sourceIndex) * .ratio)
+.zero + Index<A>.Count(sourceIndex) * .ratio
 ```
 
 **Expanded** (for readability when needed):
 ```swift
 let sourceCount = Index<A>.Count(sourceIndex)    // Position -> Count (total)
 let targetCount = sourceCount * .ratio           // Count<A> -> Count<B> (total)
-let targetIndex = Index<B>(targetCount)          // Count -> Position (total)
+let targetIndex: Index<B> = .zero + targetCount  // Count -> Position (total)
 ```
 
-**Semantic justification**: Position N means "N elements precede this position". Converting to Count makes this cardinality explicit, which can then be scaled to another domain's cardinality, which maps back to a position. All steps are total (non-negative x positive = non-negative).
+**Semantic justification**: Position N means "N elements precede this position". Converting to Count makes this cardinality explicit, which can then be scaled to another domain's cardinality, which maps back to a position via `.zero + count`. All steps are total (non-negative x positive = non-negative).
 
 **Why `Count(index)` is required**: In affine geometry, you cannot scale a point --- only vectors and magnitudes. The `Count(index)` step decomposes the point into a magnitude (the cardinality of elements preceding it), which CAN be scaled. With origin fixed at zero, this is numerically a no-op but type-theoretically necessary.
 
@@ -445,7 +461,7 @@ let targetIndex = Index<B>(targetCount)          // Count -> Position (total)
 **Correct** --- count chain one-liner:
 ```swift
 public init(_ index: Index<UInt8>) {
-    self = Self(Index<UInt8>.Count(index) * .bitsPerByte)
+    self = .zero + Index<UInt8>.Count(index) * .bitsPerByte
 }
 ```
 
@@ -468,14 +484,14 @@ public init(_ byteIndex: Index<UInt8>) {
 
 **Pattern** (one-liner, throwing):
 ```swift
-try Self(Index<A>.Count(sourceIndex) * .ratio) + offset
+try .zero + Index<A>.Count(sourceIndex) * .ratio + offset
 ```
 
 **Expanded**:
 ```swift
 let sourceCount = Index<A>.Count(sourceIndex)    // Position -> Count (total)
 let targetCount = sourceCount * .ratio           // Count<A> -> Count<B> (total)
-let baseIndex = Index<B>(targetCount)            // Count -> Position (total)
+let baseIndex: Index<B> = .zero + targetCount    // Count -> Position (total)
 let result = try baseIndex + offset              // Position + Offset (throws)
 ```
 
@@ -484,7 +500,7 @@ let result = try baseIndex + offset              // Position + Offset (throws)
 **Correct** --- hybrid chain one-liner:
 ```swift
 public init(_ index: Index<UInt8>, offset: Index<Bit>.Offset) throws(Ordinal.Error) {
-    self = try Self(Index<UInt8>.Count(index) * .bitsPerByte) + offset
+    self = try .zero + Index<UInt8>.Count(index) * .bitsPerByte + offset
 }
 ```
 
@@ -538,6 +554,43 @@ extension Affine.Discrete.Ratio where To == Bit, From: FixedWidthInteger {
 ```
 
 **Rationale**: `From.bitWidth` returns `Int` by protocol definition. The `Ratio.init(_ factor: Int)` accepts `Int`. This is the natural entry point --- wrapping it further would add complexity without benefit.
+
+---
+
+### [CONV-015] Prefer Typed Arithmetic over __unchecked
+
+**Statement**: When a typed arithmetic operator exists for a conversion, it MUST be preferred over `__unchecked` with rawValue extraction. `__unchecked` is a fallback for cases where no typed operator path exists.
+
+**Preference order** (most preferred first):
+
+| Approach | Example | When to use |
+|----------|---------|-------------|
+| Typed arithmetic | `.zero + count` | Always, when available |
+| Typed initializer | `Index(ordinal)` | When arithmetic doesn't apply |
+| `__unchecked` with rawValue | `Index(__unchecked: (), Ordinal(count.rawValue))` | Only when no typed path exists |
+
+**Common typed arithmetic patterns**:
+
+| Operation | Typed arithmetic | `__unchecked` equivalent (avoid) |
+|-----------|-----------------|----------------------------------|
+| Count → Index | `.zero + count` | `Index(__unchecked: (), Ordinal(count.rawValue))` |
+| Advance by one | `index + .one` | `Index(__unchecked: (), Ordinal(index.position.rawValue + 1))` |
+| Retreat by one | `try index - .one` | `Index(__unchecked: (), Ordinal(index.position.rawValue &- 1))` |
+| Count chain | `.zero + Count(src) * .ratio` | `Index(__unchecked: (), Ordinal(...))` |
+
+**In test code**: Test Support provides `ExpressibleByIntegerLiteral` for all Tagged types [CONV-007], so tests can use integer literals directly:
+```swift
+import Index_Primitives_Test_Support
+
+let index: Index<Int> = 5           // Test only — via ExpressibleByIntegerLiteral
+let count: Index<Int>.Count = 10    // Test only
+let offset: Index<Int>.Offset = -3  // Test only
+```
+This is the preferred construction in tests. Production code uses typed arithmetic (`.zero + count`) or typed initializers (`Index(ordinal)`).
+
+**Rationale**: Typed arithmetic preserves invariants, is self-documenting, and avoids coupling to internal representations. `__unchecked` bypasses validation and exposes rawValue — it should only appear where no typed operator exists (e.g., same-package implementation internals).
+
+**Cross-references**: [CONV-007], [CONV-010], [PATTERN-021]
 
 ---
 
@@ -717,8 +770,8 @@ struct IndexTests {
 
 extension IndexTests.Unit {
     @Test
-    func `init with valid position`() throws {
-        let index: Index<Int> = try Index(5)
+    func `init with valid position`() {
+        let index: Index<Int> = 5  // ExpressibleByIntegerLiteral from Test Support
         #expect(index == 5)
     }
 }
@@ -731,9 +784,9 @@ extension IndexTests.Unit {
 ## Cross-References
 
 See also:
-- **anti-patterns** skill for [PATTERN-017] rawValue access location and [PATTERN-018] no escaping to Int
+- **anti-patterns** skill for [PATTERN-017] rawValue access location, [PATTERN-018] no escaping to Int, [PATTERN-019] no blanket Tagged init, [PATTERN-021] prefer typed arithmetic over `__unchecked`
 - **memory-arithmetic** skill for typed `Memory.Address` arithmetic
 - **pointer-arithmetic** skill for `Pointer<T>` subscripts with `Index<T>`
 - **testing** skill for [TEST-018] literal conformances
-- Research: `swift-institute/Research/primitives-conversion-anti-patterns.md`
+- Research: `swift-primitives/Research/blanket-tagged-init-audit.md`
 - Test file: `Tests/Index Primitives Tests/Index Tests.swift`
