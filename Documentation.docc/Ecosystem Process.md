@@ -74,7 +74,7 @@ Discovery MUST follow this order:
 2. swift-standards
 3. swift-foundations
 
-The Package Inventory is the authoritative discovery index.
+The Primitives Tiers is the authoritative discovery index.
 
 Cross-reference: No Ad-Hoc Helpers.
 
@@ -92,7 +92,7 @@ If an existing primitive is not reused, the rejection MUST fall into exactly one
 2. **Missing dependency layer** — adopting would violate layer constraints
 3. **Policy contamination** — the primitive contains policy incompatible with the target layer
 
-The justification MUST be recorded in code review or the Package Inventory.
+The justification MUST be recorded in code review or the Primitives Tiers.
 
 ---
 
@@ -162,7 +162,7 @@ A gap MUST be formally evaluated once the same mechanism appears in three or mor
 
 Before creating a new primitive:
 
-1. Exhaust ecosystem search (Package Inventory)
+1. Exhaust ecosystem search (Primitives Tiers)
 2. Verify the gap is mechanism, not policy
 3. Verify multi-package benefit
 4. Verify no semantic duplicate exists
@@ -207,7 +207,7 @@ New primitives MUST satisfy:
 2. Implement minimal API surface
 3. Add comprehensive tests
 4. Document with examples
-5. Update Package Inventory
+5. Update Primitives Tiers
 6. Migrate existing ad-hoc implementations
 
 ### Creation Deferral Rule
@@ -236,7 +236,7 @@ When multiple layers or approaches are plausible, apply in order:
 Tie-breaker rationale MUST be documented in:
 
 - The relevant PR description, or
-- Package Inventory notes
+- Primitives Tiers notes
 
 This ensures future reviewers understand non-obvious placements.
 
@@ -347,8 +347,7 @@ Cross-reference: Fine-Grained Library Exposure.
 ### Architecture
 
 - <doc:Five-Layer-Architecture>
-- <doc:Primitives-Architecture>
-- <doc:Layer-Flowchart>
+- <doc:Semantic-Dependencies>
 
 ### Process Documents
 
@@ -356,7 +355,6 @@ Cross-reference: Fine-Grained Library Exposure.
 
 ### Reference
 
-- <doc:Package-Inventory>
 - <doc:API-Implementation>
 - <doc:Implementation-Patterns>
 

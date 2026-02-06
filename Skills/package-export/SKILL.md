@@ -151,68 +151,157 @@ Export Swift packages to single text files optimized for LLM consumption. Suppor
 
 ## Execution Procedure
 
-### [PKG-EXPORT-007] Export Procedure
+### [PKG-EXPORT-007] Script-Based Export
 
-**Statement**: When asked to export a package, follow this procedure:
+**Statement**: Use this single bash script for fast package exports:
 
-**Step 1: Locate package**
 ```bash
-# Find Package.swift to confirm package root
-ls {path}/Package.swift
+#!/bin/bash
+# Usage: export-package <package-path> [--with-tests]
+
+PACKAGE_PATH="$1"
+WITH_TESTS="$2"
+PACKAGE_NAME=$(basename "$PACKAGE_PATH")
+OUTPUT="/tmp/${PACKAGE_NAME}-sources.swift"
+
+# Verify package exists
+if [ ! -f "$PACKAGE_PATH/Package.swift" ]; then
+    echo "Error: Package.swift not found at $PACKAGE_PATH" >&2
+    exit 1
+fi
+
+# Function to sort files with namespace roots first
+sort_with_roots() {
+    local dir="$1"
+    # Get all swift files
+    find "$dir" -name "*.swift" -type f 2>/dev/null | while read -r file; do
+        basename="${file##*/}"
+        dirname="${file%/*}"
+        # Check if this is a namespace root (other files start with its prefix)
+        prefix="${basename%.swift}"
+        if find "$dirname" -maxdepth 1 -name "${prefix}.*" -type f 2>/dev/null | grep -q .; then
+            echo "0:$file"  # Root files sort first
+        else
+            echo "1:$file"  # Non-roots sort after
+        fi
+    done | sort -t: -k1,1 -k2,2 | cut -d: -f2
+}
+
+# Build sources export
+{
+    echo "# $PACKAGE_NAME"
+    echo ""
+    echo "## Package Manifest"
+    echo ""
+    cat "$PACKAGE_PATH/Package.swift"
+    echo ""
+    echo "## File Structure"
+    echo ""
+    find "$PACKAGE_PATH/Sources" -name "*.swift" -type f 2>/dev/null | sort
+    echo ""
+    echo "## Source Files"
+
+    sort_with_roots "$PACKAGE_PATH/Sources" | while read -r file; do
+        rel_path="${file#$PACKAGE_PATH/}"
+        echo ""
+        echo "### File: $rel_path"
+        echo ""
+        cat "$file"
+    done
+} > "$OUTPUT"
+
+# Report
+chars=$(wc -c < "$OUTPUT")
+tokens=$((chars / 4))
+echo "Exported: $OUTPUT"
+echo "Size: $chars characters (~$tokens tokens)"
+
+if [ $tokens -gt 100000 ]; then
+    echo "⚠️  WARNING: Exceeds most model limits (100K). Must split."
+elif [ $tokens -gt 32000 ]; then
+    echo "⚠️  WARNING: Exceeds ChatGPT Plus limit (32K). Consider splitting."
+fi
+
+# Export tests if requested
+if [ "$WITH_TESTS" = "--with-tests" ] && [ -d "$PACKAGE_PATH/Tests" ]; then
+    TEST_OUTPUT="/tmp/${PACKAGE_NAME}-tests.swift"
+    {
+        echo "# $PACKAGE_NAME Tests"
+        echo ""
+        echo "## Test File Structure"
+        echo ""
+        find "$PACKAGE_PATH/Tests" -name "*.swift" -type f 2>/dev/null | sort
+        echo ""
+        echo "## Test Files"
+
+        sort_with_roots "$PACKAGE_PATH/Tests" | while read -r file; do
+            rel_path="${file#$PACKAGE_PATH/}"
+            echo ""
+            echo "### File: $rel_path"
+            echo ""
+            cat "$file"
+        done
+    } > "$TEST_OUTPUT"
+
+    test_chars=$(wc -c < "$TEST_OUTPUT")
+    test_tokens=$((test_chars / 4))
+    echo "Exported: $TEST_OUTPUT"
+    echo "Size: $test_chars characters (~$test_tokens tokens)"
+fi
 ```
 
-**Step 2: Read Package.swift**
-```
-Use Read tool on {path}/Package.swift
-```
+### [PKG-EXPORT-008] Quick Export Command
 
-**Step 3: Generate file tree**
+**Statement**: For immediate use, run this single command:
+
 ```bash
-find {path}/Sources -name "*.swift" -type f | sort
+# Sources only
+PKG="/path/to/package" && echo "# $(basename $PKG)" > /tmp/$(basename $PKG)-sources.swift && echo -e "\n## Package Manifest\n" >> /tmp/$(basename $PKG)-sources.swift && cat $PKG/Package.swift >> /tmp/$(basename $PKG)-sources.swift && echo -e "\n## Source Files" >> /tmp/$(basename $PKG)-sources.swift && find $PKG/Sources -name "*.swift" -type f | sort | while read f; do echo -e "\n### File: ${f#$PKG/}\n" >> /tmp/$(basename $PKG)-sources.swift && cat "$f" >> /tmp/$(basename $PKG)-sources.swift; done && wc -c /tmp/$(basename $PKG)-sources.swift
 ```
 
-**Step 4: Order files**
-- Identify namespace roots (files where other files share their prefix)
-- Sort: namespace roots first, then alphabetically
+### [PKG-EXPORT-009] Claude Execution
 
-**Step 5: Read all source files**
-```
-Use Read tool on each file in order
-```
+**Statement**: When executing this skill, Claude MUST:
 
-**Step 6: Assemble output**
-- Write to `/tmp/{package-name}-sources.swift`
-- Use the format from [PKG-EXPORT-001]
+1. Run the quick export command via Bash tool (single invocation)
+2. Report the output path and token estimate
+3. Warn if tokens exceed thresholds
 
-**Step 7: Report**
-- File path
-- Character count
-- Estimated tokens (chars / 4)
-- Warning if > 32K tokens
-
-**If tests requested** (Step 8):
+**Example invocation**:
 ```bash
-find {path}/Tests -name "*.swift" -type f | sort
+PKG="/Users/coen/Developer/swift-primitives/swift-storage-primitives" && \
+OUT="/tmp/$(basename $PKG)-sources.swift" && \
+{ echo "# $(basename $PKG)"; \
+  echo -e "\n## Package Manifest\n"; \
+  cat "$PKG/Package.swift"; \
+  echo -e "\n## Source Files"; \
+  find "$PKG/Sources" -name "*.swift" -type f | sort | while read f; do \
+    echo -e "\n### File: ${f#$PKG/}\n"; cat "$f"; \
+  done; \
+} > "$OUT" && \
+chars=$(wc -c < "$OUT") && \
+echo "Exported: $OUT ($chars chars, ~$((chars/4)) tokens)"
 ```
-- Repeat steps 5-7 for tests using [PKG-EXPORT-002] format
-- Output to `/tmp/{package-name}-tests.swift`
+
+**Rationale**: Single bash invocation is 10-50x faster than multiple Read tool calls
 
 ---
 
 ## Examples
 
-### [PKG-EXPORT-008] Invocation Examples
+### [PKG-EXPORT-010] Invocation Examples
 
 **Export sources only** (default):
 ```
 User: "export swift-test-primitives for chatgpt"
-Claude: [Exports to /tmp/swift-test-primitives-sources.swift]
+Claude: [Runs single bash command, exports to /tmp/swift-test-primitives-sources.swift]
 ```
 
 **Export with tests**:
 ```
-User: "export swift-test-primitives with tests separate"
-Claude: [Exports to /tmp/swift-test-primitives-sources.swift]
+User: "export swift-test-primitives with tests"
+Claude: [Runs bash command for sources, then tests]
+       [Exports to /tmp/swift-test-primitives-sources.swift]
        [Exports to /tmp/swift-test-primitives-tests.swift]
 ```
 
@@ -226,7 +315,7 @@ Claude: [Exports to /tmp/swift-buffer-primitives-sources.swift]
 
 ## ChatGPT Context Limits Reference
 
-### [PKG-EXPORT-009] Context Window Reference
+### [PKG-EXPORT-011] Context Window Reference
 
 **Statement**: For planning purposes, these are current ChatGPT context limits (as of 2025):
 

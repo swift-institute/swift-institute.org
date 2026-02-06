@@ -1212,6 +1212,6 @@ Reduction: 33% fewer words, 8% fewer documents
 ### Documentation Corpus
 
 - <doc:API-Requirements>
-- <doc:Primitives-Architecture>
+- <doc:Five-Layer-Architecture>
 - <doc:Implementation-Patterns>
 - <doc:Identity>

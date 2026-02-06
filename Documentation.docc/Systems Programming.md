@@ -261,4 +261,4 @@ The memory safety mechanisms work together:
 
 These compile-time guarantees eliminate entire classes of memory safety bugs without runtime overhead.
 
-**Cross-references**: <doc:Memory>, <doc:API-Requirements>, <doc:Primitives-Architecture>
+**Cross-references**: <doc:Memory>, <doc:API-Requirements>, <doc:Five-Layer-Architecture>

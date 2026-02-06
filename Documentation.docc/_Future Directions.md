@@ -347,6 +347,4 @@ Existing primitives avoid the issue accidentally. `Input.Buffer` stores `[Elemen
 
 ### Reference
 
-- <doc:Package-Inventory>
-- <doc:Layer-Flowchart>
 - <doc:Glossary>

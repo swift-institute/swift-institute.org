@@ -487,7 +487,7 @@ This rule applies universally:
 - <doc:API-Requirements>
 - <doc:API-Implementation>
 - <doc:API-Design>
-- <doc:Primitives-Architecture>
+- <doc:Five-Layer-Architecture>
 - <doc:Implementation>
 
 ### Process Documents

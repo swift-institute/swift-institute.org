@@ -2102,7 +2102,7 @@ Any exception MUST be:
 
 ### Related Documents
 
-- <doc:Primitives-Architecture>
+- <doc:Five-Layer-Architecture>
 - <doc:Implementation-Patterns>
 - <doc:Testing-Requirements>
 - <doc:Documentation-Standards>

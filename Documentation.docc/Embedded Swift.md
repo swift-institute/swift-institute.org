@@ -289,7 +289,7 @@ A crash during SIL generation suggests the feature is partially implemented and 
 - <doc:Swift-Embedded-compilation> - Step-by-step compilation procedures
 - <doc:API-Requirements>
 - <doc:Implementation-Patterns>
-- <doc:Primitives-Architecture>
+- <doc:Five-Layer-Architecture>
 
 ### Cross-References
 

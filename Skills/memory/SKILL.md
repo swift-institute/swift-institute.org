@@ -136,6 +136,24 @@ extension Container where Element: ~Copyable {
 }
 ```
 
+**Nested type extensions**: This rule also applies to extensions on nested types within a generic outer type. Even when `Storage<Element: ~Copyable>` already constrains `Element`, extensions on nested types like `Storage.Heap` still require `where Element: ~Copyable`:
+
+```swift
+public enum Storage<Element: ~Copyable> {
+    public final class Heap: ManagedBuffer<Header, Element> { }
+}
+
+// ❌ FAILS - constraint appears redundant but is required
+extension Storage.Heap {
+    public struct Header { ... }
+}
+
+// ✓ WORKS - explicit constraint on nested type extension
+extension Storage.Heap where Element: ~Copyable {
+    public struct Header { ... }
+}
+```
+
 **Cross-references**: [MEM-COPY-001]
 
 ---

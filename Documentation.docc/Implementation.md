@@ -186,5 +186,5 @@ Types encoding exactly-once or at-most-once semantics MUST be `~Copyable`.
 
 - <doc:Memory>
 - <doc:API-Requirements>
-- <doc:Primitives-Architecture>
+- <doc:Five-Layer-Architecture>
 - <doc:Testing-Requirements>

@@ -44,6 +44,7 @@ Process workflow for auditing and fixing ~Copyable/Copyable constraint issues.
 | `ManagedBuffer` subclass fails in nested type | 1 | [COPY-FIX-002] |
 | ~Copyable element deinit NOT called (memory leak) | Runtime | [COPY-FIX-009] |
 | `InlineArray<capacity, ...>` with value generic | Runtime | [COPY-FIX-009] |
+| Extension on nested type within generic fails | 2 | [COPY-FIX-003] |
 
 ---
 
@@ -153,6 +154,31 @@ extension Container {
 ```
 
 Applies to methods, computed properties, typealiases, and nested types.
+
+**Nested type extensions**: This rule also applies to extensions on **nested types** within a generic outer type. Even though `Storage<Element: ~Copyable>` already constrains `Element`, extensions on `Storage.Heap` or `Storage.Initialization` still require `where Element: ~Copyable`:
+
+```swift
+public enum Storage<Element: ~Copyable> {
+    public final class Heap: ManagedBuffer<Header, Element> { }
+    public enum Initialization { ... }
+}
+
+// CORRECT - Constraint appears redundant but is REQUIRED
+extension Storage.Heap where Element: ~Copyable {
+    public struct Header { ... }
+}
+
+extension Storage.Initialization where Element: ~Copyable {
+    public var count: Int { ... }
+}
+
+// INCORRECT - Fails with "type 'Element' does not conform to protocol 'Copyable'"
+extension Storage.Heap {
+    public struct Header { ... }  // FAILS
+}
+```
+
+**Rationale**: Swift's constraint system doesn't automatically propagate `~Copyable` from the outer generic parameter to nested type extensions, even when the nested type is only defined within the constrained scope.
 
 **Cross-references**: [MEM-COPY-004], [MEM-COPY-006] Category 2
 
@@ -472,6 +498,26 @@ struct Container<Element: ~Copyable, let capacity: Int>: ~Copyable {
     var _deinitWorkaround: AnyObject? = nil
 }
 ```
+
+### Mistake 6: Missing Constraint on Nested Type Extensions
+
+```swift
+// WRONG - Fails even though outer type has ~Copyable constraint
+public enum Storage<Element: ~Copyable> {
+    public final class Heap: ManagedBuffer<Header, Element> { }
+}
+
+extension Storage.Heap {
+    public struct Header { ... }  // ERROR: type 'Element' does not conform to 'Copyable'
+}
+
+// RIGHT - Explicit constraint on nested type extension
+extension Storage.Heap where Element: ~Copyable {
+    public struct Header { ... }  // WORKS
+}
+```
+
+The `where Element: ~Copyable` appears redundant since `Heap` only exists within `Storage<Element: ~Copyable>`, but Swift requires it.
 
 ---
 

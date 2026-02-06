@@ -1072,7 +1072,7 @@ The Standards layer (syscall wrappers) stays honest: it wraps syscalls, nothing 
 - <doc:API-Requirements>
 - <doc:API-Errors>
 - <doc:API-Design>
-- <doc:Primitives-Architecture>
+- <doc:Five-Layer-Architecture>
 - <doc:Implementation>
 
 ### Process Documents

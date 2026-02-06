@@ -31,7 +31,7 @@ Fine-grained packages provide:
 
 The alternative—a monolithic `SwiftPrimitives` package—would force all consumers to accept all types, even those irrelevant to their domain. This contradicts the principle of minimal coupling.
 
-See <doc:Primitives-Architecture> for the nine-tier dependency hierarchy.
+See the Primitives Tiers document in swift-primitives for the tier dependency hierarchy.
 
 ---
 
@@ -52,7 +52,7 @@ See <doc:Primitives-Architecture> for the nine-tier dependency hierarchy.
 
 The distinction matters for dependency management: atomic types are universally reusable; infrastructure types serve specific domains.
 
-See <doc:Layer-Flowchart> for a visual guide.
+See <doc:Five-Layer-Architecture> for more detail.
 
 ---
 
@@ -118,4 +118,4 @@ See <doc:Implementation-Patterns> for more on multi-library products.
 
 - <doc:Identity>
 - <doc:Contributor-Guidelines>
-- <doc:Primitives-Architecture>
+- <doc:Five-Layer-Architecture>

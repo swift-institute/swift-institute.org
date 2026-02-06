@@ -873,7 +873,7 @@ Left Primitives-Architecture.md with partial edits uncommitted.
 ### Swift Institute Integration Targets
 
 - <doc:API-Requirements>
-- <doc:Primitives-Architecture>
+- <doc:Five-Layer-Architecture>
 - <doc:Implementation>
 - <doc:Identity>
 - <doc:_Future-Directions>

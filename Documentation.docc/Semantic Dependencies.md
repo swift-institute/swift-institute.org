@@ -570,8 +570,9 @@ Inspired by Cargo's optional dependencies, a mechanism where SDG edges could be 
 
 ### Related Documents
 
-- <doc:API-Layering>
+- <doc:Target-Layering>
 - <doc:Five-Layer-Architecture>
-- <doc:Primitives-Architecture>
+
+<!-- Cross-layer documents in swift-primitives: Primitives Tiers, Primitives Layering -->
 
 <!-- Cross-layer documents in swift-primitives: Primitives Tiers, Primitives Layering -->

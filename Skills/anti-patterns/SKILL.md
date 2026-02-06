@@ -260,6 +260,39 @@ struct Storage { ... }
 
 **Statement**: `.rawValue` and intermediate property access (`.position`) MUST be confined to extension initializers and same-package implementations. Call-sites MUST use extension APIs that accept the higher-level type.
 
+---
+
+## [PATTERN-018] No Escaping to Int for Arithmetic
+
+**Scope**: All arithmetic on primitives types.
+
+**Statement**: Arithmetic MUST use typed operators. Converting to `Int` via `Int(bitPattern:)` or `.rawValue` to perform computation defeats type safety. `Int(bitPattern:)` is a **last resort** escape hatch for interop only.
+
+```swift
+// CORRECT - Typed arithmetic
+let next = index + 1                    // Index<T> + Offset → Index<T>
+let distance = end - start              // Index<T> - Index<T> → Offset
+let address = base + (count * stride)   // Memory.Address arithmetic
+let wrapped = cyclicIndex + 1           // Automatic wraparound
+
+// ANTI-PATTERN - Escaping to Int
+let next = Index(Int(bitPattern: index) + 1)          // ❌ Type safety lost
+let distance = Int(bitPattern: end) - Int(bitPattern: start)  // ❌
+let scaled = Int(bitPattern: count) * stride          // ❌
+```
+
+**Valid uses of `Int(bitPattern:)`**:
+| Use Case | Example | Valid |
+|----------|---------|-------|
+| C interop | `read(fd, buffer, Int(bitPattern: count))` | ✓ Yes |
+| Standard Library | `array[Int(bitPattern: index)]` | ✓ Yes |
+| Debug output | `print("index: \(Int(bitPattern: index))")` | ✓ Yes |
+| Computation | `Int(bitPattern: a) + Int(bitPattern: b)` | ✗ Never |
+
+**Rationale**: Typed arithmetic preserves invariants: indices stay non-negative, cyclic types wrap correctly, offsets can be negative but indices cannot. Escaping to `Int` strips these guarantees and introduces bugs that the type system was designed to prevent.
+
+**Cross-references**: [CONV-010], [MEM-ARITH-001], [PTR-ARITH-001]
+
 ```swift
 // CORRECT - Extension init hides rawValue access
 extension Int {
@@ -325,5 +358,7 @@ See also:
 - **naming** skill for correct naming patterns
 - **errors** skill for correct error handling
 - **memory** skill for correct ~Copyable patterns
-- **primitives-conversions** skill for conversion API reference
+- **conversions** skill for conversion API reference and [CONV-010] typed arithmetic
+- **memory-arithmetic** skill for [MEM-ARITH-001] typed address arithmetic
+- **pointer-arithmetic** skill for [PTR-ARITH-001] typed pointer arithmetic
 - **testing** skill for [TEST-018] Test Support literal conformances

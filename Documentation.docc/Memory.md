@@ -946,7 +946,7 @@ public struct Retained<T: AnyObject>: ~Copyable, @unchecked Sendable {
 - <doc:API-Errors>
 - <doc:Implementation-Patterns>
 - <doc:Systems-Programming>
-- <doc:Primitives-Architecture>
+- <doc:Five-Layer-Architecture>
 
 ### Swift Evolution
 

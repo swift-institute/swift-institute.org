@@ -66,7 +66,6 @@ Before implementing, read the Implementation Checklist:
 
 | Document | Content |
 |----------|---------|
-| <doc:Package-Inventory> | All packages catalog |
 | <doc:Data-Structures> | Data structure primitives |
 | <doc:Glossary> | Terminology definitions |
 | <doc:FAQ> | Common questions |

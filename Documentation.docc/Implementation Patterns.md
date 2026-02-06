@@ -1577,7 +1577,7 @@ swift build
 ### Related Documents
 
 - <doc:API-Requirements>
-- <doc:Primitives-Architecture>
+- <doc:Five-Layer-Architecture>
 - <doc:Testing-Requirements>
 
 ### Process Documents

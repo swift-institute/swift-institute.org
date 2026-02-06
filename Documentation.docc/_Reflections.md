@@ -637,6 +637,242 @@ Knowing an operator *should* exist differs from knowing it *does* exist. The exp
 
 ---
 
+## 2026-01-30: Testing ~Copyable Types Reveals Framework Boundaries
+
+*After adding comprehensive tests to binary-parser-primitives and discovering Swift Testing's limitations with non-copyable types.*
+
+### The Macro Can't Copy What Can't Be Copied
+
+`Binary.Bytes.Input.View` is `~Copyable` and `~Escapable`. The natural test pattern—`#expect(view.isEmpty)`—failed with: "global function requires that 'Binary.Bytes.Input.View' conform to 'Copyable'." The `#expect` macro captures its argument to produce diagnostic output. Capturing requires copying. The type system prevents it.
+
+The workaround: extract values before assertion. Instead of testing the view directly, extract `isEmpty` into a local `Bool`, then assert on that:
+
+```swift
+let isEmpty = bytes.withUnsafeBufferPointer { buffer in
+    let span = Span(_unsafeElements: buffer)
+    let view = Binary.Bytes.Input.View(span)
+    return view.isEmpty
+}
+#expect(!isEmpty)
+```
+
+The indirection feels ceremonial, but it's principled. The view's non-copyability is a semantic guarantee—it cannot outlive its backing storage. The test respects this by extracting copyable observations rather than demanding the view itself be copyable.
+
+### Generic Types Need Parallel Namespaces
+
+[TEST-004] documents the limitation: `@Suite` in extensions of generic type specializations isn't discovered by Swift Testing. The intuitive pattern fails silently:
+
+```swift
+extension Binary.Coder {  // Binary.Coder<Value> is generic
+    @Suite struct Test { }  // Never runs
+}
+```
+
+The workaround is parallel namespaces:
+
+```swift
+@Suite("Binary.Coder")
+struct BinaryCoderTests { }  // Discovered correctly
+```
+
+Three test files required this adaptation: `Binary.Coder<T>`, `Binary.LEB128.Unsigned<T>`, `Binary.LEB128.Signed<T>`. The naming convention documents the association—`BinaryCoderTests` tests `Binary.Coder`—while avoiding the discovery bug.
+
+This is technical debt in the testing framework, not in our code. When swift-testing fixes the generic extension issue, the parallel namespaces can be migrated to proper type extensions. Until then, the workaround is documented and consistent.
+
+### Test Support Literal Conformances Enable Clean Assertions
+
+The typed primitives return `Index<UInt8>.Count` instead of `Int`. Without Test Support, comparisons require conversion chains:
+
+```swift
+#expect(Int(bitPattern: count.rawValue) == 5)  // Verbose, violates [PATTERN-017]
+```
+
+With Test Support's `ExpressibleByIntegerLiteral` conformance:
+
+```swift
+#expect(count == 5)  // Clean, type-safe
+```
+
+The literal conformance is `@_disfavoredOverload`—a test convenience, not production API. The tests read naturally while the production code maintains explicit type construction. This separation is intentional: tests should be readable, production should be precise.
+
+### The Typed Error Boundary
+
+`Binary.Coder` expects `throws(Binary.Bytes.Machine.Fault)`. `Binary.Bytes.Input.advance()` throws `Input.Stream.Error`. The closure signature must match the expected error type, but the underlying operation throws a different type.
+
+The solution wasn't manual error conversion. It was using the proper API:
+
+```swift
+// Wrong: manual closure with mismatched error
+let coder = Binary.Coder<UInt8>(
+    decode: { input in try input.advance() },  // Error type mismatch
+    ...
+)
+
+// Right: use the machine parser that handles errors correctly
+let coder = Binary.Coder.machine(
+    Binary.Bytes.Machine.u8Parser(),
+    encode: { value, output in output.append(value) }
+)
+```
+
+The `Binary.Coder.machine()` factory exists precisely to wrap `Machine.Parser` types that already have the correct error type. The tests originally bypassed this API to construct coders directly, hitting the type mismatch. Using the intended API resolved it.
+
+This validates the factory pattern: when a type has a complex initialization requirement, the factory should handle it. Tests that bypass factories often reveal the complexity the factory was designed to hide.
+
+---
+
+## 2026-02-03: The Protocol Bridge for Unbound Generic Parameters
+
+*After needing conditional conformance on `Tagged<Finite.Bound<N>, Ordinal>` where N is unbound.*
+
+### The Constraint That Can't Be Written
+
+`Ordinal.Finite<N>` is a typealias for `Tagged<Finite.Bound<N>, Ordinal>`. To make all finite ordinals conform to `Finite.Enumerable`, the natural extension would be:
+
+```swift
+extension Tagged: Finite.Enumerable where Tag == Finite.Bound<N>, RawValue == Ordinal
+```
+
+This doesn't compile. `N` is unbound — there's no way to introduce a generic parameter in an extension's `where` clause that isn't already part of the type being extended. `Tagged` has `Tag` and `RawValue`. `Finite.Bound<N>` introduces a new parameter `N` that the extension has no way to bind.
+
+### The Protocol as Existential Witness
+
+The solution: introduce a protocol that captures what `Finite.Bound<N>` provides — a compile-time capacity.
+
+```swift
+extension Finite {
+    public protocol Capacity: Sendable {
+        static var capacity: Int { get }
+    }
+}
+
+extension Finite.Bound: Finite.Capacity {
+    public static var capacity: Int { N }
+}
+```
+
+Now the conformance becomes writable:
+
+```swift
+extension Tagged: Finite.Enumerable where Tag: Finite.Capacity, RawValue == Ordinal
+```
+
+The protocol erases the specific `N` while preserving its value. `Tag: Finite.Capacity` captures "this tag carries a compile-time integer" without naming that integer. The conformance on `Finite.Bound` bridges the gap: any `Tagged<Finite.Bound<N>, Ordinal>` satisfies the constraint because `Finite.Bound<N>` conforms to `Finite.Capacity`.
+
+### When Type-Level Information Needs a Runtime Path
+
+The integer `N` in `Finite.Bound<N>` exists only at the type level. The protocol creates a runtime path to it via `static var capacity`. This is a common pattern in Swift generics: type-level information enters runtime through protocol witnesses. The alternative — reflection or compiler magic — doesn't exist in Swift.
+
+This is also why the protocol must be `public`. Downstream packages may need to create their own bounded tag types that carry capacity. The protocol makes the pattern extensible rather than closed to `Finite.Bound` alone.
+
+---
+
+## 2026-02-03: The Commutative Wrapper Tax
+
+*After discovering that test code used `.ring.ring` chains to access Field components.*
+
+### Every Wrapper Doubles the Projection Depth
+
+The algebra witness hierarchy uses a recurring pattern: `X.Commutative` wraps `X` and documents commutativity as a type-level fact. `Ring.Commutative` stores `ring: Ring`. `Monoid.Commutative` stores `monoid: Monoid`. `Semiring.Commutative` stores `semiring: Semiring`.
+
+This creates a projection tax. `Field.ring` returns `Ring.Commutative` (not `Ring`), because a field's multiplication is commutative. To reach the underlying `Ring`, you write `field.ring.ring` — the first `.ring` is the Field→Ring.Commutative projection, the second `.ring` is the Ring.Commutative→Ring unwrap. The identical property name at both levels makes the chain read like a stutter.
+
+The test code had written `z2.ring.ring.additive.group.semigroup` throughout. Six dots to reach a semigroup from a field. The `.ring.ring` was the unnecessary part — Field stores `additive: Group.Abelian` directly, making `z2.additive.group.semigroup` correct and shorter.
+
+### Convenience Accessors as Wrapper Bypass
+
+The fix wasn't changing the wrapper architecture — Commutative wrappers are correct. The fix was recognizing that higher types already provide convenience accessors that skip intermediate wrappers. `Field.additive` goes directly to `Group.Abelian`, bypassing both `Ring.Commutative` and `Ring`. `Field.multiplicative` goes directly to `Monoid.Commutative`, bypassing `Ring.Commutative`.
+
+The pattern: wrappers exist for type safety (you can't accidentally pass a non-commutative ring where commutativity is required). Convenience accessors exist for ergonomics (you shouldn't need to unwrap wrappers just to reach the components they wrap).
+
+When a wrapper adds no semantic value to a specific access path — when you're reaching *through* the wrapper to its contents — a convenience accessor on the outer type should provide the shortcut. The wrapper tax should only be paid when the wrapper's semantic guarantee matters to the caller.
+
+### The Unavoidable Remainder
+
+Some `.ring.ring` chains survived the cleanup. Distributivity and Annihilation law harnesses take `Ring` (not `Field`), because these laws are ring-level properties. The Field must project to Ring for these checks, and the Commutative wrapper is in the way. This is correct — the harness signature says "I verify a ring property," and the caller must provide a ring.
+
+The unavoidable chains mark genuine type boundaries. The avoidable ones marked missing convenience shortcuts. Distinguishing between the two is the audit.
+
+---
+
+## 2026-02-03: Law Harnesses as Source, Not Test
+
+*After implementing Algebra Law Primitives as a non-test module.*
+
+### Total Functions Return Evidence, Not Assertions
+
+Each law harness — Associativity, Identity, Inverse, Distributivity, Reciprocal — is a total pure function returning `Violation?`. Not `Bool`. Not a thrown error. Not a `#expect` call. A value that either describes the violation or is nil.
+
+```swift
+let result = Algebra.Law.Associativity.check(of: semigroup, over: elements)
+// result is Violation? — a value, not an effect
+```
+
+This design choice has a structural consequence: harnesses live in source code, not test code. They're a library that any package can import. A downstream package implementing a new algebraic carrier can verify its witness by calling the same harnesses used to verify the primitives. The verification infrastructure is shared, not duplicated.
+
+If harnesses used `#expect`, they'd require the Swift Testing framework, making them test-only. If they trapped on failure, they'd be unsafe in production. Returning `Violation?` keeps them pure, total, and portable.
+
+### The Reciprocal Harness Tests Both Sides of Zero
+
+The reciprocal harness requires `Element: Equatable` and uses `field.zero` to identify the additive identity. For nonzero elements, it verifies `a * reciprocal(a) == one`. For zero, it verifies that reciprocal *throws* `.nonInvertible` specifically — not just any error.
+
+This asymmetry encodes the mathematical structure: the multiplicative group of a field is the field minus zero. The harness doesn't just check that reciprocal works for most elements — it checks that zero is correctly excluded. A field implementation that returned a bogus value for reciprocal(zero) instead of throwing would fail this check.
+
+The specificity matters. Catching `any Error` would accept a harness that throws for the wrong reason. Catching `.nonInvertible` specifically verifies that the implementation understands *why* zero has no reciprocal.
+
+---
+
+## 2026-02-03: Deferred Work as Dependency Graph
+
+*After implementing all six deferred items from the algebra-primitives correctness round.*
+
+### The Plan Was a Topological Sort
+
+The deferred-work research document identified seven items with explicit dependency relationships. The implementation order followed those dependencies almost exactly:
+
+1. Semiring (independent) → unlocked Ring→Semiring projection
+2. Z.Modulo (now `Algebra.Z<n>`) (independent) → unlocked exhaustive carrier testing
+3. Law harnesses (benefits from Z.Modulo) → unlocked mechanical verification
+4. Z₂ consolidation (needs Parity iso from optic-primitives) → simplified four witness files
+5. Module/VectorSpace (needs Field, benefits from Law) → added higher algebra
+6. Canonical instances (needs Semiring, benefits from Law) → Bool semiring and monoids
+
+The research document's dependency graph wasn't just documentation — it was the implementation schedule. Each phase unlocked the next. The few deviations (Semiring before Z.Modulo instead of after) reflected the actual independence: items without dependencies can be ordered freely.
+
+### The Seventh Item Stayed Deferred
+
+CaseSet (item 7) was excluded from the implementation because it belongs in optic-primitives, not algebra-primitives. Its dependency on `Optic.Prism` crosses a package boundary that the current work couldn't resolve.
+
+This is the correct outcome. Deferred work documents should include items that *won't* be done in the current scope. Their presence documents the decision to exclude them. Removing them from the document would lose the rationale. Marking them as still-deferred preserves it.
+
+A deferred-work document that reaches 100% completion wasn't ambitious enough. The one item that remained deferred validates the document's scope — it captured work beyond the current boundary.
+
+---
+
+## 2026-02-04: The Typealias That Replaced a Namespace
+
+*After refactoring `Algebra.Z.Modulo<5>` to `Algebra.Z<5>` to mirror Z₅ notation.*
+
+### Names Should Mirror Mathematics, Not Implementation
+
+The original `Algebra.Z.Modulo<5>` spelled out the construction: "the integers, then take the modulo." Mathematicians write Z₅ or Z/5Z — the modular reduction is implicit in the subscript. The refactored `Algebra.Z<5>` mirrors this: the integer parameter *is* the modulus.
+
+The intermediate namespace `enum Z {}` existed solely to host `Modulo<n>`, `Residue<n>`, and `Residual`. Once `Z` became a generic typealias, the namespace had to dissolve — a typealias cannot also be a namespace. `Residue` and `Residual` moved up to `Algebra` scope, which is correct: they describe algebraic structure (residue classes, the residual protocol) independent of any particular ring.
+
+### The Extension Constraint Is the Real API Surface
+
+None of the arithmetic, ring, or field implementations mention `Z` or `Modulo`. They all extend `Tagged where Tag: Algebra.Residual, RawValue == Ordinal`. The refactor changed only one word in every constraint: `Algebra.Z.Residual` became `Algebra.Residual`. The implementations didn't care about the typealias name — they cared about the protocol constraint.
+
+This confirms the design: the typealias is sugar for humans. The protocol constraint is the mechanism. Renaming the sugar required touching every file header but not a single line of logic. When the API surface is defined by constraints rather than concrete types, renames are mechanical.
+
+### Git Detected What We Intended
+
+The commit produced renames at 76–93% similarity. Git didn't see "delete 11 files, create 11 files" — it saw "rename with edits." This happened because the file content changed minimally: a few characters in the constraint clause, a few characters in the filename. The structural preservation validated the refactor's minimality.
+
+When git's rename detection agrees with your intent, the change was probably scoped correctly. When it doesn't — when git sees unrelated additions and deletions instead of renames — the refactor likely changed too much or too little.
+
+---
+
 ## Topics
 
 ### Related Documents
