@@ -1,10 +1,13 @@
 ---
 name: anti-patterns
 description: |
-  Common mistakes and anti-patterns to avoid.
-  Reference this skill when reviewing code for correctness.
+  SUPERSEDED by **implementation** skill.
+  All PATTERN-009–021 rules are now in the implementation skill.
+  This skill remains for backwards compatibility only.
 
 layer: implementation
+
+superseded_by: implementation
 
 requires:
   - swift-institute
@@ -23,7 +26,15 @@ migrated_from: Implementation/Anti-Patterns.md
 migration_date: 2026-01-28
 ---
 
-# Anti-Patterns
+# Anti-Patterns (SUPERSEDED)
+
+**This skill has been superseded by the `implementation` skill.** All PATTERN-009–021 rules have been absorbed into that skill, reframed as "imperfect" examples paired with their "perfect" counterparts.
+
+Use `/implementation` instead of `/anti-patterns`.
+
+The original content is preserved below for reference.
+
+---
 
 Common mistakes to avoid when implementing Swift Institute packages.
 

@@ -47,6 +47,8 @@ struct Profile { }   // in one file - FORBIDDEN
 
 **Rationale**: Single-type files enable precise naming, easier navigation, clear ownership, and reduced merge conflicts.
 
+**Exception**: Types with `~Copyable` generic parameters cannot have their nested types extracted into separate files due to constraint poisoning. See [PATTERN-022].
+
 ---
 
 ### [API-IMPL-006] File Naming Convention
