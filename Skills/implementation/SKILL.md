@@ -73,6 +73,7 @@ After improving infrastructure, all other call sites also benefit.
 | You want to write | Why it doesn't exist | What to write instead |
 |---|---|---|
 | `count - count` with `-` | Subtraction on naturals isn't total. `Cardinal - Cardinal` can underflow. | `count.subtract.saturating(other)` or `try count.subtract.exact(other)` |
+| `count &-= 1` | Wrapping subtract on naturals hides underflow. `&-=` is not defined on `Tagged`/`Cardinal`. | `count = count.subtract.saturating(.one)` |
 | `index * 2` | Indices are ordinals (affine space positions). Scaling a position is meaningless. | Rethink: do you mean `offset * 2`? Express the actual operation. |
 | `count * count` | Multiplying two quantities of the same dimension produces a different dimension. | `count.scale(by: ratio)` or the appropriate cross-domain operation. |
 | `pointer + count` | Affine space: you add vectors (offsets) to points, not scalars (counts). | `pointer + offset` where offset is computed via the appropriate conversion. |
@@ -117,6 +118,11 @@ let count = Int(range.count.rawValue.rawValue)
 
 If you find yourself chaining `.rawValue.rawValue`, that's a missing operator. Add it.
 
+**Canonical constants**: `.one` and `.zero` are provided by `Cardinal.Protocol`. All `Tagged<Tag, Cardinal>` types (including `Index<Element>.Count`) inherit them. Never construct `.init(Cardinal(1))` — write `.one`.
+
+**Imperfect**: `remaining = remaining.subtract.saturating(.init(Cardinal(1)))`
+**Perfect**: `remaining = remaining.subtract.saturating(.one)`
+
 **Cross-references**: [CONV-010], [PATTERN-018]
 
 ---
@@ -130,6 +136,7 @@ If you find yourself chaining `.rawValue.rawValue`, that's a missing operator. A
 | `.map(Ordinal.init)` | `Count → Index` (Cardinal → Ordinal, same tag) | `currentCount.map(Ordinal.init)` |
 | `.retag(Element.self)` | Change phantom type (zero-cost) | `_slots.popcount.retag(Element.self)` |
 | `.map { $0 * 2 }` | Transform raw value | `count.map { Cardinal($0.rawValue * 2) }` |
+| `.map { $0.position }` | Cyclic element → Ordinal (extract linear position from cyclic index) | `header.head.map { $0.position }` |
 
 **Cross-references**: [CONV-003], [IDX-010]
 
@@ -155,6 +162,55 @@ precondition(currentCount.rawValue.rawValue > 0, "...")
 If a comparison operator doesn't exist between two related types, add it.
 
 **Cross-references**: [PATTERN-017], [CONV-001]
+
+---
+
+### [IMPL-005] Typed Static Min/Max
+
+**Statement**: When computing the minimum or maximum of two values of the same `Tagged` type, use the static `Type.min(a, b)` / `Type.max(a, b)` methods. Do not extract raw values to use `Swift.min()`.
+
+**Perfect**:
+```swift
+let take = Index<Element>.Count.min(.init(maximumCount), remaining)
+```
+
+**Imperfect**:
+```swift
+let take = Swift.min(maximumCount.rawValue, remaining.rawValue.rawValue)
+```
+
+**Rationale**: `Tagged` provides `min`/`max` via its `Comparable` conformance. Using them keeps the result typed, eliminating downstream raw-value extraction for subtraction or pointer math.
+
+**Cross-references**: [IMPL-002], [IMPL-004]
+
+---
+
+### [IMPL-006] Zero-Cost Typed Stored Properties
+
+**Statement**: Stored properties that hold quantities (counts, positions, sizes) SHOULD use typed wrappers (`Index<Element>.Count`, `Index<Element>`) rather than raw `UInt`. The conversion boundary belongs in the type's initializer — where data flows in from already-typed sources — not scattered across every method that reads the field.
+
+**Perfect**:
+```swift
+var remaining: Index<Element>.Count
+
+init(count: Index<Element>.Count) {
+    self.remaining = count          // boundary: typed in, typed stored
+}
+```
+
+**Imperfect**:
+```swift
+var remaining: UInt
+
+init(count: Index<Element>.Count) {
+    self.remaining = count.rawValue.rawValue  // boundary: typed in, raw stored
+}
+// Then every method repeats: Index<Element>.Count(Cardinal(remaining))
+```
+
+**Rationale**: `Tagged` is a zero-cost wrapper — same memory layout as the raw value. Storing the typed version eliminates N extraction sites across M methods, replacing them with one clean assignment at init.
+
+**Cross-references**: [IMPL-002], [IMPL-010]
 
 ---
 
@@ -388,6 +444,36 @@ while slot < range.upperBound {
     slot = slot.successor.saturating()
 }
 ```
+
+---
+
+### [IMPL-033] Typed Iteration Loops
+
+**Statement**: Loops that iterate over index ranges MUST use typed loop variables (`Index<Element>`, `Bit.Index`) with typed increment (`+= .one`). Raw `UInt` loop counters with per-iteration `__unchecked` Index construction are forbidden.
+
+**Perfect**:
+```swift
+var slot: Index<Element> = .zero
+let end = count.map(Ordinal.init)
+while slot < end {
+    storage.deinitialize(at: slot)
+    slot += .one
+}
+```
+
+**Imperfect**:
+```swift
+var i: UInt = 0
+while i < count.rawValue.rawValue {
+    let idx = Index<Element>(__unchecked: (), Ordinal(i))
+    storage.deinitialize(at: idx)
+    i &+= 1
+}
+```
+
+**Rationale**: The typed version uses `+=` (ordinal + cardinal, well-defined in affine space) instead of `&+=` (wrapping add on raw UInt), and eliminates per-iteration `__unchecked` construction.
+
+**Cross-references**: [IMPL-002], [IMPL-006]
 
 ---
 
