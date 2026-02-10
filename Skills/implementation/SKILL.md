@@ -368,6 +368,52 @@ public struct Initialize: ~Copyable, ~Escapable {
 
 ---
 
+### [IMPL-022] _read + _modify for Mutating Property Accessors
+
+**Statement**: When a `Property.View` (or `.View.Typed`, or `.View.Typed.Valued`) extension includes **mutating** methods, the accessor property MUST provide both `_read` and `_modify` coroutines. Without `_modify`, the compiler treats the yield as read-only and rejects mutating method calls at the call site.
+
+**Correct** — both coroutines:
+```swift
+var remove: Property<Remove, Self>.View.Typed<Element> {
+    mutating _read {
+        yield unsafe Property<Remove, Self>.View.Typed(&self)
+    }
+    mutating _modify {
+        var view = unsafe Property<Remove, Self>.View.Typed<Element>(&self)
+        yield &view
+    }
+}
+```
+
+**Incorrect** — `_read` only:
+```swift
+var remove: Property<Remove, Self>.View.Typed<Element> {
+    mutating _read {
+        yield unsafe Property<Remove, Self>.View.Typed(&self)
+    }
+}
+// table.remove.all()  // ❌ "cannot use mutating member on immutable value"
+```
+
+The same applies to `Property.View.Typed.Valued` for value-generic types:
+```swift
+var remove: Property<Tag, Self>.View.Typed<Element>.Valued<bucketCapacity> {
+    mutating _read {
+        yield unsafe .init(&self)
+    }
+    mutating _modify {
+        var view = unsafe Property<Tag, Self>.View.Typed<Element>.Valued<bucketCapacity>(&self)
+        yield &view
+    }
+}
+```
+
+If the extension only has non-mutating methods (e.g., `bucket.for(hash:)`, `forEach.occupied { }`), `_read` alone is sufficient.
+
+**Cross-references**: [IMPL-021], [API-NAME-002]
+
+---
+
 ## Expression Style
 
 ### [IMPL-030] Inline Construction Over Intermediate Variables
