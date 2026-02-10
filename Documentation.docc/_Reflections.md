@@ -873,6 +873,69 @@ When git's rename detection agrees with your intent, the change was probably sco
 
 ---
 
+## 2026-02-10: The Band-Aid That Revealed the Wound
+
+*After rejecting a `Cardinal(clamping: Int)` init in favor of typed `truncate(to: Index.Count)` parameters.*
+
+### The Research Was Correct and Wrong Simultaneously
+
+The research document analyzed three options for converting signed `Int` to `Tagged<Tag, Cardinal>` with negative-to-zero clamping. Option A — `Cardinal(clamping: Int)` and `Tagged(clamping: Int)` at both layers — won on every criterion: symmetry with the existing `Int(clamping: Cardinal)`, call-site clarity, [IMPL-010] compliance. The analysis was rigorous. The decision was sound. The implementation was clean.
+
+And it was the wrong fix.
+
+The `clamping:` init treated a symptom. The real disease was `truncate(to newCount: Int)` — an `Int` parameter on a method that only makes sense with non-negative counts. The 12 call sites that needed clamping existed because the API accepted the wrong type. Making the clamping conversion prettier didn't change the fact that it shouldn't exist at all.
+
+### The User's Instinct Preceded the Analysis
+
+"I'm not a fan of this clamping overload" — said without a detailed technical argument, just design instinct. The subsequent analysis confirmed the instinct: `Int` was the design smell. `clamping:` was perfume.
+
+This happens repeatedly in design work. Analysis catches problems that intuition flags first. The value of analysis isn't discovering the problem — it's confirming the solution. The research document's SUPERSEDED status is not a failure of the research process. It's the process working correctly: the research forced explicit examination of alternatives, which revealed that the question itself was wrong.
+
+### The Real Fix Was Simpler Than the Band-Aid
+
+The `clamping:` approach required:
+- New `Cardinal(clamping: Int)` init with `UInt(Swift.max(0, value))` logic
+- New `Tagged(clamping: Int)` init forwarding to Cardinal
+- 12 call sites using `Index.Count(clamping: newCount)`
+- Two new API surface methods that needed documentation and testing
+
+The typed parameter approach required:
+- Changing `Int` to `Index.Count` in 12 signatures
+- *Deleting* all conversion code from every method body
+- Adding one test import for `ExpressibleByIntegerLiteral`
+
+The band-aid added infrastructure. The real fix removed it. Every `truncate` body went from:
+```swift
+let targetCount = Index.Count(clamping: newCount)
+guard targetCount < _buffer.count else { return }
+while _buffer.count > targetCount { ... }
+```
+to:
+```swift
+guard newCount < _buffer.count else { return }
+while _buffer.count > newCount { ... }
+```
+
+No conversion. No temporary. No mechanism. Just the math.
+
+### Test Support Completes the Circle
+
+The concern with typed parameters was call-site ergonomics. If `truncate(to:)` takes `Index.Count`, callers can't write `stack.truncate(to: 3)` — the literal `3` is an `Int`, not a typed count.
+
+Except they can. Test Support provides `ExpressibleByIntegerLiteral` for all `Tagged` types via `@_disfavoredOverload`. In tests, `stack.truncate(to: 3)` compiles because the literal infers as `Index.Count`. In production, callers already have typed counts — they're operating within the type system, not at the `Int` boundary.
+
+The `@_disfavoredOverload` is the key detail. The literal conformance exists for tests, where convenience matters. It doesn't exist in production, where type safety matters. The same syntax means different things at different layers — and that's correct.
+
+[IMPL-010] says "push Int to the edge." The typed parameter pushes Int past the edge entirely. The boundary is now the caller's responsibility, and in most cases, there is no boundary — the caller already has a typed count from somewhere upstream. The `Int` was an artifact of the API, not a requirement of the domain.
+
+### Superseded Research Is Not Wasted Research
+
+The research document earned its SUPERSEDED status before implementation. This is the ideal outcome — the analysis revealed that the question was wrong *before* code was committed. The document remains in the repository with full analysis, comparison table, and rationale. Future developers who encounter the same "how to convert Int to Cardinal" question will find the document, follow the analysis, reach the same conclusion — and then read the supersession notice that redirects them to the real fix.
+
+Research that concludes "don't do this" is as valuable as research that concludes "do this." The SUPERSEDED document is a signpost: "we considered this path, analyzed it thoroughly, and discovered a better one." Without it, future sessions would re-derive the same analysis and potentially implement the band-aid that was already rejected.
+
+---
+
 ## Topics
 
 ### Related Documents
