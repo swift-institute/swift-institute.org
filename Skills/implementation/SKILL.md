@@ -1,8 +1,9 @@
 ---
 name: implementation
 description: |
-  Call-site-first implementation patterns: typed arithmetic, boundary overloads,
-  property accessors, expression style. Absorbs anti-patterns.
+  Intent-over-mechanism as foundational axiom. Expression-first style,
+  call-site-first design, typed arithmetic, boundary overloads,
+  property accessors. Absorbs anti-patterns.
   ALWAYS apply when writing or reviewing implementation code.
 
 layer: implementation
@@ -24,17 +25,82 @@ applies_to:
 
 # Implementation
 
-Every line of implementation code should be locally perfect.
+Every line of implementation code reads as intent.
 
 ---
 
-## Core Principle
+## Foundational Axiom
+
+### [IMPL-INTENT] Code Reads as Intent, Not Mechanism
+
+**Statement**: All implementation code MUST read as a declaration of *what* is being accomplished, never as a description of *how* the machine accomplishes it. This is the governing principle of the entire implementation skill. Every other rule in this document is a corollary.
+
+The question at every line, every expression, every code review is: **"Does this read as intent?"**
+
+- If a line describes *what* happens → it reads as intent. Keep it.
+- If a line describes *how* it happens → it reads as mechanism. Refactor it.
+- If you cannot tell the difference → the code is unclear. Refactor it.
+
+**Intent** is the domain operation: initialize, move, copy, insert, remove, count, compare, iterate.
+**Mechanism** is the implementation machinery: offset computation, pointer arithmetic, raw value extraction, bitPattern conversion, closure scaffolding, manual index construction.
+
+Mechanism belongs inside infrastructure (operators, overloads, accessors, boundary methods). Intent belongs at call sites. When mechanism leaks into a call site, the infrastructure is incomplete.
+
+This principle has convergent support spanning 50+ years of language design (Landin 1966, Backus 1978, Dijkstra 1968), practitioner consensus (Beck, Fowler, Martin), empirical research (Cates et al. 2021), and Swift's own evolution toward expression-oriented style (SE-0255, SE-0380).
+
+**Cross-references**: [Research: intent-over-mechanism-expression-first.md]
+
+---
+
+### [IMPL-EXPR-001] Prefer Single Expressions Over Separate Declarations
+
+**Statement**: Implementation code MUST prefer single-line expressions over separate `let`/`var` declarations. An intermediate variable is justified only when it meets one of the three boundary conditions below. Otherwise, inline the expression.
+
+**Boundary conditions** (the only valid reasons for an intermediate binding):
+
+1. **Multi-use**: The sub-expression is consumed more than once. Even then, prefer a named function over a local variable when the logic is reusable.
+2. **Explanatory name**: The intermediate name communicates domain knowledge not visible in the expression itself. A name that merely restates the expression (e.g., `let count = range.count`) does not qualify.
+3. **Complexity ceiling**: The expression composition has reached a point where it obscures rather than reveals intent. The correct extraction target is a named function (Fowler's "Replace Temp with Query"), not a local variable.
+
+**Perfect** — single expression, reads as intent:
+```swift
+unsafe destination.pointer(at: offset)
+    .initialize(from: base.pointer(at: range.lowerBound), count: range.count)
+```
+
+**Imperfect** — separate declarations expose mechanism:
+```swift
+let srcPointer = unsafe base.pointer(at: range.lowerBound)
+let dstPointer = unsafe destination.pointer(at: offset)
+let count = range.count
+unsafe dstPointer.initialize(from: srcPointer, count: count)
+```
+
+The second form has three bindings. None carries explanatory value beyond what the expression already says. Each binding forces the reader to hold a name in working memory and match it to its use site. The first form composes the same operation as a single intent: "initialize destination from source."
+
+**Perfect** — expression communicates the full operation:
+```swift
+return currentCount.map(Ordinal.init)
+```
+
+**Imperfect** — decomposition adds nothing:
+```swift
+let ordinal = Ordinal(currentCount.rawValue)
+let index = Index<Element>(__unchecked: (), ordinal)
+return index
+```
+
+**Empirical basis**: Cates, Yunik, & Feitelson (2021) showed that intermediate variables with non-informative names can *decrease* comprehension. Variables are cognitively beneficial only when the name carries genuine explanatory value.
+
+**Cross-references**: [IMPL-INTENT], [IMPL-030], [Research: intent-over-mechanism-expression-first.md]
+
+---
 
 ### [IMPL-000] Call-Site-First Design
 
 **Statement**: Implementation code MUST be written as the ideal expression first. If the infrastructure doesn't support it, the infrastructure MUST be improved — unless the absence is principled (see [IMPL-001]).
 
-Write the expression that reads like intent, not mechanism. Then:
+Write the expression that reads like intent. Then:
 
 1. **If it compiles** → done.
 2. **If it doesn't compile** → is the absence principled?
@@ -73,12 +139,10 @@ After improving infrastructure, all other call sites also benefit.
 | You want to write | Why it doesn't exist | What to write instead |
 |---|---|---|
 | `count - count` with `-` | Subtraction on naturals isn't total. `Cardinal - Cardinal` can underflow. | `count.subtract.saturating(other)` or `try count.subtract.exact(other)` |
-| `count &-= 1` | Wrapping subtract on naturals hides underflow. `&-=` is not defined on `Tagged`/`Cardinal`. | `count = count.subtract.saturating(.one)` |
 | `index * 2` | Indices are ordinals (affine space positions). Scaling a position is meaningless. | Rethink: do you mean `offset * 2`? Express the actual operation. |
-| `count * count` | Multiplying two quantities of the same dimension produces a different dimension. | `count.scale(by: ratio)` or the appropriate cross-domain operation. |
-| `pointer + count` | Affine space: you add vectors (offsets) to points, not scalars (counts). | `pointer + offset` where offset is computed via the appropriate conversion. |
-| `Index(rawValue: 5)` as public API | Bypasses the type's invariants. | Designated constructor, literal conformance (tests), or `__unchecked` (same-package). |
-| Scalar operators on typed quantities | Typed quantities don't mix with bare `Int`/`UInt`. | Use the typed operator that preserves the domain. |
+| `bounded + .one` returning `Bounded<N>` | Addition on a bounded ordinal is partial: the result may equal `N`, exceeding the bound. A non-Optional return hides capacity overflow. | `bounded.successor()` (returns `Optional`). Or widen to `Index<Element>`, operate, re-narrow. |
+
+For the complete catalog of principled absences, see [INFRA-200].
 
 **Gap — DO add:**
 
@@ -99,7 +163,7 @@ After improving infrastructure, all other call sites also benefit.
 
 ### [IMPL-002] Write the Math, Not the Mechanism
 
-**Statement**: Arithmetic on typed values MUST use typed operators. Raw value extraction (`.rawValue`, `.position`) MUST NOT appear at call sites for computation.
+**Statement**: Arithmetic on typed values MUST use typed operators. Raw value extraction (`.rawValue`, `.position`) MUST NOT appear at call sites for computation. This is a direct corollary of [IMPL-INTENT]: raw value extraction is mechanism; typed arithmetic is intent.
 
 **Perfect**:
 ```swift
@@ -118,12 +182,9 @@ let count = Int(range.count.rawValue.rawValue)
 
 If you find yourself chaining `.rawValue.rawValue`, that's a missing operator. Add it.
 
-**Canonical constants**: `.one` and `.zero` are provided by `Cardinal.Protocol`. All `Tagged<Tag, Cardinal>` types (including `Index<Element>.Count`) inherit them. Never construct `.init(Cardinal(1))` — write `.one`.
+For canonical constants (`.one`, `.zero`) and their protocol lifting, see [INFRA-101].
 
-**Imperfect**: `remaining = remaining.subtract.saturating(.init(Cardinal(1)))`
-**Perfect**: `remaining = remaining.subtract.saturating(.one)`
-
-**Cross-references**: [CONV-010], [PATTERN-018]
+**Cross-references**: [CONV-010], [PATTERN-018], [INFRA-101]
 
 ---
 
@@ -131,14 +192,9 @@ If you find yourself chaining `.rawValue.rawValue`, that's a missing operator. A
 
 **Statement**: Cross-domain type conversions MUST use `.map()` (transform raw value, preserve tag) or `.retag()` (preserve raw value, change tag). Direct `__unchecked` construction SHOULD be avoided when a functor path exists.
 
-| Operation | Meaning | Example |
-|-----------|---------|---------|
-| `.map(Ordinal.init)` | `Count → Index` (Cardinal → Ordinal, same tag) | `currentCount.map(Ordinal.init)` |
-| `.retag(Element.self)` | Change phantom type (zero-cost) | `_slots.popcount.retag(Element.self)` |
-| `.map { $0 * 2 }` | Transform raw value | `count.map { Cardinal($0.rawValue * 2) }` |
-| `.map { $0.position }` | Cyclic element → Ordinal (extract linear position from cyclic index) | `header.head.map { $0.position }` |
+For the complete functor operation catalog (`.map()`, `.retag()`) and common mistakes, see [INFRA-103].
 
-**Cross-references**: [CONV-003], [IDX-010]
+**Cross-references**: [CONV-003], [IDX-010], [INFRA-103]
 
 ---
 
@@ -181,7 +237,9 @@ let take = Swift.min(maximumCount.rawValue, remaining.rawValue.rawValue)
 
 **Rationale**: `Tagged` provides `min`/`max` via its `Comparable` conformance. Using them keeps the result typed, eliminating downstream raw-value extraction for subtraction or pointer math.
 
-**Cross-references**: [IMPL-002], [IMPL-004]
+For the full `Type.min(a, b)` / `Type.max(a, b)` API, see [INFRA-103].
+
+**Cross-references**: [IMPL-002], [IMPL-004], [INFRA-103]
 
 ---
 
@@ -320,29 +378,9 @@ heap.copy(to: dest)                         // callAsFunction — all elements
 heap.copy()                                 // callAsFunction — clone
 ```
 
-**Implementation**: Tag types are empty enums. Methods are extensions on `Property` constrained by `where Tag == ..., Base == ...`.
+**Implementation**: Tag types are empty enums. Methods are extensions on `Property` constrained by `where Tag == ..., Base == ...`. For the full implementation pattern, see [INFRA-106].
 
-```swift
-extension Storage where Element: ~Copyable {
-    public enum Move {}
-}
-
-extension Storage.Heap where Element: ~Copyable {
-    public var move: Property<Storage.Move, Storage.Heap> {
-        Property(self)
-    }
-}
-
-extension Property {
-    public func callAsFunction<Element: ~Copyable>(
-        at slot: Index<Element>
-    ) -> Element where Tag == Storage<Element>.Move, Base == Storage<Element>.Heap {
-        return unsafe base.pointer(at: slot).move()
-    }
-}
-```
-
-**Cross-references**: [API-NAME-002]
+**Cross-references**: [API-NAME-002], [INFRA-106]
 
 ---
 
@@ -414,13 +452,64 @@ If the extension only has non-mutating methods (e.g., `bucket.for(hash:)`, `forE
 
 ---
 
+## Static Method Architecture
+
+### [IMPL-023] Core Logic in Static Methods
+
+**Statement**: Types with `~Copyable` generic parameters that need both `~Copyable` and `Copyable` method overloads MUST place core logic in static methods. Instance methods (or Property.View methods) delegate to statics. This eliminates Swift's overload recursion problem.
+
+**The problem**: When two extensions define the same method name with different constraints, the more-constrained (`Copyable`) overload calling `self.method()` resolves to itself, not the `~Copyable` version — producing infinite recursion.
+
+**The solution**: Statics are called on the type, not `self`, so overload resolution cannot recurse. Both `~Copyable` and `Copyable` instance overloads delegate to the same static.
+
+For the full problem/solution code examples and pattern, see [INFRA-110].
+
+**Static method signature pattern**: Statics take the type's decomposed state as explicit parameters (e.g., `state: inout State` and `storage: Storage`). Methods that replace `self` as a whole (e.g., growth, copy-on-write) remain as instance methods.
+
+**Validated by**: Experiment `static-property-view-pattern` — all six variants CONFIRMED (consuming ~Copyable through view, Copyable overloads, growth through _modify, callAsFunction, overload coexistence, full end-to-end).
+
+**Cross-references**: [IMPL-020], [IMPL-024], [IMPL-025], [API-NAME-002]
+
+---
+
+### [IMPL-024] Compound Identifiers in the Static Layer
+
+**Statement**: Static methods (the implementation layer) MAY use compound names. The public API layer MUST NOT — it uses Property.View nested accessors per [API-NAME-002]. The two layers have different naming rules because they serve different audiences.
+
+| Layer | Audience | Naming | Example |
+|-------|----------|--------|---------|
+| Static (implementation) | Package author | Compound names allowed | `MyType.insertFront(_:state:storage:)` |
+| Property.View (public API) | Consumer | Nested accessors required | `instance.insert.front(element)` |
+
+**Rationale**: Static method names are implementation details — they appear in delegation code inside the package, not at consumer call sites. Compound names like `insertFront` are clear and conventional at this layer. The public API transforms them into the nested accessor pattern: `instance.insert.front()`.
+
+For the full pipeline (static layer → Property.View layer → call site), see [INFRA-110] and [INFRA-106].
+
+**Cross-references**: [API-NAME-002], [IMPL-023], [IMPL-020], [INFRA-110], [INFRA-106]
+
+---
+
+### [IMPL-025] Two-Tier Overload Resolution
+
+**Statement**: When a type supports both `~Copyable` and `Copyable` elements, it MUST provide two tiers of public methods (instance or Property.View). Both tiers delegate to the same static. The `Copyable` tier adds preparation logic (e.g., copy-on-write uniqueness checks) before the static call. Neither tier calls `self.method()` — both call `Type.staticMethod()`.
+
+For the full two-tier overload pattern with code examples, see [INFRA-110].
+
+**Overload resolution**: When `Element` is `Copyable`, Swift selects the more-constrained overload. When `Element` is `~Copyable`, only the base overload is available. No ambiguity, no recursion.
+
+**What stays as instance methods**: Methods that replace `self` as a whole (growth, copy-on-write checks) remain as instance methods — they mutate the entire value, not just individual stored properties.
+
+**Cross-references**: [IMPL-023], [IMPL-024], [MEM-COPY-006]
+
+---
+
 ## Expression Style
 
 ### [IMPL-030] Inline Construction Over Intermediate Variables
 
-**Statement**: When constructing a value to pass immediately, it SHOULD be constructed inline rather than bound to an intermediate variable.
+**Statement**: When constructing a value to pass immediately, it MUST be constructed inline rather than bound to an intermediate variable. Intermediate bindings are permitted only under the boundary conditions of [IMPL-EXPR-001].
 
-**Perfect**:
+**Perfect** — single expression reads as intent ("give body a span over this range"):
 ```swift
 return try body(unsafe Span(
     _unsafeStart: pointer(at: range.lowerBound),
@@ -428,7 +517,7 @@ return try body(unsafe Span(
 ))
 ```
 
-**Imperfect**:
+**Imperfect** — four bindings expose mechanism ("compute offset, convert count, make pointer, construct span, then call"):
 ```swift
 try unsafe withUnsafeMutablePointerToElements { base throws(E) in
     let startOffset = Index<Element>.Offset(fromZero: range.lowerBound)
@@ -438,7 +527,9 @@ try unsafe withUnsafeMutablePointerToElements { base throws(E) in
 }
 ```
 
-**Exception**: When the intermediate improves readability or is used more than once, binding is appropriate.
+**Boundary conditions** (per [IMPL-EXPR-001]): An intermediate binding is justified only when the sub-expression is used more than once, the name carries genuine explanatory value, or the expression exceeds the complexity ceiling. In the latter case, prefer extracting a named function over introducing a local variable.
+
+**Cross-references**: [IMPL-INTENT], [IMPL-EXPR-001]
 
 ---
 
@@ -446,29 +537,11 @@ try unsafe withUnsafeMutablePointerToElements { base throws(E) in
 
 **Statement**: When applying a uniform operation across all cases of an enum, the enum SHOULD provide `.forEach` (and `.linearize` when offset tracking is needed). Call sites MUST NOT manually switch when a uniform iterator exists.
 
-**Perfect**:
-```swift
-header.initialization.forEach { range in
-    deinitialize(range: range)
-}
-
-base.initialization.linearize { range, offset in
-    self(range: range, to: destination, at: offset)
-}
-```
-
-**Imperfect**:
-```swift
-switch header.initialization {
-case .empty: return
-case .one(let range): deinitialize(range: range)
-case .two(let first, let second):
-    deinitialize(range: first)
-    deinitialize(range: second)
-}
-```
+For enum iteration examples (`.forEach`, `.linearize`) vs manual `switch`, see [INFRA-107].
 
 If the iteration method doesn't exist on the enum, add it.
+
+**Cross-references**: [IMPL-INTENT], [IMPL-033]
 
 ---
 
@@ -476,50 +549,32 @@ If the iteration method doesn't exist on the enum, add it.
 
 **Statement**: When a bulk operation exists (e.g., `set.range()`, `clear.range()`, `deinitialize(count:)`), it MUST be preferred over per-element loops.
 
-**Perfect**:
-```swift
-_slots.set.range(range.map.bounds { $0.retag(Bit.self) })
-unsafe pointer(at: range.lowerBound).deinitialize(count: range.count)
-```
+For bulk operation examples (`.set.range()`, `.deinitialize(count:)`) vs per-element loops, see [INFRA-107] and [INFRA-108].
 
-**Imperfect**:
-```swift
-var slot = range.lowerBound
-while slot < range.upperBound {
-    _slots[Bit.Index(slot.rawValue)] = true
-    slot = slot.successor.saturating()
-}
-```
+**Cross-references**: [IMPL-INTENT], [IMPL-033], [INFRA-107], [INFRA-108]
 
 ---
 
-### [IMPL-033] Typed Iteration Loops
+### [IMPL-033] Iteration: Intent Over Mechanism
 
-**Statement**: Loops that iterate over index ranges MUST use typed loop variables (`Index<Element>`, `Bit.Index`) with typed increment (`+= .one`). Raw `UInt` loop counters with per-iteration `__unchecked` Index construction are forbidden.
+**Statement**: Iteration MUST use the highest-level abstraction that expresses intent. Manual `while` loops are mechanism — they describe *how* to traverse, not *what* to traverse. The iteration infrastructure in sequence-primitives and vector-primitives exists to express intent. A manual loop is permitted only when implementing that infrastructure itself.
 
-**Perfect**:
-```swift
-var slot: Index<Element> = .zero
-let end = count.map(Ordinal.init)
-while slot < end {
-    storage.deinitialize(at: slot)
-    slot += .one
-}
-```
+**Hierarchy** (prefer higher levels):
 
-**Imperfect**:
-```swift
-var i: UInt = 0
-while i < count.rawValue.rawValue {
-    let idx = Index<Element>(__unchecked: (), Ordinal(i))
-    storage.deinitialize(at: idx)
-    i &+= 1
-}
-```
+| Level | Style | When |
+|-------|-------|------|
+| **1. Bulk operation** | No loop | Operation applies uniformly to a range or all elements |
+| **2. Iteration infrastructure** | `.forEach { }`, `.reduce.into { }`, `.map { }` | Per-element logic with closure |
+| **3. Typed while loop** | `while slot < end { ... slot += .one }` | Inside iteration infrastructure implementation only |
+| **4. Raw while loop** | Forbidden | Never |
 
-**Rationale**: The typed version uses `+=` (ordinal + cardinal, well-defined in affine space) instead of `&+=` (wrapping add on raw UInt), and eliminates per-iteration `__unchecked` construction.
+For iteration examples at each level of this hierarchy, see [INFRA-107] and [INFRA-022].
 
-**Cross-references**: [IMPL-002], [IMPL-006]
+**When you need a loop and no iteration infrastructure exists**: Per [IMPL-000], the absence is likely a gap. Add `.forEach`, `.reduce`, or the appropriate iteration method to the type, then use it at the call site. All other call sites also benefit.
+
+**Rationale**: A `while` loop with `slot += .one` is typed mechanism — better than raw mechanism, but still mechanism. The intent is "do X for each element." The infrastructure `.forEach { }`, `.reduce.into { }`, `.map { }`, `.drain { }` from sequence-primitives and vector-primitives express exactly that intent.
+
+**Cross-references**: [IMPL-INTENT], [IMPL-EXPR-001], [IMPL-000], [IMPL-031], [IMPL-032]
 
 ---
 
@@ -554,6 +609,150 @@ extension Storage where Element: ~Copyable {
 ```
 
 **Cross-references**: [API-ERR-001], [API-NAME-001]
+
+---
+
+## Bounded Indexing
+
+### [IMPL-050] Bounded Indices for Static-Capacity Types
+
+**Statement**: Static-capacity types (value-generic `let N: Int`) MUST accept `Index<Element>.Bounded<N>` in subscripts and position-tracking APIs. When the bounded index is produced by the collection's own API, all runtime checks are eliminated — the type proves capacity, and the API proves occupancy.
+
+**Type guarantees**:
+- `index >= 0` — structural (Ordinal is non-negative)
+- `index < N` — structural (Finite<N> is bounded)
+
+**API guarantee**:
+- `index < count` — an index returned by the collection (`index(_:)`, `position(forHash:equals:)`, `forEach.position { }`) is occupied by construction. The collection is the authority on which positions are valid.
+
+**Applies to**: `Hash.Table.Static<N>`, `Set.Ordered.Static<N>`, `Buffer.Linear.Inline<N>`, `Array.Inline<Element, N>`, and all future static-capacity types.
+
+**Perfect** — bounded index from collection API (no runtime check):
+```swift
+subscript(index: Index<Element>.Bounded<capacity>) -> Element {
+    _buffer[index]
+}
+```
+
+The bounded index was produced by the collection — `index(_:)`, `forEach.position { }`, or `position(forHash:equals:)`. The type proves `index < capacity`; the API proves `index < count`. No runtime check remains.
+
+**Acceptable** — bounded index from external construction, typed throw per [IMPL-040]:
+```swift
+func element(at index: Index<Element>.Bounded<capacity>) throws(Error) -> Element {
+    guard index < count else { throw .unoccupied }
+    return _buffer[index]
+}
+```
+
+**Imperfect** — unbounded index, 3 preconditions:
+```swift
+subscript(index: Index<Element>) -> Element {
+    precondition(index >= .zero)       // ❌ Redundant — Ordinal is non-negative
+    precondition(index < capacity)     // ❌ Provable at compile time with Bounded<N>
+    precondition(index < count)        // ❌ Precondition where typed throw fits [IMPL-040]
+    return _buffer[index]
+}
+```
+
+For bounded index type structure and available operations, see [INFRA-105].
+
+**Cross-references**: [IMPL-002], [IMPL-004], [IMPL-040], [IMPL-052], [INFRA-105]
+
+---
+
+### [IMPL-051] Bounded Construction: Narrowing and Widening
+
+**Statement**: Narrowing (unbounded → bounded) MUST return `Optional` — the value may exceed the bound. Widening (bounded → unbounded) is always safe. These are the only two conversion directions between `Index<Element>` and `Index<Element>.Bounded<N>`.
+
+**Narrowing** (checked, returns Optional):
+```swift
+let bounded: Index<Element>.Bounded<16>? = .init(index)
+```
+
+**Widening** (safe, always succeeds):
+```swift
+let index: Index<Element> = .init(bounded)
+```
+
+**Literal construction** (statically known values):
+```swift
+let position: Index<Element>.Bounded<16> = 0
+```
+
+**Imperfect** — raw-value chain construction:
+```swift
+let position: Index<Element>.Bounded<8> = .init(Index<Element>(Ordinal(UInt(i))))!
+```
+
+Per [IMPL-000]: if narrowing from runtime values requires chaining through `Ordinal` and `Index` constructors, that is an infrastructure gap. The ideal expression is direct narrowing from the runtime source.
+
+**Cross-references**: [IMPL-000], [IMPL-003], [PATTERN-019]
+
+---
+
+### [IMPL-052] Bounded Index Flow Through APIs
+
+**Statement**: Methods on static-capacity types that accept, return, or pass positions to closures MUST use `Index<Element>.Bounded<N>`, not unbounded `Index<Element>`. The compile-time bound MUST propagate to every call site that touches a position.
+
+**Perfect** — bounded flows end-to-end:
+```swift
+// Accept bounded
+public mutating func insert(
+    position: Index<Element>.Bounded<capacity>,
+    hashValue: Hash.Value,
+    equals: (Index<Element>.Bounded<capacity>) -> Bool
+) -> Bool
+
+// Return bounded
+public func index(_ element: Element) -> Index<Element>.Bounded<capacity>?
+
+// Iterate bounded
+public func position(_ body: (Index<Element>.Bounded<capacity>) -> Void)
+
+// Accept bounded for mutation
+public mutating func decrement(after position: Index<Element>.Bounded<capacity>)
+```
+
+**Imperfect** — bound lost at API boundary:
+```swift
+public mutating func insert(
+    position: Index<Element>,           // ❌ Capacity bound lost
+    hashValue: Hash.Value,
+    equals: (Index<Element>) -> Bool    // ❌ Caller must re-validate
+) -> Bool
+```
+
+**Rationale**: A static-capacity type *knows* all stored positions are within [0, N). Exposing `Index<Element>` instead of `Index<Element>.Bounded<N>` discards this knowledge, forcing every consumer to re-establish it at runtime.
+
+**Cross-references**: [IMPL-050], [IMPL-006], [IMPL-010]
+
+---
+
+### [IMPL-053] Bounded Arithmetic Follows [IMPL-000]
+
+**Statement**: Arithmetic on `Index<Element>.Bounded<N>` MUST follow [IMPL-000] call-site-first design. The ideal expression operates directly on the bounded index. If a bounded arithmetic operation requires `.rawValue` extraction and `__unchecked` reconstruction, that is an infrastructure gap — not a workaround to accept.
+
+**Ideal call-site expressions**:
+```swift
+let next = position.successor()              // Index<Element>.Bounded<N>?
+let prev = position.predecessor()            // Index<Element>.Bounded<N>?
+let shifted = position.offset(by: 2)         // Index<Element>.Bounded<N>?
+let mirror = position.complement()           // Index<Element>.Bounded<N>
+```
+
+**Imperfect** — raw-value escape:
+```swift
+let next = position.rawValue.successor()
+    .map { Index<Element>.Bounded<8>(__unchecked: (), $0) }
+// ❌ [IMPL-002] rawValue extraction at call site
+// ❌ [PATTERN-017] __unchecked construction at call site
+```
+
+**Current infrastructure gap**: `Ordinal.Finite<N>` provides `successor()`, `predecessor()`, `offset(by:)`, `complement()`, `injected()`, and `projected()` — but these are constrained to `where Tag == Finite.Bound<N>, RawValue == Ordinal`. They do not resolve on `Index<Element>.Bounded<N>` where `Tag == Element` and `RawValue == Ordinal.Finite<N>`. Per [IMPL-000], this gap MUST be filled by lifting these operations to the outer `Tagged` layer.
+
+**Bounded arithmetic is total**: All advancement operations (`successor`, `predecessor`, `offset`) return `Optional`. This is principled — see [IMPL-001]. A non-Optional `bounded + .one` would hide overflow past the capacity bound.
+
+**Cross-references**: [IMPL-000], [IMPL-001], [IMPL-002], [PATTERN-017]
 
 ---
 
@@ -705,3 +904,6 @@ See also:
 - **memory** skill for [MEM-*] ownership patterns
 - **design** skill for [API-LAYER-*] layering decisions
 - **testing** skill for [TEST-018] literal conformances in tests
+- **existing-infrastructure** skill for [INFRA-*] catalog of typed operations, integration modules, and principled absences
+- `Ordinal.Finite<N>` in swift-finite-primitives for bounded ordinal arithmetic infrastructure
+- `Index.Bounded.swift` in swift-finite-primitives for the typealias definition and narrowing/widening
