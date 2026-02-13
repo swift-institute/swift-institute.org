@@ -793,7 +793,7 @@ Per [IMPL-000]: if narrowing from runtime values requires chaining through `Ordi
 
 ### [IMPL-052] Bounded Index Flow Through APIs
 
-**Statement**: Methods on static-capacity types that accept, return, or pass positions to closures MUST use `Index<Element>.Bounded<N>`, not unbounded `Index<Element>`. The compile-time bound MUST propagate to every call site that touches a position.
+**Statement**: Methods on static-capacity types that accept, return, or pass positions to closures MUST use `Index<Element>.Bounded<N>`, not unbounded `Index<Element>`. The compile-time bound MUST propagate to every call site that touches a position. Unbounded index variants MUST NOT co-exist alongside bounded variants on the same type — bounded is the sole public API, not an overload. When remediating, the fix is subtractive (remove unbounded) not additive (add bounded alongside).
 
 **Perfect** — bounded flows end-to-end:
 ```swift

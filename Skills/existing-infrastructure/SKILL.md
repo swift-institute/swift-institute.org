@@ -232,6 +232,8 @@ Before writing ANY implementation code, consult this catalog. The typed infrastr
 | Capacity | `Self.capacity()` → `Cardinal` | The bound N |
 | Max | `Self.max()` → `Self?` | N - 1 |
 
+**Audit guidance**: When auditing static-capacity types for unbounded indices, the finding is "replace unbounded with bounded" — not "add bounded overload alongside unbounded." The fix is subtractive. An unbounded public API on a type with statically-known capacity discards compile-time knowledge. Widen inside the method body when delegating to lower-level APIs that accept unbounded indices.
+
 **Cross-references**: [IMPL-050], [IMPL-051], [IMPL-052], [IMPL-053]
 
 ---
