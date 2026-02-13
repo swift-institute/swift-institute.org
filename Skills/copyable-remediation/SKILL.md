@@ -75,6 +75,33 @@ Before remediation, collect:
 
 ---
 
+## Planning ~Copyable/~Escapable Changes
+
+### [COPY-REM-003] Constraint Cascade Audit
+
+**Statement**: Before implementing a `~Copyable` or `~Escapable` change to an associated type or generic parameter, the planner MUST trace every associated type through every conformer and extension to predict where explicit `Copyable`/`Escapable` constraints will be needed.
+
+**Audit procedure**:
+
+1. **Identify** the associated type or parameter being changed (e.g., `associatedtype Element: ~Copyable`)
+2. **List** all conformers of the protocol
+3. **For each conformer**, check:
+   - Does it store the associated type? → Subscript access on borrowed containers may break
+   - Does it use the type as a return value? → Implicit `Copyable` on return types may break
+   - Does it set another protocol's associated type to this type? → Downstream `Copyable` requirements propagate
+4. **For each extension** on the protocol or its conformers, check:
+   - Does it constrain on the associated type? → May need explicit `Copyable`/`~Copyable`
+   - Does it pass the type to a generic parameter? → That parameter may need `~Copyable`/`~Escapable`
+
+**The three cascade categories** (from Input.Stream.Protocol experience):
+- **~Copyable on Element**: Subscript access on borrowed containers breaks (fix: conditional conformance `where Base.Element: Copyable`)
+- **~Copyable on output types**: Protocol requirements with implicit `Copyable` on outputs break (fix: `where Input.Element: Copyable` on specific conformers)
+- **~Escapable on generic parameters**: Parameters with implicit `Escapable` break (fix: add `~Escapable` to the parameter declaration)
+
+**Cross-references**: [COPY-FIX-003], [COPY-FIX-004], [MEM-COPY-006]
+
+---
+
 ## Remediation Rules
 
 ### [COPY-FIX-001] Nesting Level Principle
