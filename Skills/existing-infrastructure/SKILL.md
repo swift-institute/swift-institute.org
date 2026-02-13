@@ -382,6 +382,7 @@ extension Property.View.Typed where Element: ~Copyable {
 | `Sequence.Map` | Mapping | `.map { transform }` |
 | `Sequence.Drain` | Consuming iteration | `.drain { element in }` |
 | `Sequence.Filter` | Filtering | `.filter { predicate }` |
+| `Sequence.First` | Find first matching | `.first { predicate }` |
 | `Sequence.Satisfies` | Quantification | `.satisfies { predicate }` |
 
 **Enum iteration** (initialization state, ring buffer segments):
