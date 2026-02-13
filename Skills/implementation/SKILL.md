@@ -198,6 +198,27 @@ For the complete functor operation catalog (`.map()`, `.retag()`) and common mis
 
 ---
 
+### [IMPL-003a] Domain-Crossing Before Operations
+
+**Statement**: When an operation requires values from different phantom-typed domains, convert to the target domain first using `.retag()`, then operate. Do NOT extract `.rawValue` or use `.vector` as a domain escape hatch.
+
+**Perfect** — convert to target domain, then compare:
+```swift
+let offset = offset.retag(Element.self)
+guard offset.vector < count else { throw .outOfBounds }
+```
+
+**Imperfect** — extract raw value to bypass domain enforcement:
+```swift
+guard offset.vector.rawValue < count.rawValue else { throw .outOfBounds }
+```
+
+**Rationale**: When `Domain` enforcement arrives (via `SuppressedAssociatedTypes`), domain-agnostic operations break. The `.retag()` pattern makes the domain crossing explicit and survives Domain enforcement.
+
+**Cross-references**: [IMPL-003], [INFRA-103]
+
+---
+
 ### [IMPL-004] Typed Comparisons
 
 **Statement**: Comparisons MUST use typed values directly. Raw value extraction for comparison is forbidden at call sites.
