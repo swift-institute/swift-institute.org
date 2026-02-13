@@ -45,6 +45,8 @@ struct User { }      // Multiple types - FORBIDDEN
 struct Profile { }   // in one file - FORBIDDEN
 ```
 
+**Clarification**: This rule counts type *declarations* (`struct`, `enum`, `class`, `actor`), not `extension` blocks. A file may contain multiple `extension` blocks adding methods, computed properties, or protocol conformances to an already-declared type. For example, a file like `Buffer.Linear+Property.View.swift` may contain several `extension Property.View where Tag == ..., Base == ...` blocks — these add behavior to existing types, not new type declarations.
+
 **Rationale**: Single-type files enable precise naming, easier navigation, clear ownership, and reduced merge conflicts.
 
 **Exception**: Types with `~Copyable` generic parameters cannot have their nested types extracted into separate files due to constraint poisoning. See [PATTERN-022].

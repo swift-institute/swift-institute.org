@@ -300,6 +300,16 @@ extension Stack: @unchecked Sendable where Element: Sendable {}
 extension Stack: Sendable where Element: Copyable & Sendable {}
 ```
 
+**Silent failure mode**: `@unchecked Sendable where Element: ~Copyable` compiles without any warning but makes the type Sendable for ALL element types — including non-Sendable ones. The compiler trusts `@unchecked` and cannot catch this. Always use `where Element: Sendable`, never `where Element: ~Copyable`.
+
+```swift
+// DANGEROUS — compiles silently, allows non-Sendable elements
+extension Container: @unchecked Sendable where Element: ~Copyable {}
+
+// CORRECT — restricts to Sendable elements only
+extension Container: @unchecked Sendable where Element: Sendable {}
+```
+
 ---
 
 ### [COPY-FIX-009] InlineArray + Value Generic Deinit Bug
