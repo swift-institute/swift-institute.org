@@ -250,6 +250,8 @@ Before writing ANY implementation code, consult this catalog. The typed infrastr
 | `Property<Tag, Base>.Typed<E>` | Copyable base, property extensions | Copyable |
 | `Property<Tag, Base>.View` | ~Copyable base, mutable access | ~Copyable |
 | `Property<Tag, Base>.View.Typed<E>` | ~Copyable base + Element | ~Copyable |
+| `Property<Tag, Base>.View.Typed<E>.Valued<n>` | ~Copyable base + Element + 1 value generic | ~Copyable |
+| `Property<Tag, Base>.View.Typed<E>.Valued<n>.Valued<m>` | ~Copyable base + Element + 2 value generics | ~Copyable |
 | `Property<Tag, Base>.View.Read` | ~Copyable base, read-only | ~Copyable |
 | `Property<Tag, Base>.View.Read.Typed<E>` | ~Copyable read-only + Element | ~Copyable |
 | `Property<Tag, Base>.Consuming<E>` | State-tracking consuming | Consuming |
@@ -321,6 +323,43 @@ var remove: Property<Tag, Self>.View.Typed<Element>.Valued<bucketCapacity> {
 ```
 
 If the extension only has non-mutating methods (e.g., `bucket.for(hash:)`, `forEach.occupied { }`), `_read` alone is sufficient.
+
+**When to use Valued**: Use `.View.Typed<E>.Valued<n>` when the `Base` type has one value generic (`<let N: Int>`) and the extension needs `where Element: ~Copyable`. Use `.View.Typed<E>.Valued<n>.Valued<m>` when the `Base` type has two value generics. Value generics are lowercase (`n`, `m`) at the extension level.
+
+**CRITICAL — Extension-level constraints for ~Copyable**: When extending `Property.View.Typed.Valued` (or `.Valued.Valued`), ALL constraints (`Tag ==`, `Base ==`, `Element: ~Copyable`) MUST be at the **extension level**, not the method level. The compiler adds an implicit `Base: Copyable` requirement when `Base ==` is constrained at method level inside a generic extension. This silently poisons ~Copyable support.
+
+**Correct** — all constraints at extension level:
+```swift
+extension Property.View.Typed.Valued
+where Tag == Buffer<Element>.Linked<n>.Insert,
+      Base == Buffer<Element>.Linked<n>,
+      Element: ~Copyable
+{
+    @_lifetime(&self) @inlinable
+    public mutating func front(_ element: consuming Element) throws(Buffer<Element>.Linked<n>.Error) {
+        try unsafe Buffer<Element>.Linked<n>.insertFront(
+            consume element,
+            header: &base.pointee.header,
+            storage: base.pointee.storage
+        )
+    }
+}
+```
+
+**Incorrect** — constraints at method level (compiler adds implicit `Base: Copyable`):
+```swift
+extension Property.View.Typed where Element: ~Copyable {
+    public mutating func front<let N: Int>(
+        _ element: consuming Element
+    ) throws(Buffer<Element>.Linked<N>.Error)
+    where Tag == Buffer<Element>.Linked<N>.Insert,
+          Base == Buffer<Element>.Linked<N>
+    { ... }
+    // ❌ "no type for 'Base' can satisfy both 'Base == ...' and 'Base : Copyable'"
+}
+```
+
+**The rule**: `.Valued<n>` lifts value generics from the method level to the type level. This enables extension-level `where` clauses, which is the only way to avoid implicit `Copyable` constraints on `Base`.
 
 **Common mistake**: Hand-rolling a custom accessor struct instead of using `Property<Tag, Base>.View`. The Property pattern is uniform across the ecosystem.
 
@@ -504,6 +543,8 @@ extension MyType where Element: Copyable {
 **Validated by**: Experiment `static-property-view-pattern` — all six variants CONFIRMED (consuming ~Copyable through view, Copyable overloads, growth through _modify, callAsFunction, overload coexistence, full end-to-end).
 
 **The full pipeline** (static → Property.View → call site):
+
+For types **without** value generics — use `.View`:
 ```swift
 // 1. Static layer — compound name (implementation detail)
 extension MyType where Element: ~Copyable {
@@ -529,6 +570,85 @@ where Element: ~Copyable {
 
 // 3. Call site — reads as intent
 instance.insert.front(element)
+```
+
+For types **with one value generic** — use `.View.Typed<Element>.Valued<n>`:
+```swift
+// 1. Static layer
+extension Buffer.Linked where Element: ~Copyable {
+    static func insertFront(
+        _ element: consuming Element,
+        header: inout Header,
+        storage: Storage<Node>.Pool
+    ) throws(Error) { /* core logic */ }
+}
+
+// 2. Accessor — returns .Valued<N>
+extension Buffer.Linked where Element: ~Copyable {
+    public var insert: Property<Insert, Self>.View.Typed<Element>.Valued<N> {
+        mutating _read {
+            yield unsafe Property<Insert, Self>.View.Typed<Element>.Valued<N>(&self)
+        }
+        mutating _modify {
+            var view = unsafe Property<Insert, Self>.View.Typed<Element>.Valued<N>(&self)
+            yield &view
+        }
+    }
+}
+
+// 3. Extension — ALL constraints at extension level (lowercase n)
+extension Property.View.Typed.Valued
+where Tag == Buffer<Element>.Linked<n>.Insert,
+      Base == Buffer<Element>.Linked<n>,
+      Element: ~Copyable
+{
+    @_lifetime(&self) @inlinable
+    public mutating func front(
+        _ element: consuming Element
+    ) throws(Buffer<Element>.Linked<n>.Error) {
+        try unsafe Buffer<Element>.Linked<n>.insertFront(
+            consume element,
+            header: &base.pointee.header,
+            storage: base.pointee.storage
+        )
+    }
+}
+
+// 4. Call site — reads as intent
+buffer.insert.front(element)
+```
+
+For types **with two value generics** — use `.View.Typed<Element>.Valued<n>.Valued<m>`:
+```swift
+// Accessor — returns .Valued<N>.Valued<capacity>
+extension Buffer.Linked.Inline where Element: ~Copyable {
+    public var insert: Property<Buffer<Element>.Linked<N>.Insert, Self>.View.Typed<Element>.Valued<N>.Valued<capacity> {
+        mutating _read {
+            yield unsafe Property<Buffer<Element>.Linked<N>.Insert, Self>.View.Typed<Element>.Valued<N>.Valued<capacity>(&self)
+        }
+        mutating _modify {
+            var view = unsafe Property<Buffer<Element>.Linked<N>.Insert, Self>.View.Typed<Element>.Valued<N>.Valued<capacity>(&self)
+            yield &view
+        }
+    }
+}
+
+// Extension — lowercase n, m for both value generics
+extension Property.View.Typed.Valued.Valued
+where Tag == Buffer<Element>.Linked<n>.Insert,
+      Base == Buffer<Element>.Linked<n>.Inline<m>,
+      Element: ~Copyable
+{
+    @_lifetime(&self) @inlinable
+    public mutating func front(
+        _ element: consuming Element
+    ) throws(Buffer<Element>.Linked<n>.Inline<m>.Error) {
+        try unsafe base.pointee._insertFront(element)
+    }
+}
+
+// Call site — same as always
+inlineBuffer.insert.front(element)
 ```
 
 **Cross-references**: [IMPL-023], [IMPL-024], [IMPL-025]
@@ -573,6 +693,7 @@ Ten integration modules currently exist:
 | `Int.init(bitPattern: Cardinal)` | Unchecked conversion (pointer math) |
 | `Int.init(clamping: Cardinal)` | Clamped conversion (`underestimatedCount`) |
 | `Int.init(_ Cardinal) throws(Cardinal.Error)` | Throwing conversion (overflow check) |
+| `Tagged<Tag, Cardinal>.init(_ int: Int) throws(Cardinal.Error)` | Int value-generic to typed Count bridge (e.g., `try! Index<Element>.Count(capacity)`) |
 
 ---
 
@@ -746,6 +867,12 @@ Need a namespaced operation?
 ├─ ~Copyable base, mutable + Element?
 │   └─ Property<Tag, Base>.View.Typed<Element> [INFRA-106]
 │
+├─ ~Copyable base, mutable + Element + 1 value generic (e.g., <let N: Int>)?
+│   └─ Property<Tag, Base>.View.Typed<Element>.Valued<N> [INFRA-106]
+│
+├─ ~Copyable base, mutable + Element + 2 value generics (e.g., <let N: Int, let M: Int>)?
+│   └─ Property<Tag, Base>.View.Typed<Element>.Valued<N>.Valued<M> [INFRA-106]
+│
 ├─ ~Copyable base, read-only?
 │   └─ Property<Tag, Base>.View.Read [INFRA-106]
 │
@@ -870,6 +997,27 @@ static func append(
 mutating func append(_ element: consuming Element) throws(Storage.Error) {
     try Self.append(consume element, state: &header, storage: heap)
 }
+```
+
+### Property.View.Typed.Valued — Nested Accessors with Value Generics
+
+```swift
+// Buffer.Linked<N> — one value generic, uses .Valued<N>
+var buffer = Buffer<Int>.Linked<2>(minimumCapacity: 8)
+buffer.insert.front(42)          // Property.View.Typed<Int>.Valued<2>
+buffer.insert.back(99)
+let first = buffer.remove.front() // → 42
+
+// Buffer.Linked<N>.Inline<capacity> — two value generics, uses .Valued<N>.Valued<capacity>
+var inline = Buffer<Int>.Linked<2>.Inline<8>()
+try inline.insert.front(42)      // Property.View.Typed<Int>.Valued<2>.Valued<8>
+try inline.insert.back(99)
+let x = inline.remove.front()    // → 42
+
+// Buffer.Linked<N>.Small<inlineCapacity> — two value generics, same pattern
+var small = Buffer<Int>.Linked<2>.Small<4>()
+small.insert.front(10)           // Property.View.Typed<Int>.Valued<2>.Valued<4>
+small.insert.back(20)
 ```
 
 ### Enum Iteration

@@ -452,6 +452,84 @@ If the extension only has non-mutating methods (e.g., `bucket.for(hash:)`, `forE
 
 ---
 
+### [IMPL-026] Property.View Protocol Delegation
+
+**Statement**: When a `~Copyable` protocol's conformers share Property.View operations with identical semantics, the accessors and Property.View methods MUST be provided as protocol defaults with `Base: Protocol & ~Copyable` constraints. Per-type accessors MUST NOT duplicate the protocol default. Per-type Property.View extensions MAY add type-specific methods that coexist with protocol-level defaults.
+
+**Perfect** — one declaration serves all conformers:
+```swift
+// Protocol provides accessors as defaults
+extension MyProtocol where Self: ~Copyable {
+    @inlinable
+    public var pop: Property<Pop, Self>.View {
+        mutating _read { yield unsafe Property<Pop, Self>.View(&self) }
+        mutating _modify { var view = unsafe Property<Pop, Self>.View(&self); yield &view }
+    }
+}
+
+// Protocol-constrained Property.View methods
+extension Property.View where Tag == Pop, Base: MyProtocol & ~Copyable {
+    @inlinable
+    public func first() -> Index? {
+        unsafe base.pointee.popFirst()
+    }
+}
+
+// All conformers — ~Copyable, Copyable, value-generic — get pop.first() automatically.
+// Zero boilerplate per type.
+```
+
+**Imperfect** — duplicated per concrete type:
+```swift
+// Repeated for EVERY conformer
+extension ConcreteType {
+    public var pop: Property<Pop, Self>.View {
+        mutating _read { yield unsafe Property<Pop, Self>.View(&self) }
+        mutating _modify { var view = unsafe Property<Pop, Self>.View(&self); yield &view }
+    }
+}
+extension Property.View where Tag == Pop, Base == ConcreteType {
+    public func first() -> Index? { unsafe base.pointee.popFirst() }
+}
+// Same again for ConcreteType2, ConcreteType3...
+```
+
+**Type-specific methods coexist** with protocol-level defaults. A concrete `Base == ConcreteType` extension can add methods that resolve through the protocol-provided accessor:
+```swift
+// Protocol provides: var set: Property<Set, Self>.View (serves all conformers)
+// Dynamic-specific method resolves through the protocol-provided accessor:
+extension Property.View where Tag == Set, Base == Dynamic {
+    public func returning(_ index: Index) throws(Dynamic.Error) -> Bool {
+        let previous = try unsafe base.pointee.get(index)
+        try unsafe base.pointee.set(index)
+        return previous
+    }
+}
+// dynamic.set.all()              — protocol-level default
+// dynamic.set.returning(index)   — type-specific addition
+```
+
+**Compiler constraints**:
+
+1. `where Self: ~Copyable` on protocol extensions — required. Without it, the compiler adds implicit `Self: Copyable`, preventing ~Copyable conformers from accessing the defaults.
+2. `Base: Protocol & ~Copyable` on Property.View extensions — the `& ~Copyable` is required so the extension covers both Copyable and ~Copyable conformers.
+3. Per-type overrides shadow protocol defaults. If a conformer declares its own accessor with an identical body, the override is redundant — remove it.
+
+**Semantic boundary** — this pattern applies when:
+- The operation is expressible purely through protocol requirements
+- The semantics are identical across all conformers
+
+It does NOT apply when:
+- Operations check type-specific state not in the protocol (e.g., bounds-checking against `_count`)
+- Return types differ per conformer
+- Operations require type-specific initializers or growth behavior
+
+**Validated by**: Experiment `swift-bit-vector-primitives/Experiments/property-view-protocol-constraint/` — 6 variants CONFIRMED (~Copyable, Copyable, value-generic, `some Protocol` generic function).
+
+**Cross-references**: [IMPL-020], [IMPL-021], [IMPL-022], [Research: property-view-protocol-delegation.md]
+
+---
+
 ## Static Method Architecture
 
 ### [IMPL-023] Core Logic in Static Methods
@@ -575,6 +653,29 @@ For iteration examples at each level of this hierarchy, see [INFRA-107] and [INF
 **Rationale**: A `while` loop with `slot += .one` is typed mechanism — better than raw mechanism, but still mechanism. The intent is "do X for each element." The infrastructure `.forEach { }`, `.reduce.into { }`, `.map { }`, `.drain { }` from sequence-primitives and vector-primitives express exactly that intent.
 
 **Cross-references**: [IMPL-INTENT], [IMPL-EXPR-001], [IMPL-000], [IMPL-031], [IMPL-032]
+
+---
+
+## Compiler Constraints on Expression Structure
+
+### [IMPL-034] unsafe Keyword Placement
+
+**Statement**: The `unsafe` keyword MUST wrap the entire expression from the left. It cannot appear to the right of a non-assignment binary operator.
+
+**Correct**:
+```swift
+guard unsafe slot < base.pointee.slotCapacity else { throw .capacityExceeded }
+```
+
+**Incorrect**:
+```swift
+guard slot < unsafe base.pointee.slotCapacity else { throw .capacityExceeded }
+// ❌ Compiler error: 'unsafe' cannot appear to the right of '<'
+```
+
+**Rationale**: Swift's `unsafe` is a statement-level annotation, not an expression-level operator. When it appears in a binary expression, it must precede the full expression, not a sub-expression.
+
+**Cross-references**: [IMPL-INTENT], [IMPL-030]
 
 ---
 
