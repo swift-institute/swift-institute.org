@@ -205,6 +205,33 @@ When `Extra = Never`, `switch never {}` compiles to nothing — a type-level ass
 
 ---
 
+## Protocol Refinement
+
+### [PATTERN-051] Inherit vs Shadow for Refining Protocols
+
+**Statement**: When a refining protocol (`Collection.Protocol` refining `Sequence.Protocol`) shares operations with its parent, the decision to inherit or shadow MUST follow this rule: if the refining protocol's implementation is identical to the parent's, inherit — do not redeclare a tag. Shadow with a protocol-specific tag only when the implementation genuinely differs.
+
+**Decision framework**: For any operation shared across parent and refining protocol, ask: "Does the refining protocol's implementation differ from the parent's?" If no → inherit. If yes → shadow with a more-constrained Property.View extension.
+
+**Correct** — inherit identical operations:
+```swift
+// Sequence.Protocol provides: .contains, .first, .map, .filter, .reduce, .satisfies
+// Collection.Protocol inherits all of these — NO collection-specific tags needed.
+// Collection.Protocol adds: .forEach (index-based, not iterator-based), .count (returns typed Count)
+```
+
+**Incorrect** — redeclare identical operations:
+```swift
+// ❌ Collection.Contains tag with same makeIterator() loop as Sequence.Contains
+// ❌ Collection.Map tag with same implementation as Sequence.Map
+```
+
+**The compiler resolves correctly**: When both parent and refining protocol provide same-named default properties with different return types (e.g., `Property<Sequence.ForEach, Self>.View` vs `Property<Collection.ForEach, Self>.View`), the compiler selects the more-specific protocol extension for conformers of the refining protocol.
+
+**Cross-references**: [IMPL-026], [INFRA-107]
+
+---
+
 ## Concurrency Patterns
 
 ### [PATTERN-020] Never Resume Under Lock
