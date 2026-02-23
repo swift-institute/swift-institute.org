@@ -256,6 +256,7 @@ Before writing ANY implementation code, consult this catalog. The typed infrastr
 | `Property<Tag, Base>.View.Typed<E>.Valued<n>.Valued<m>` | ~Copyable base + Element + 2 value generics | ~Copyable |
 | `Property<Tag, Base>.View.Read` | ~Copyable base, read-only | ~Copyable |
 | `Property<Tag, Base>.View.Read.Typed<E>` | ~Copyable read-only + Element | ~Copyable |
+| `Property<Tag, Base>.View.Read.Typed<E>.Valued<n>` | ~Copyable read-only + Element + 1 value generic | ~Copyable |
 | `Property<Tag, Base>.Consuming<E>` | State-tracking consuming | Consuming |
 
 **Pattern**:
@@ -325,6 +326,43 @@ var remove: Property<Tag, Self>.View.Typed<Element>.Valued<bucketCapacity> {
 ```
 
 If the extension only has non-mutating methods (e.g., `bucket.for(hash:)`, `forEach.occupied { }`), `_read` alone is sufficient.
+
+**Property.View.Read — non-mutating access via `init(borrowing:)`**: All `View.Read` variants (`Read`, `Read.Typed<E>`, `Read.Typed<E>.Valued<n>`) support two construction paths:
+
+| Initializer | Context | How |
+|-------------|---------|-----|
+| `init(borrowing:)` | Non-mutating | `withUnsafePointer(to:)` on borrow |
+| `init(_: UnsafePointer)` | Any (caller provides pointer) | Direct pointer wrap |
+
+Prefer `init(borrowing:)` — it works from non-mutating `_read` accessors and `borrowing` functions, enabling `let` bindings on the container.
+
+**Non-mutating read-only accessor** (preferred):
+```swift
+extension Container where Element: ~Copyable {
+    var peek: Property<Peek, Self>.View.Read.Typed<Element> {
+        _read {
+            yield Property<Peek, Self>.View.Read.Typed(
+                borrowing: self
+            )
+        }
+    }
+}
+```
+
+**Mutating read-only accessor** (legacy, still supported):
+```swift
+extension Container where Element: ~Copyable {
+    var peek: Property<Peek, Self>.View.Read.Typed<Element> {
+        mutating _read {
+            yield unsafe Property<Peek, Self>.View.Read.Typed(
+                unsafe UnsafePointer(Property<Peek, Self>.View(&self).base)
+            )
+        }
+    }
+}
+```
+
+The non-mutating variant enables `let` bindings: `let container = ...; container.peek.count`. The mutating variant requires `var`.
 
 **When to use Valued**: Use `.View.Typed<E>.Valued<n>` when the `Base` type has one value generic (`<let N: Int>`) and the extension needs `where Element: ~Copyable`. Use `.View.Typed<E>.Valued<n>.Valued<m>` when the `Base` type has two value generics. Value generics are lowercase (`n`, `m`) at the extension level.
 
@@ -878,6 +916,12 @@ Need a namespaced operation?
 │
 ├─ ~Copyable base, read-only?
 │   └─ Property<Tag, Base>.View.Read [INFRA-106]
+│
+├─ ~Copyable base, read-only + Element?
+│   └─ Property<Tag, Base>.View.Read.Typed<Element> [INFRA-106]
+│
+├─ ~Copyable base, read-only + Element + 1 value generic?
+│   └─ Property<Tag, Base>.View.Read.Typed<Element>.Valued<N> [INFRA-106]
 │
 └─ None of the above?
     └─ Likely still covered — check Property.Consuming<E>
