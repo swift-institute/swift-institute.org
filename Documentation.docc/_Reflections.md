@@ -936,6 +936,82 @@ Research that concludes "don't do this" is as valuable as research that conclude
 
 ---
 
+## 2026-02-12: The Static Method Pattern as Language Workaround Turned Canonical Architecture
+
+*After validating and canonicalizing the static + Property.View pattern across all buffer variants.*
+
+### The Compiler's Preference Is the Bug
+
+When two extensions define the same method — one constrained `where Element: ~Copyable`, the other `where Element: Copyable` — and the Copyable extension calls `self.method()`, Swift selects the more-constrained overload. It calls itself. Infinite recursion.
+
+This isn't a bug in the compiler. It's a consequence of how overload resolution works: the Copyable constraint is more specific than the ~Copyable constraint, so Swift prefers it. The programmer's intent — "call the less-constrained version" — cannot be expressed through `self`. There is no syntax for "call the overload I'm not in."
+
+The `_` prefix workaround (`_insertFront` in the ~Copyable extension, `insertFront` calling `_insertFront` in the Copyable extension) broke the recursion but violated naming conventions and created an asymmetric API: one "real" method, one "implementation detail" that happens to be the actual logic.
+
+Static methods resolve this elegantly. `MyType.method(...)` is called on the type, not on `self`. There is no `self` to trigger overload preference. Both extensions call the same static, and the compiler doesn't choose between them — it dispatches to the one unambiguous target.
+
+The insight: the workaround is architecturally superior to the "correct" approach it works around. Statics with decomposed parameters are more testable (pass state explicitly), more composable (call from any context), and more transparent (the signature declares all inputs). The language limitation forced a better design.
+
+### Two Naming Layers Is Not a Compromise
+
+The static + Property.View pattern creates two naming layers: compound names in statics (`insertFront`, `removeFront`), nested accessors in the public API (`insert.front()`, `remove.front()`). The initial instinct was that this violates [API-NAME-002]'s prohibition on compound identifiers.
+
+It doesn't. [API-NAME-002] governs consumer-facing API. Static methods are implementation details — they appear in delegation code within the package, never at consumer call sites. The two layers have different audiences: the package author reads `MyType.insertFront(element, state: &state, storage: storage)`; the consumer reads `instance.insert.front(element)`. Different audiences, different naming rules.
+
+This distinction was uncomfortable to formalize. It felt like an exception. But the experiment proved it's a feature: compound names at the static layer are *clearer* than nested names would be, because statics don't have the property accessor context that makes nesting readable. `MyType.insert.front(element, state: &state, storage: storage)` would be bizarre — `insert` would need to be a type-level namespace, not a property. Compound names are the natural expression at this layer.
+
+### The Experiment Almost Failed for the Wrong Reasons
+
+The first build of `static-property-view-pattern` produced four errors. None were about the pattern being tested. All were about experiment infrastructure:
+
+1. `~Escapable` requires the `Lifetimes` experimental feature flag
+2. `@_lifetime(borrow ptr)` is mandatory on `~Escapable` initializers
+3. `@_lifetime(&self)` is mandatory on mutating methods of `~Escapable` types
+4. Global mutable state requires `nonisolated(unsafe)` in Swift 6
+
+The hypothesis — consuming ~Copyable elements through a ~Escapable view calling statics — was correct. The experiment's boilerplate was wrong. This is a recurring pattern in Swift experiments: the feature being tested works, but the surrounding scaffolding triggers unrelated diagnostics. The fix came from reading the production `Property.View` source and matching its annotations exactly.
+
+This validates [EXP-011] (Experiment-First Debugging): the experiment proved the capability works in isolation. The production code's annotations weren't mysterious — they were precisely the annotations the experiment needed. The delta between "experiment fails" and "experiment succeeds" was infrastructure, not design.
+
+### Generalization as Quality Test
+
+The first draft of [IMPL-023], [IMPL-024], and [IMPL-025] was buffer-specific. It mentioned Buffer.Ring, Buffer.Linked, Storage.Heap, Storage.Pool, `header: inout Header`. The user's correction — "remember, /implementation is meant as GENERAL implementation skill" — forced generalization.
+
+The generalized rules are better. Not just broader, but *clearer*. `MyType` with `state: inout State` and `storage: Storage` communicates the pattern without distracting with domain specifics. A reader implementing a tree, a graph, a parser, or any ~Copyable generic type can see themselves in the pattern. The buffer-specific version would have required mental translation: "ok, so `header` maps to my `cursor`, and `storage` maps to my `backing`..."
+
+This is a general principle for skill documentation: if a rule can only be stated in terms of specific types, it's not a rule — it's a recipe. Rules generalize. Recipes duplicate. The effort of stripping domain specifics exposes the underlying principle, and the principle is what belongs in a skill.
+
+### Six Variants, One Pipeline
+
+The experiment tested six capabilities independently, then combined them:
+
+1. Consuming ~Copyable through a ~Escapable view
+2. Copyable extension with ensureUnique, no recursion
+3. Growth (storage replacement) through _modify coroutine
+4. callAsFunction for verb-as-operation
+5. ~Copyable and Copyable view methods coexisting
+6. Full end-to-end combination
+
+Each variant was minimal — one capability, one test function, one assertion. The final variant composed all five prior capabilities. This structure (isolate, then integrate) is the experiment equivalent of unit-then-integration testing.
+
+Variant 5 was the most revealing. It used global flags to prove which overload was selected at runtime. For `Int` (Copyable), the Copyable path was taken. For `UniqueResource` (~Copyable), the ~Copyable path was taken. This is the core of [IMPL-025] — overload resolution chooses the right tier automatically. The experiment didn't just prove it compiles; it proved the *runtime behavior* matches the design intent.
+
+### From Pattern to Rule to Implementation to Canonicalization
+
+The progression across sessions:
+
+1. Buffer.Ring already used static methods (organic discovery)
+2. Buffer.Linked was refactored from `_` prefixes to statics (conscious alignment)
+3. Buffer.Slots was aligned with statics + proper copy/ensureUnique (consistency audit)
+4. The experiment validated the full Property.View integration (empirical proof)
+5. The implementation skill was updated with [IMPL-023/024/025] (canonicalization)
+
+Each step generalized: one type → matching types → all types → proven pattern → universal rule. The canonicalization didn't create the pattern — it recognized what was already emerging and gave it a name, a number, and a place in the permanent record.
+
+This is how infrastructure conventions should evolve: emerge from practice, validate through experiment, codify through documentation. The reverse — specify first, implement second — produces rules that don't fit reality. The forward path — implement, observe, extract, canonicalize — produces rules that describe what already works.
+
+---
+
 ## Topics
 
 ### Related Documents

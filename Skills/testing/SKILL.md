@@ -322,7 +322,7 @@ Tests/Memory Primitives Tests/
 import Memory_Primitives_Test_Support
 ```
 
-This one import transitively provides: `Memory_Primitives`, `Index_Primitives_Test_Support`, `Range_Primitives_Test_Support`, `Identity_Primitives_Test_Support`, `Ordinal_Primitives_Test_Support`, `Cardinal_Primitives_Test_Support`, and `Affine_Primitives_Test_Support` — every upstream module and its test utilities.
+This one import transitively provides: `Memory_Primitives`, `Index_Primitives_Test_Support`, `Vector_Primitives_Test_Support`, `Identity_Primitives_Test_Support`, `Ordinal_Primitives_Test_Support`, `Cardinal_Primitives_Test_Support`, and `Affine_Primitives_Test_Support` — every upstream module and its test utilities.
 
 #### Index, Offset, and Count as Integer Literals
 
@@ -428,20 +428,20 @@ func `inline buffer`() {
 }
 ```
 
-#### Range.Lazy from Swift Ranges
+#### Vectors from Swift Ranges
 
 ```swift
-import Range_Primitives_Test_Support
+import Vector_Primitives_Test_Support
 
 @Test
-func `lazy range from Swift range`() {
-    let range = try Range.Lazy(0..<10) { $0 }
-    #expect(range.count == 10)
+func `vector from Swift range`() {
+    let vector = try Vector(0..<10) { $0 }
+    #expect(vector.count == 10)
 }
 
 @Test
-func `lazy range with transform`() {
-    let range = try Range.Lazy(0..<5) { $0 * 2 }
+func `vector with transform`() {
+    let vector = try Vector(0..<5) { $0 * 2 }
     // Produces: 0, 2, 4, 6, 8
 }
 ```
@@ -536,7 +536,7 @@ struct MyFeatureTests {
 | Module | Unique API |
 |--------|-----------|
 | **Buffer Primitives TS** | `Buffer.Ring: ExpressibleByArrayLiteral`. Factory methods: `Buffer.Ring.with(_:minimumCapacity:)`, `.Bounded.with(_:capacity:)`, `Buffer.Linear.with(...)`, `.Bounded.with(...)`, `Buffer.Slab.Bounded.with(...)`, `Buffer.Ring.Inline.with(...)`, `Buffer.Linear.Inline.with(...)`, `Buffer.Slab.Inline.with(...)` — all constrained to `Element == Int` |
-| **Range Primitives TS** | `Range.Lazy.init(_: Swift.Range<UInt>, transform:)`, `Range.Lazy.init(_: Swift.Range<Int>, transform:)`, `Range.Lazy.init(count:transform:)`, `Range.Lazy.init(start:end:transform:)`, `Range.Error.Int` |
+| **Vector Primitives TS** | `Vector.init(_: Swift.Range<UInt>, transform:)`, `Vector.init(_: Swift.Range<Int>, transform:)`, `Vector.init(count:transform:)`, `Vector.init(start:end:transform:)` |
 
 #### Primitives Layer — Pure Re-Export Aggregators
 
@@ -548,7 +548,7 @@ These modules provide no unique API — they exist to aggregate upstream re-expo
 | **Ordinal Primitives TS** | Ordinal Primitives, Cardinal TS |
 | **Affine Primitives TS** | Affine Primitives, Ordinal TS, Cardinal TS |
 | **Index Primitives TS** | Identity TS, Ordinal TS, Cardinal TS, Affine TS |
-| **Memory Primitives TS** | Memory Primitives, Index TS, Range TS |
+| **Memory Primitives TS** | Memory Primitives, Index TS, Vector TS |
 | **Storage Primitives TS** | Storage Primitives, Memory TS |
 | **Bit Primitives TS** | Identity TS |
 | **Bit Index Primitives TS** | Bit TS, Index TS |
@@ -559,7 +559,7 @@ These modules provide no unique API — they exist to aggregate upstream re-expo
 | **Finite Primitives TS** | Finite Primitives, Index TS |
 | **Hash Table Primitives TS** | Hash Table Primitives, Index TS |
 | **Set Primitives TS** | Bit TS, Index TS |
-| **Vector Primitives TS** | Vector Primitives, Algebra Modular TS, Index TS |
+| **Vector Primitives TS** | Vector Primitives, Index TS |
 | **Binary Primitives TS** | Binary Primitives, Memory TS, Bit TS |
 | **Binary Parser Primitives TS** | Binary Parser Primitives, Binary TS, Index TS, Serialization Primitives, Parser Primitives |
 
@@ -599,7 +599,7 @@ targets: [
         dependencies: [
             "Memory Primitives",
             .product(name: "Index Primitives Test Support", package: "swift-index-primitives"),
-            .product(name: "Range Primitives Test Support", package: "swift-range-primitives"),
+            .product(name: "Vector Primitives Test Support", package: "swift-vector-primitives"),
         ],
         path: "Tests/Support"
     ),
@@ -669,13 +669,13 @@ Sources/Memory Primitives Test Support/        // ❌ Not at Tests/Support (exce
 ```swift
 @_exported public import Memory_Primitives
 @_exported public import Index_Primitives_Test_Support
-@_exported public import Range_Primitives_Test_Support
+@_exported public import Vector_Primitives_Test_Support
 ```
 
 **Effect**: A test file that imports `Memory_Primitives_Test_Support` transitively receives:
 - `Memory_Primitives` (main module)
 - `Index_Primitives_Test_Support` (and its chain: Identity, Ordinal, Cardinal, Affine)
-- `Range_Primitives_Test_Support` (and its chain)
+- `Vector_Primitives_Test_Support` (and its chain)
 
 **Incorrect**:
 ```swift
@@ -697,9 +697,9 @@ Identity Primitives Test Support (root — literal conformances for Tagged)
     ↓
 Index Primitives Test Support (hub — re-exports Identity, Ordinal, Cardinal, Affine)
     ↓                    ↓                          ↓
-Range Primitives TS    Cyclic Index Primitives TS   Collection Primitives TS
+Vector Primitives TS   Cyclic Index Primitives TS   Collection Primitives TS
     ↓                    ↓
-Memory Primitives Test Support (re-exports Index TS, Range TS)
+Memory Primitives Test Support (re-exports Index TS, Vector TS)
     ↓
 Storage Primitives Test Support (re-exports Memory TS)
     ↓

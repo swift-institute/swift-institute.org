@@ -45,6 +45,7 @@ This is the root meta-skill for the Swift Institute ecosystem.
 - **memory** - [MEM-COPY-*, MEM-OWN-*, MEM-LINEAR-*] Ownership, copyability
 - **memory-safety** - [MEM-SAFE-*, MEM-SEND-*, MEM-REF-*, MEM-LIFE-*] Strict safety, reference primitives
 - **copyable-remediation** - [COPY-FIX-*, COPY-REM-*] ~Copyable constraint fixes
+- **existing-infrastructure** - [INFRA-*] Catalog of typed boundary overloads, Standard Library Integration modules, Tagged functors, Ratio scaling
 - **testing** - [TEST-001–018] Test organization, Swift Testing patterns
 
 ### Process Layer
@@ -54,6 +55,8 @@ This is the root meta-skill for the Swift Institute ecosystem.
 - **skill-creation** - [SKILL-CREATE-*] Adding new skills to the ecosystem
 - **package-export** - [PKG-EXPORT-*] Export packages for LLM consumption
 - **collaborative-discussion** - [COLLAB-*] Claude-ChatGPT collaborative discussions
+- **reflect-session** - [REFL-*] Structured post-session reflection capture
+- **reflections-processing** - [REFL-PROC-*] Triage reflections into skill/doc/research improvements
 
 ---
 
@@ -73,7 +76,8 @@ Skills are loaded based on their `requires:` DAG. The order is:
 10. `copyable-remediation` (requires: memory)
 11. `conversions` (requires: swift-institute, naming)
 12. `implementation` (requires: swift-institute, naming, errors, code-organization, conversions)
-13. `advanced-patterns` (requires: memory, memory-safety, design)
+13. `existing-infrastructure` (requires: swift-institute, implementation, conversions)
+14. `advanced-patterns` (requires: memory, memory-safety, design)
 14. `testing` (requires: swift-institute, naming, code-organization)
 14. Process skills (requires: swift-institute)
 
