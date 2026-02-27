@@ -281,9 +281,9 @@ func defaultConfiguration() -> Config { ... }  // ❌ Implementation in umbrella
 |---------|-----------|-------|
 | parser | 3 (Core → Take → Many) | Wide fan, one 3-deep chain |
 | buffer | 3 (Core → Linear → Linear Inline → Linear Small) | Wide fan, per-variant 2-3 depth |
-| memory | 2 (Core → Arena/Pool) | Flat star |
+| memory | 2 (Core → StdLib Integration → Arena/Pool) | Flat star |
 
-**Rationale**: Brent's theorem: given DAG with work W and span S, execution time on P processors is bounded by T_P >= max(W/P, S). With depth 3 and 35 targets: max parallelism = 35/3 ~ 11.7x. A deeper DAG (depth 10) would yield only 3.5x. The wide shallow shape is near-optimal for build parallelism (Mokhov et al. 2018, Amdahl's law: sequential fraction = 3/35 ~ 8.6%).
+**Rationale**: Brent's theorem: given DAG with work W and span S, execution time on P processors is bounded by T_P >= max(W/P, S). With depth 3 and 35 targets: max parallelism = 35/3 ~ 11.7x. Contrast: a deeper DAG (depth 10) would yield only 3.5x — shallow DAGs are disproportionately better. The wide shallow shape is near-optimal for build parallelism (Mokhov et al. 2018, Amdahl's law: sequential fraction = 3/35 ~ 8.6%).
 
 **Cross-references**: [MOD-001], [MOD-003]
 
@@ -305,6 +305,8 @@ A concern SHOULD NOT be a separate target when:
 1. It always co-occurs with another target (no independent consumer)
 2. It would create a depth > 3 chain without justification
 3. The file count is 1 and no other target depends on it specifically
+
+**Tradeoff**: Each additional target boundary requires `@inlinable` annotations for cross-target specialization. Whole Module Optimization (WMO) is bounded by target scope — code in separate targets cannot be jointly optimized without explicit `@inlinable`. Weigh this annotation burden against the modularity benefit.
 
 **Evidence**:
 
