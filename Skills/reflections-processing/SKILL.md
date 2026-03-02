@@ -96,7 +96,7 @@ Triage accumulated session reflections into knowledge improvements. Each invocat
 | `[research]` | ResearchTopic | Triple-loop | New Research/ document |
 | `[experiment]` | ExperimentTopic | Validation | New Experiments/ package |
 | `[blog]` | BlogIdea | Communication | Blog/_index.md |
-| `[package]` | PackageInsight | Package-specific | Package's `_Package-Insights.md` |
+| `[package]` | PackageInsight | Package-specific | Package's `Research/_Package-Insights.md` |
 
 **Override rules**:
 - If a `[doc]` item implies the normative rule itself is wrong (not just poorly explained), reclassify as `[skill]`
@@ -191,7 +191,7 @@ Action: Rewrite [API-NAME-001] to allow compound names for macros
 
 **Rationale**: Documentation.docc/ files are non-normative but must still follow structural conventions and use impersonal voice for long-term readability.
 
-**Cross-references**: [REFL-PROC-008], Documentation Standards
+**Cross-references**: [REFL-PROC-008], **documentation** skill, **readme** skill
 
 ---
 
@@ -253,7 +253,7 @@ Becomes: "Names should describe mechanism, not origin."
 
 ### [REFL-PROC-009] PackageInsight Execution
 
-**Statement**: When the triage outcome is PackageInsight (tag `[package]`), the processor MUST route the insight to the named package's `_Package-Insights.md`, following the package routing rules below.
+**Statement**: When the triage outcome is PackageInsight (tag `[package]`), the processor MUST route the insight to the named package's `Research/_Package-Insights.md`, following the package routing rules below.
 
 **Package location resolution**:
 
@@ -263,7 +263,7 @@ Becomes: "Names should describe mechanism, not origin."
 | `swift-rfc-*`, `swift-iso-*`, `swift-ietf-*` | swift-standards | `/Users/coen/Developer/swift-standards/{package}/` |
 | Other `swift-*` | swift-foundations | `/Users/coen/Developer/swift-foundations/{package}/` |
 
-**Documentation.docc location**: `{package}/Sources/{primary-target}/Documentation.docc/`
+**Research location**: `{package}/Research/_Package-Insights.md`
 
 **If `_Package-Insights.md` does not exist**: Create it using the template:
 
@@ -309,9 +309,9 @@ future work on this package.
 **Applies to**: {Specific types, APIs, or subsystems within the package}
 ```
 
-**Rationale**: Package-specific insights belong with the package, not scattered across Swift Institute docs. The lighter format (no requirement IDs, no Correct/Incorrect) reduces friction for non-normative knowledge.
+**Rationale**: Package insights are non-normative design rationale — they belong in `Research/` alongside other design rationale documents, not in `.docc/`. The `.docc` catalogue is the expanded API reference layer per [DOC-027]; it should *link to* research documents per [DOC-028], not contain them. The `.docc` root page SHOULD include a link to `_Package-Insights.md` in its `## Topics` or `## Research` section.
 
-**Cross-references**: [REFL-003], [RES-002a] (research triage by scope)
+**Cross-references**: [REFL-003], [RES-002a] (research triage by scope), [DOC-027], [DOC-028]
 
 ---
 

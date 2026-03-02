@@ -138,7 +138,7 @@ into genuine analysis. Ask "what pattern does this instance belong to?"}
 | `[research]` | ResearchTopic | New Research/ document per [RES-003] | Triple-loop |
 | `[experiment]` | ExperimentTopic | New Experiments/ package per [EXP-002] | Validation |
 | `[blog]` | BlogIdea | Blog/_index.md per [BLOG-002] | Communication |
-| `[package]` | PackageInsight | Package's `_Package-Insights.md` | Package-specific |
+| `[package]` | PackageInsight | Package's `Research/_Package-Insights.md` | Package-specific |
 
 **Statement**: Action items MUST name a specific target. `[skill] naming` not `[skill]`. `[doc] API-Requirements.md` not `[doc]`. `[package] swift-kernel` not `[package]`.
 

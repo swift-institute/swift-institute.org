@@ -2,6 +2,7 @@
 name: modularization
 description: |
   Intra-package modularization: target decomposition, dependency structure, constraint isolation.
+  Cross-package integration: SE-0450 trait-gated targets for optional inter-package conformances.
   Apply when organizing multiple targets within a SwiftPM package or auditing package structure.
 
 layer: implementation
@@ -47,6 +48,7 @@ This is the governing principle. Every MOD-* rule is a corollary.
 **Statement**: Every multi-product package MUST have a `{Domain} Primitives Core` target containing namespace enums, foundational protocols, and minimal type definitions.
 
 Core properties:
+- Core is an **internal target only** — it MUST NOT be published as a library product. Only the umbrella and variant targets are products.
 - Core re-exports external dependencies via `@_exported public import` in `exports.swift`
 - Every other target in the package depends on Core (directly or transitively)
 - Core holds the namespace enum and foundational protocol(s)
@@ -374,6 +376,85 @@ extension UnsafePointer { ... }  // ❌ In Core, not isolated
 **Rationale**: Stdlib extensions can cause implicit member resolution conflicts if imported broadly. Isolating them lets consumers who don't need stdlib interop avoid the extensions. Only present when stdlib extensions exist (not all packages have them).
 
 **Cross-references**: [MOD-001], [MOD-012]
+
+---
+
+### [MOD-014] Cross-Package Integration via Traits
+
+**Statement**: When package A needs to provide integration with package B's types (e.g., conformances, witness values, adapters), and B is not a universal dependency of A's consumers, the integration MUST be gated behind an SE-0450 package trait.
+
+This is **Problem 2** (cross-package optional integration). It is distinct from Problem 1 (intra-package dependency isolation, solved by Core extraction per [MOD-001]).
+
+Structure:
+1. Package A declares a trait in its `Package.swift` via the `traits:` parameter
+2. Package A declares B as a package-level dependency (always resolved for development, but gated for consumers)
+3. Package A adds an integration target whose dependency on B uses `condition: .when(traits: ["TraitName"])`
+4. Consumers opt in by adding `traits: ["TraitName"]` to their `.package(...)` dependency declaration
+5. SE-0226 target-based dependency resolution ensures consumers who don't enable the trait never resolve B
+
+**Correct** (provider package):
+```swift
+let package = Package(
+    name: "swift-dependencies",
+    products: [
+        .library(name: "Dependencies", targets: ["Dependencies"]),
+        .library(name: "Clocks Dependency", targets: ["Clocks Dependency"]),
+    ],
+    traits: [
+        .trait(name: "Clocks"),
+    ],
+    dependencies: [
+        .package(path: "../swift-witnesses"),
+        .package(path: "../../swift-primitives/swift-clock-primitives"),
+    ],
+    targets: [
+        .target(name: "Dependencies", dependencies: [
+            .product(name: "Witnesses", package: "swift-witnesses"),
+        ]),
+        // MARK: - Integration
+        .target(name: "Clocks Dependency", dependencies: [
+            "Dependencies",
+            .product(name: "Clock Primitives", package: "swift-clock-primitives",
+                     condition: .when(traits: ["Clocks"])),
+        ]),
+    ]
+)
+```
+
+**Correct** (consumer package):
+```swift
+.package(path: "../swift-dependencies", traits: ["Clocks"]),
+// ...
+.product(name: "Clocks Dependency", package: "swift-dependencies"),
+```
+
+**Incorrect**:
+```swift
+// ❌ Nested package for integration — fails GitHub publication (SPM limitation)
+.package(path: "../swift-dependencies/integration/swift-clocks-dependency"),
+
+// ❌ Separate repository for a single integration target — unnecessary proliferation
+.package(url: "https://github.com/org/swift-clocks-dependency.git", from: "1.0.0"),
+
+// ❌ Integration dependency unconditional — all consumers pay the cost
+.target(name: "Clocks Dependency", dependencies: [
+    "Dependencies",
+    .product(name: "Clock Primitives", package: "swift-clock-primitives"),  // ❌ No trait gate
+]),
+```
+
+Decision criteria — use traits when:
+- The integration target connects two otherwise-independent packages
+- Not all consumers of the provider need the integration
+- The alternative would be a separate repository or nested package
+
+Do NOT use traits for:
+- Intra-package Core extraction (use [MOD-001] instead)
+- Dependencies that all consumers need (just declare them normally)
+
+**Rationale**: SE-0450 package traits (Swift 6.1+) solve the cross-package integration problem without repository proliferation, nested package limitations, or unconditional dependency resolution. The consumer opts in explicitly, and SE-0226 ensures unused integration targets don't pull in their dependencies. Validated with swift-dependencies clock integration (research: `cross-package-integration-strategies.md`).
+
+**Cross-references**: [MOD-001], [MOD-002], SE-0450, SE-0226, `cross-package-integration-strategies.md`
 
 ---
 

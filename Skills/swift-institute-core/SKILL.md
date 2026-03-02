@@ -39,7 +39,7 @@ This is the root meta-skill for the Swift Institute ecosystem.
 - **implementation** - [IMPL-*], [PATTERN-009–021] Call-site-first patterns, typed arithmetic, boundary overloads (supersedes anti-patterns)
 - **conversions** - [IDX-*], [CONV-*] Index<T> patterns, conversion APIs, rawValue access rules
 - **memory-arithmetic** - [MEM-ARITH-*] Memory.Address typed arithmetic (in swift-memory-primitives)
-- **platform** - [PATTERN-001–008] Build, platform, Swift 6, C shims
+- **platform** - [PLAT-ARCH-*], [PATTERN-001–008] Platform code layering (L1–L3), compilation mechanics, Swift 6, C shims
 - **design** - [API-LAYER-*, PATTERN-017–050, SEM-DEP-*] API design, layering, semantic dependencies
 - **modularization** - [MOD-*] Intra-package target decomposition, constraint isolation
 - **advanced-patterns** - [PATTERN-014–048] Memory ownership, unsafe ops, refactoring
@@ -60,6 +60,7 @@ This is the root meta-skill for the Swift Institute ecosystem.
 - **collaborative-discussion** - [COLLAB-*] Claude-ChatGPT collaborative discussions
 - **reflect-session** - [REFL-*] Structured post-session reflection capture
 - **reflections-processing** - [REFL-PROC-*] Triage reflections into skill/doc/research improvements
+- **dutch-law** - [NL-WET-*] Dutch legislation lookup via wetten.overheid.nl
 
 ---
 
