@@ -61,6 +61,7 @@ This is the root meta-skill for the Swift Institute ecosystem.
 - **reflect-session** - [REFL-*] Structured post-session reflection capture
 - **reflections-processing** - [REFL-PROC-*] Triage reflections into skill/doc/research improvements
 - **dutch-law** - [NL-WET-*] Dutch legislation lookup via wetten.overheid.nl
+- **save-all** - [SAVE-*] Commit and push all repos to remote
 
 ---
 
