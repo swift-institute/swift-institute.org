@@ -62,6 +62,7 @@ This is the root meta-skill for the Swift Institute ecosystem.
 - **reflections-processing** - [REFL-PROC-*] Triage reflections into skill/doc/research improvements
 - **dutch-law** - [NL-WET-*] Dutch legislation lookup via wetten.overheid.nl
 - **testing-institute** - [INST-TEST-*] Nested package pattern for performance + snapshot testing
+- **research-meta-analysis** - [META-*] Corpus health: staleness, supersession, revalidation, pruning
 - **quick-commit-and-push-all** - [SAVE-*] Commit and push all sub-repos to remote
 
 ---
@@ -89,6 +90,7 @@ Skills are loaded based on their `requires:` DAG. The order is:
 15. `documentation` (requires: swift-institute, naming, code-organization)
 15. `readme` (requires: swift-institute)
 16. Process skills (requires: swift-institute)
+16. `research-meta-analysis` (requires: research-process, experiment-process, reflect-session)
 
 ---
 
