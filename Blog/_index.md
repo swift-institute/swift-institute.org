@@ -26,7 +26,7 @@ Central backlog of blog post ideas captured from Swift Institute work.
 
 | ID | Title | Category | Source | Captured | Notes |
 |----|-------|----------|--------|----------|-------|
-| BLOG-IDEA-001 | The Hidden Deinit Bug in ~Copyable Inline Storage | Technical Deep Dive | [Experiments/_index.md](Experiments/_index.md) | 2026-01-23 | Swift 6.2 bug, workaround documented, affects Deque/Queue/Stack |
+| BLOG-IDEA-001 | The Hidden Deinit Bug in ~Copyable Inline Storage (and how Swift 6.2.4 fixed it) | Technical Deep Dive | [Experiments/_index.md](Experiments/_index.md) | 2026-01-23 | Swift 6.2 bug FIXED in 6.2.4 — update angle to "bug journey" story |
 | BLOG-IDEA-002 | Module Boundaries and ~Copyable Constraint Poisoning | Lessons Learned | [Experiments/_index.md](Experiments/_index.md) | 2026-01-23 | Module splitting as solution, applied in array-primitives |
 | BLOG-IDEA-003 | BitwiseCopyable's Hidden Constraint on Lifetime Inference | Technical Deep Dive | [BitwiseCopyable Analysis.md](/Users/coen/Developer/swift-primitives/Sources/Swift Primitives/Swift Primitives.docc/Reference/BitwiseCopyable Analysis.md) | 2026-01-23 | Category error in compiler, accidental workaround found |
 | BLOG-IDEA-004 | Conditional Copyability: Unified Architecture for Containers | Technical Deep Dive | [Stack Research Paper](/Users/coen/Developer/swift-primitives/swift-stack-primitives/Research/Research Paper.md) | 2026-01-23 | ManagedBuffer enables conditional Copyable, full research paper |
@@ -41,7 +41,13 @@ Central backlog of blog post ideas captured from Swift Institute work.
 | BLOG-IDEA-013 | Typed Throws Wrapper Pattern for stdlib Functions | Pattern Documentation | [Tier 0 Analysis](/Users/coen/Developer/swift-primitives/Sources/Swift Primitives/Swift Primitives.docc/Research/Tier%200%20Comparative%20Analysis.md) | 2026-01-23 | 60+ typed throws functions, error preservation pattern |
 | BLOG-IDEA-014 | Combining ~Copyable and ~Escapable for Lifetime Safety | Technical Deep Dive | [Tier 0 Analysis](/Users/coen/Developer/swift-primitives/Sources/Swift Primitives/Swift Primitives.docc/Research/Tier%200%20Comparative%20Analysis.md) | 2026-01-23 | String primitives double-safety pattern |
 | BLOG-IDEA-015 | Seven Patterns of Best-in-Class Technical Blog Posts | Tutorial | [Research/Best-in-Class Blog Post Pattern.md](Research/Best-in-Class%20Blog%20Post%20Pattern.md) | 2026-01-23 | Evidence-based writing patterns, actionable framework |
+| BLOG-IDEA-024 | The Pointer Acquisition Problem: Why Swift Can't Project Pointers from Borrowed Values | Technical Deep Dive | [Experiments/_index.md](Experiments/_index.md) | 2026-01-23 | Was "In Progress" — no draft exists. Reset to Ready. |
+| BLOG-IDEA-025 | Why you can't build a ~Escapable Pointer (and what Builtin.load teaches us) | Technical Deep Dive | [Experiments/_index.md](Experiments/_index.md) | 2026-01-24 | Was "In Progress" — no draft exists. Reset to Ready. |
 | BLOG-IDEA-026 | BorrowingSequence: Span-Based Iteration Without Copies | Pattern Documentation | [borrowing-sequence-pitch](/Users/coen/Developer/swift-primitives/swift-sequence-primitives/Experiments/borrowing-sequence-pitch/) | 2026-01-24 | Implementation of Swift Forums pitch with Nest.Name conventions. Sequence.Borrowing.Protocol, Span.Batch.Iterator patterns. |
+| BLOG-IDEA-027 | The Dual Protocol Conformance Trap: Swift.Comparable vs Comparison.Protocol | Technical Deep Dive | [Experiments/_index.md](Experiments/_index.md) | 2026-01-24 | Was "In Progress" — no draft exists. Reset to Ready. |
+| BLOG-IDEA-028 | What Swift 6.2.4 fixed (and didn't fix) for ~Copyable | Lessons Learned | [Experiments/_index.md](Experiments/_index.md) | 2026-03-10 | 4 bugs fixed, 9 limitations remain. Revalidation of 13 experiments. Strong angle for external readers. |
+| BLOG-IDEA-029 | The Sequence Copyable wall: why ~Copyable containers can't conform to Sequence | Technical Deep Dive | [Experiments/_index.md](Experiments/_index.md) | 2026-03-10 | 6 experiments all hit the same wall — Sequence inherits Copyable. Implications for library design. |
+| BLOG-IDEA-030 | Typed throws in practice: the stdlib compatibility matrix you need | Pattern Documentation | [Research/typed-throws-standards-inventory.md](Research/typed-throws-standards-inventory.md) | 2026-03-10 | Which stdlib functions support typed throws, which don't, and the closure annotation cost. |
 
 ---
 
@@ -72,9 +78,9 @@ Central backlog of blog post ideas captured from Swift Institute work.
 
 | ID | Title | Category | Writer | Started | Draft |
 |----|-------|----------|--------|---------|-------|
-| BLOG-IDEA-024 | The Pointer Acquisition Problem: Why Swift Can't Project Pointers from Borrowed Values | Technical Deep Dive | Swift Institute | 2026-01-23 | [Draft](Draft/pointer-acquisition-problem.md) |
-| BLOG-IDEA-025 | Why you can't build a ~Escapable Pointer (and what Builtin.load teaches us) | Technical Deep Dive | Swift Institute | 2026-01-24 | [Review](Review/escapable-pointer-primitives.md) |
-| BLOG-IDEA-027 | The Dual Protocol Conformance Trap: Swift.Comparable vs Comparison.Protocol | Technical Deep Dive | Swift Institute | 2026-01-24 | [Draft](Draft/dual-protocol-conformance-trap.md) |
+| — | — | — | — | — | No drafts in progress |
+
+> **Note**: BLOG-IDEA-024, 025, 027 were previously listed as "In Progress" but no draft files exist. Moved back to Ready for Drafting.
 
 ---
 
