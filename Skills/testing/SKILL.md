@@ -952,6 +952,63 @@ let package = Package(
 
 ---
 
+## Async Testing Patterns
+
+### [TEST-027] Async Expect Bindings
+
+**Statement**: When comparing two `async` values in `#expect`, both sides MUST be extracted to `let` bindings first. Direct `await` inside `#expect` causes compiler inference failures.
+
+**Correct**:
+```swift
+@Test
+func `stream produces expected value`() async {
+    let actual = await stream.next()
+    let expected = await reference.value()
+    #expect(actual == expected)
+}
+```
+
+**Incorrect**:
+```swift
+@Test
+func `stream produces expected value`() async {
+    #expect(await stream.next() == await reference.value())  // ❌ Inference failure
+}
+```
+
+**Rationale**: Swift Testing's `#expect` macro expansion interacts poorly with multiple `await` expressions in a single macro invocation.
+
+---
+
+### [TEST-028] Foundation-Free Isolation Verification
+
+**Statement**: Primitives-layer tests that need to verify main-actor isolation MUST use `pthread_main_np()` instead of Foundation's `Thread.isMainThread`.
+
+**Correct**:
+```swift
+#if canImport(Darwin)
+import Darwin
+
+@Test
+func `callback runs on main thread`() async {
+    let isMain = pthread_main_np() != 0
+    #expect(isMain)
+}
+#endif
+```
+
+**Incorrect**:
+```swift
+import Foundation  // ❌ Forbidden in primitives [PRIM-FOUND-001]
+#expect(Thread.isMainThread)
+```
+
+**Rationale**: Foundation is forbidden in primitives and standards layers. `pthread_main_np()` is available directly from Darwin.
+
+**Cross-references**: [PRIM-FOUND-001]
+
+---
+
 ## Testing ~Copyable Types
 
 ### [TEST-011] Observable Property Testing

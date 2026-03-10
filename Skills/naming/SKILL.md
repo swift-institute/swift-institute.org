@@ -96,6 +96,36 @@ URL         // No specification context
 
 ---
 
+## Type Sharing
+
+### [API-NAME-004] No Typealiases for Type Unification
+
+**Statement**: When unifying duplicate types across packages, the canonical type MUST be used directly at all call sites. Typealiases MUST NOT be introduced as a unification bridge — they create a false sense of equivalence while adding an indirection layer that complicates navigation and diagnostics.
+
+**Correct**:
+```swift
+// After unification: all packages use the canonical type directly
+import Text_Primitives
+
+func report(at location: Text.Location) { }  // Direct usage
+```
+
+**Incorrect**:
+```swift
+// ❌ Typealias bridge — adds indirection without benefit
+typealias SourceLocation = Text.Location
+
+func report(at location: SourceLocation) { }  // Obscures actual type
+```
+
+**Exception**: [PATTERN-024] typealiases for generic instantiations remain valid — those localize a *specialization decision*, not a *unification bridge*.
+
+**Rationale**: Type unification should eliminate indirection, not add it. Typealiases obscure the canonical type in diagnostics, autocomplete, and documentation.
+
+**Cross-references**: [PATTERN-024], [PATTERN-049]
+
+---
+
 ## Cross-References
 
 See also:

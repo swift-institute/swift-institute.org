@@ -232,6 +232,68 @@ When `Extra = Never`, `switch never {}` compiles to nothing — a type-level ass
 
 ---
 
+## Inlining and Access Levels
+
+### [PATTERN-052] @usableFromInline Access Level for Cross-Module Inlining
+
+**Statement**: `@inlinable` functions that reference internal types or properties MUST mark those declarations `@usableFromInline`. The access level determines the inlining boundary:
+
+| Declaration | Inlinable Within | Cross-Module Inlinable |
+|-------------|-----------------|----------------------|
+| `@usableFromInline internal` | Same module only | No |
+| `@usableFromInline package` | Same package | Yes (within package) |
+| `public` | Everywhere | Yes |
+
+**Correct**:
+```swift
+// Cross-module inlining required (e.g., primitives consumed by standards)
+@usableFromInline package var _storage: RawValue
+
+@inlinable
+public var value: RawValue { _storage }
+```
+
+**Incorrect**:
+```swift
+@usableFromInline internal var _storage: RawValue  // ❌ Cannot inline cross-module
+
+@inlinable
+public var value: RawValue { _storage }  // Compiler error in consuming module
+```
+
+**Rationale**: `@usableFromInline internal` enables inlining only within the declaring module. Cross-package `@inlinable` access requires `package` or `public` visibility.
+
+---
+
+### [PATTERN-053] Prefer Primitives Types Over Local Equivalents
+
+**Statement**: Packages MUST use primitives-layer types for common concepts (source location, error wrapping, indices) rather than defining local equivalents. When an existing primitives type covers the concept, import and use it.
+
+**Correct**:
+```swift
+import Text_Primitives
+
+// Use existing Text.Location from primitives
+func report(at location: Text.Location) { }
+```
+
+**Incorrect**:
+```swift
+// ❌ Reinventing a type that already exists in primitives
+struct SourceLocation {
+    var line: Int
+    var column: Int
+}
+```
+
+**Detection**: During code review, if a type has the same fields and semantics as an existing primitives type, it is a duplication candidate. Unify via import, not via typealias indirection.
+
+**Rationale**: Local equivalents create conversion overhead, type incompatibility across packages, and maintenance burden. Primitives exist to be consumed.
+
+**Cross-references**: [API-LAYER-001], [ARCH-LAYER-001]
+
+---
+
 ## Concurrency Patterns
 
 ### [PATTERN-020] Never Resume Under Lock
