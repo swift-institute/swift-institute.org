@@ -2,11 +2,9 @@
 name: testing-institute
 description: |
   Nested package pattern for performance and snapshot testing using
-  swift-foundations/swift-testing in packages that are transitive
-  dependencies of swift-testing.
-  Apply when adding performance tests, snapshot tests, or any tests
-  requiring swift-testing features to primitives, standards, or
-  foundations packages.
+  swift-foundations/swift-testing.
+  ALWAYS apply when adding performance tests, snapshot tests, or any
+  tests requiring swift-testing features to ANY ecosystem package.
 
 layer: process
 
@@ -32,7 +30,7 @@ The Swift Institute ecosystem has two testing layers:
 | Unit + Edge Case | Apple Testing (toolchain) | `@Test`, `@Suite`, `#expect` | Main `Package.swift` test targets |
 | Performance + Snapshot | swift-foundations/swift-testing | `.timed()`, `#snapshot`, `#Tests` macro | Nested `Tests/Testing/` package |
 
-Most ecosystem packages are transitive dependencies of swift-testing, creating a circular dependency. The nested package pattern breaks this cycle.
+The nested package pattern keeps the swift-testing dependency isolated from the parent `Package.swift`. This is mandatory for all ecosystem packages — even those that are not transitive dependencies of swift-testing — to maintain a uniform structure and prevent swift-testing from polluting the main dependency graph.
 
 ---
 
@@ -40,13 +38,9 @@ Most ecosystem packages are transitive dependencies of swift-testing, creating a
 
 ### [INST-TEST-001] Nested Package Requirement
 
-**Statement**: Any package that is a direct or transitive dependency of `swift-foundations/swift-testing` MUST use the nested package pattern for tests requiring swift-testing features. Packages that are NOT dependencies of swift-testing MAY add swift-testing as a regular test dependency instead.
+**Statement**: ALL ecosystem packages MUST use the nested `Tests/Testing/` package pattern for performance tests, snapshot tests, and any tests requiring swift-testing features. Direct dependencies on swift-testing in a package's main `Package.swift` are forbidden.
 
-**Affected packages include** (non-exhaustive):
-- All `swift-primitives` packages
-- `swift-tests` (direct dependency)
-- `swift-kernel`, `swift-environment`, `swift-loader` (direct dependencies)
-- `swift-dependencies`, `swift-witnesses`, `swift-effects` (direct dependencies)
+**Rationale**: Uniformity. Every package follows the same structure regardless of whether it's a transitive dependency of swift-testing. This keeps main `Package.swift` files clean, avoids pulling swift-syntax and the full swift-testing dependency graph into regular builds, and makes the testing approach discoverable and consistent across primitives, standards, and foundations.
 
 **Rationale**: SwiftPM does not allow circular dependencies.
 
