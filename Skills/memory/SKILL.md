@@ -183,7 +183,7 @@ For `~Copyable` containers, choose: keep container Copyable, use direct methods 
 
 | Category | Boundary | Workaround |
 |----------|----------|------------|
-| 1 | Extension declaration site | Declare nested types inside struct body |
+| 1 | Extension declaration site | PARTIALLY RESOLVED in 6.2.4 — value-generic types can use extensions; parent context refs still require body |
 | 2 | Implicit Copyable in extensions | Add explicit `where Element: ~Copyable` |
 | 3 | Protocol conformance in separate files | Move conformances to same file |
 | 4 | Sequence/Collection protocol requirements | No workaround; use `forEach` with borrowing closures |

@@ -140,27 +140,34 @@ public struct Stack<Element: ~Copyable>: ~Copyable {
 
 ### [COPY-FIX-002] Nested Type Declaration Site
 
-**Statement**: Nested types referencing the outer type's `~Copyable` parameter MUST be declared in the struct/enum body, NOT in extensions.
+**Status**: PARTIALLY RESOLVED in Swift 6.2.4.
+
+**Statement**: Value-generic nested types (e.g., `struct Static<let capacity: Int>`) CAN now be declared in extensions with `where Element: ~Copyable`. This was fixed in Swift 6.2.4.
 
 ```swift
-// CORRECT - In body
-public struct Container<Element: ~Copyable>: ~Copyable {
-    public struct Variant: ~Copyable {
-        var storage: UnsafeMutablePointer<Element>  // Works
-    }
-}
-
-// INCORRECT - In extension
-extension Container {
-    public struct Variant: ~Copyable {
-        var storage: UnsafeMutablePointer<Element>  // FAILS
+// NOW WORKS in Swift 6.2.4
+extension Container where Element: ~Copyable {
+    public struct Static<let capacity: Int>: ~Copyable {
+        var _buffer: Buffer<Element>.Linear.Inline<capacity>  // Works
     }
 }
 ```
 
-**Exception**: Nested types that don't reference `Element` can remain in extensions.
+**Remaining restriction**: Nested types declared in extensions CANNOT reference parent type context (typealiases, static properties, sentinel values). Types that need `Table.Bucket`, `Table.empty`, etc. MUST remain in the struct body.
 
-**Cross-references**: [MEM-COPY-006] Category 1
+```swift
+// STILL REQUIRED IN BODY — references Table.Bucket, Table.empty
+public struct Table<Element: ~Copyable>: ~Copyable {
+    public struct Static<let bucketCapacity: Int>: ~Copyable {
+        public typealias Bucket = Table.Bucket  // Needs parent context
+        public static var empty: Int { Table.empty }  // Needs parent context
+    }
+}
+```
+
+**Applied in Swift 6.2.4**: 13 value-generic types extracted to extension files across 6 packages (array, stack, heap, queue, dictionary, set). Hash.Table.Static remains in body due to parent context references.
+
+**Cross-references**: [MEM-COPY-006] Category 1, [API-IMPL-005]
 
 ---
 
@@ -341,6 +348,8 @@ extension Container: @unchecked Sendable where Element: Sendable {}
 
 ### [COPY-FIX-009] InlineArray + Value Generic Deinit Bug
 
+**Status**: PARTIALLY RESOLVED in Swift 6.2.4.
+
 **Statement**: When a `~Copyable` struct uses `InlineArray<capacity, ...>` with a value generic parameter and only value-type properties, element deinitializers silently fail for cross-module elements.
 
 **All four conditions must be present**:
@@ -352,7 +361,11 @@ extension Container: @unchecked Sendable where Element: Sendable {}
 | 3 | Cross-module boundary |
 | 4 | deinit with manual cleanup |
 
-**Workaround**: Add a reference type property:
+**Swift 6.2.4 status**:
+- `_deinitWorkaround` REMOVED from `Buffer.Ring.Inline`, `Buffer.Linear.Inline`, `Set.Ordered.Static`, `Set.Ordered.Small` — verified via cross-module experiment (`noncopyable-inline-deinit`).
+- **STILL PRESENT** for `Buffer.Ring.Inline`-based containers (`Queue.Static`, `Queue.Small`). Pre-existing failures: element deinit not called when container goes out of scope. Queue types never had `_deinitWorkaround`. Needs investigation — may be a distinct variant of the bug.
+
+**Workaround** (only if still affected):
 
 ```swift
 struct Container<Element: ~Copyable, let capacity: Int>: ~Copyable {
@@ -361,8 +374,6 @@ struct Container<Element: ~Copyable, let capacity: Int>: ~Copyable {
     var _deinitWorkaround: AnyObject? = nil  // Forces correct dispatch
 }
 ```
-
-**Affected packages**: swift-deque-primitives, swift-queue-primitives, swift-stack-primitives (all fixed).
 
 **Cross-references**: [MEM-COPY-001]
 
