@@ -1,6 +1,5 @@
 # ========== CANONICAL (auto-synced, do not edit) ==========
-# Source: swift-institute
-# Sync: Scripts/sync-gitignore.sh or manual
+# Source: swift-institute/Scripts/sync-gitignore.sh
 
 *~
 .DS_Store
@@ -22,19 +21,15 @@ Thumbs.db
 # Top-level entries (opt-in only)
 # First ignore all, then whitelist specific folders and files
 /*
-!/.claude/
-/.claude/*
-!/.claude/skills/
-!/Blog/
-!/Documentation.docc/
+!/Sources/
+!/Tests/
 !/Experiments/
-!/Implementation/
 !/Research/
-!/SE-Pitches/
 !/Skills/
 !/.github/
 !/Package.swift
 !/LICENSE.md
+!/README.md
 
 # Documentation (opt-in for whitelisted .md files and .docc catalogs only)
 # Blocks all .md files by default to prevent AI-generated content from being committed
@@ -48,11 +43,8 @@ Thumbs.db
 !CLAUDE.md
 !**/*.docc/**/*.md
 !**/Research/**/*.md
-!**/Skills/**/*.md
-!**/Implementation/**/*.md
-!**/Blog/**/*.md
 !**/Experiments/**/*.md
-!**/SE-Pitches/**/*.md
+!**/Skills/**/*.md
 
 *.pdf
 
@@ -66,13 +58,20 @@ Thumbs.db
 # ========== END CANONICAL ==========
 
 # ========== LOCAL OVERRIDES ==========
-# Package-specific rules below (preserved during sync)
+# Package-specific rules below (managed by sync-gitignore.sh)
 
-# Scripts directory for tooling
+# Institute directories
+!/Documentation.docc/
+!/Implementation/
+!/SE-Pitches/
 !/Scripts/
 
-# Documentation catalog
-!/Documentation.docc/
+# Claude config (selective)
+!/.claude/
+/.claude/*
+!/.claude/skills/
 
-# All swift-* primitive packages
-!/swift-*/
+# Additional markdown whitelists
+!**/Implementation/**/*.md
+!**/SE-Pitches/**/*.md
+
