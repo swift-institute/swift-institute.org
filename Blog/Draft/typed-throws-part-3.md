@@ -24,7 +24,7 @@ tags:
 
 The model is sound. `throws(E)` gives us a spectrum from `throws(Never)` to `throws(any Error)`, with subtyping at every level. Part 2 showed where the model works — signatures, catch sites, protocol conformance covariance — and where it meets boundaries — closure inference, generic callers.
 
-Now let's use it with the standard library. Everything in this post reflects Swift 6.2 — the compatibility landscape will change as the stdlib adopts typed throws signatures.
+Now let's use it with the standard library. Everything in this post is based on compiler experiments against Swift 6.2 and stdlib source review — the compatibility landscape will change as the stdlib adopts typed throws signatures.
 
 ## The map test
 
@@ -86,6 +86,46 @@ Here's what works and what doesn't as of Swift 6.2 (based on our [typed throws s
 
 The pattern: most `rethrows` functions in the standard library don't preserve typed throws. `map` is the exception, not the rule.
 
+> **Verifying these claims.** You can test any entry in the table: write a closure with an explicit `throws(E)` annotation and check whether the catch site preserves `E`.
+>
+> ```swift
+> // Preserves Port.Error — exhaustive switch compiles:
+> do {
+>     let _ = try ["8080"].map { (s: String) throws(Port.Error) -> Port in try Port(s) }
+> } catch { switch error { case .invalid: break; case .outOfRange: break } }
+>
+> // Erases to any Error — exhaustive switch does NOT compile:
+> do {
+>     let _ = try ["8080"].compactMap { (s: String) throws(Port.Error) -> Port? in try Port(s) }
+> } catch { /* error: any Error, not Port.Error */ }
+> ```
+>
+> The difference is in the stdlib signatures. `map` is generic over the error type; `compactMap` uses `rethrows`:
+>
+> ```swift
+> // stdlib — preserves E:
+> func map<T, E: Error>(_ transform: (Element) throws(E) -> T) throws(E) -> [T]
+>
+> // stdlib — erases E:
+> func compactMap<T>(_ transform: (Element) throws -> T?) rethrows -> [T]
+> ```
+
+The same pattern extends beyond `Sequence`. `withUnsafeBytes(of:)` preserves `E` because its signature is generic over the error type; `reduce` still erases it via `rethrows`:
+
+```swift
+// stdlib — preserves E:
+func withUnsafeBytes<T, E: Error>(
+    of value: borrowing T,
+    _ body: (UnsafeRawBufferPointer) throws(E) -> Result
+) throws(E) -> Result
+
+// stdlib — erases E:
+func reduce<Result>(
+    _ initialResult: Result,
+    _ nextPartialResult: (Result, Element) throws -> Result
+) rethrows -> Result
+```
+
 ### Why the difference?
 
 The stdlib's `rethrows` predates typed throws. When `compactMap` was written, the only question was "does the closure throw?" — binary. The `rethrows` mechanism was designed around that binary distinction.
@@ -106,7 +146,7 @@ func compactMap<T>(
 
 The first signature carries `E` through. The second doesn't — it accepts `throws` (untyped) and `rethrows`, losing whatever specific error type the closure had.
 
-Updating these signatures is an additive, non-breaking change. `throws(E)` is a subtype of `throws`, so existing callers continue to compile. But it requires changes to the standard library — function by function.
+Updating these signatures would be source-compatible — `throws(E)` is a subtype of `throws`, so existing callers should continue to compile. But it requires stdlib evolution proposals, and the interaction with `rethrows`-based callers needs careful consideration.
 
 ## Protocol-mandated throws
 
@@ -131,13 +171,15 @@ init(from decoder: any Decoder) throws(DecodingError) {
 }
 ```
 
+This example is intentionally cautionary, not prescriptive: the catch-all exists to show why narrowing a Codable conformance to `throws(DecodingError)` is usually not worth the ceremony or the assumption.
+
 The wrapping works, but the cost is high:
 
-- **Soundness is questionable**: custom `Decoder` implementations *could* throw non-`DecodingError` types, hitting the `preconditionFailure`.
+- **Soundness depends on the decoder**: the `Decoder` protocol doesn't require implementations to throw only `DecodingError`. The stdlib's `JSONDecoder` does, but third-party decoders may not — and would hit the `preconditionFailure`.
 - **Scale**: across a real codebase, this is dozens or hundreds of conformances.
 - **Benefit is limited**: generic callers go through the protocol witness — untyped `throws` — so only concrete callers see the typed error.
 
-In our standards library, 122 Codable conformances use untyped `throws`. We don't convert them. The cost-to-benefit ratio is unfavorable.
+In a real codebase — ours has over a hundred Codable conformances — the wrapping cost adds up quickly. We don't convert them. The cost-to-benefit ratio is unfavorable.
 
 ### Clock
 
@@ -248,7 +290,7 @@ Where should you use typed throws today?
 - Leaf error types that compose into parent domains
 
 **Accept untyped throws** at stdlib and protocol boundaries:
-- Codable conformances (122 untyped calls per codebase)
+- Codable conformances (the wrapping cost scales poorly)
 - Higher-order functions that don't preserve `E` (`compactMap`, `filter`, etc.)
 - Protocol conformances where generic callers won't benefit
 
@@ -265,9 +307,11 @@ The friction in this post is a gap between what the language can express and wha
 
 The Swift compiler has a `FullTypedThrows` experimental feature that makes closure inference and `do`/`catch` blocks preserve the error type automatically. When enabled, `{ try Port($0) }` would infer `throws(Port.Error)` instead of `throws(any Error)`. The explicit annotation would become optional, not required. As of Swift 6.2, this feature is not available in production toolchains.
 
-The standard library can adopt `throws(E)` signatures function by function. `compactMap`, `filter`, `reduce` — each can be updated from `rethrows` to `<E: Error> throws(E)` without breaking existing callers, because `throws(E)` is a subtype of `throws`. Protocol APIs like `Encoder`, `Decoder`, and `Task.checkCancellation()` can similarly be updated. These are additive, non-breaking changes — but they require stdlib evolution proposals and have no announced timeline.
+The standard library can adopt `throws(E)` signatures function by function. `compactMap`, `filter`, `reduce` — each could be updated from `rethrows` to `<E: Error> throws(E)`. Protocol APIs like `Encoder`, `Decoder`, and `Task.checkCancellation()` could similarly be updated. These changes would be source-compatible in principle — `throws(E)` is a subtype of `throws` — but they require stdlib evolution proposals, careful consideration of edge cases, and have no announced timeline.
 
-The language has the model. The ecosystem will follow.
+There is also a less obvious motivation. In Embedded Swift, ordinary `throws` is modeled in terms of `any Error`, and existential machinery remains constrained there. Typed throws isn't just a precision improvement in that context — it may be the only viable throwing mechanism. As of this writing, the public design baseline still treats existentials as restricted in Embedded Swift.
+
+The language has the model. Whether and when the ecosystem closes the remaining gaps depends on stdlib evolution and toolchain adoption.
 
 ## References
 

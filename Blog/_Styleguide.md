@@ -35,6 +35,7 @@ Every major style guide—[Google](https://developers.google.com/style/person), 
 **When to use "we"**:
 - Speaking on behalf of Swift Institute: "We discovered this during our experiment..."
 - Describing shared experience: "We've all encountered this error..."
+- **Exploring together**: In posts that follow the first-principles writing pattern [BLOG-010], "we" is appropriate when guiding the reader through a journey of discovery: "Let's try this... we get a compiler error... so we need to..." This creates the sense of joint exploration that makes the pattern work. Use "we" for the shared journey and "you" for direct instructions.
 
 ### Conversational, not casual
 
@@ -271,6 +272,37 @@ func process(value) {
 
 This shows processing.
 ```
+
+### Cautionary code samples
+
+**Statement**: When showing a code sample to illustrate *why not* to do something, add a framing sentence immediately after the code block — before any analysis. Readers will otherwise assume the sample is prescriptive.
+
+**Correct**:
+```markdown
+```swift
+init(from decoder: any Decoder) throws(DecodingError) {
+    // ... preconditionFailure in catch-all ...
+}
+```
+
+This example is intentionally cautionary, not prescriptive: the catch-all
+exists to show why narrowing this conformance is usually not worth it.
+
+The wrapping works, but the cost is high:
+```
+
+**Incorrect**:
+```markdown
+```swift
+init(from decoder: any Decoder) throws(DecodingError) {
+    // ... preconditionFailure in catch-all ...
+}
+```
+
+The wrapping works, but the cost is high:
+```
+
+In the incorrect version, the reader reaches the cost analysis only after absorbing the pattern as if it were recommended.
 
 ---
 

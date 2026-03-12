@@ -53,9 +53,11 @@ do {
 }
 ```
 
-The error type is in the signature. The catch is checked against that type — exhaustive, no recovery casts, no defensive fallback.
+The error type is in the signature. Inside this single-try `do` block, the compiler infers the caught error type from `Port.init`'s `throws(Port.Error)` declaration — the `switch` is exhaustive, no recovery cast, no defensive fallback.
 
 Swift didn't always let us write this. To understand why it matters, let's start from the beginning.
+
+> **A note on scope.** This series is not arguing that all public APIs should use typed throws, or that untyped `throws` is obsolete. Untyped `throws` is often the correct choice — when callers don't benefit from matching specific error cases, when the error domain is broad, or when the API crosses module boundaries. Typed throws adds precision where the error type is semantically part of the contract. This series explores where that precision matters and where the ecosystem supports it today.
 
 ## Return a special value
 
@@ -188,9 +190,11 @@ func parseConfiguration(
 
 The `flatMap` pyramid is gone. The `.mapError` calls are gone. Each step is a single line. `try` marks every point where control might transfer. The compiler enforces that you handle errors — you can't call a `throws` function without `try` or wrapping it in a `do`/`catch`.
 
-The syntax is clean. Linear. Each step reads as intent. But notice what we lost: we have to write `Port.Error.invalid(...)` — the full path — because the compiler doesn't know the error type. Compare that with the opening's `throw .invalid(...)`. That dot syntax is only possible when the compiler knows the error type from the signature.
+The syntax is clean. Linear. Each step reads as intent. For many APIs, this is exactly the right abstraction — callers want to know "this can fail" without matching specific cases. A networking layer that might throw DNS errors, TLS errors, timeout errors — the caller retries or shows a message. Listing every error type in the signature would be noise.
 
-And there's a deeper loss. `parsePort` throws `Port.Error`. `parseRetries` throws `Retries.Error`. `parseConfiguration` adds its own `Service.Error`. Three error domains — all erased to `any Error`. The domain structure we designed with leaf error types is invisible to the caller.
+But consider domain types where the caller *does* need to match specific cases. Here, notice what we lost. We have to write `Port.Error.invalid(...)` — the full path — because the compiler doesn't know the error type. Compare that with the opening's `throw .invalid(...)`. That dot syntax is only possible when the compiler knows the error type from the signature.
+
+And there's a deeper loss for these domain-specific APIs. `parsePort` throws `Port.Error`. `parseRetries` throws `Retries.Error`. `parseConfiguration` adds its own `Service.Error`. Three error domains — all erased to `any Error`. The domain structure we designed with leaf error types is invisible to the caller.
 
 Now look at the call site.
 
@@ -236,9 +240,9 @@ This compiles. But consider what you're doing:
 
 With `parseConfiguration`, it's worse: three error domains flow through one `throws`. The caller must guess which types to cast for, with no guidance from the signature.
 
-Compare this with the opening: no cast, no catch-all, exhaustive `switch` directly on the error. The syntax is right, but the *types* are wrong. We erased the very information that makes error handling precise.
+Compare this with the opening: no cast, no catch-all, exhaustive `switch` directly on the error. The syntax is linear again. But the error type itself has been erased — the very information that makes error handling precise.
 
-This is the **cost of erasure**: you trade type information for syntax. And every caller pays whether they want precision or not.
+This is the **cost of erasure** in domain-specific APIs: where callers need to match specific error cases, they trade compile-time type information for runtime casting. The information exists at the throw site — the catch site just can't see it.
 
 ## A deliberate choice
 

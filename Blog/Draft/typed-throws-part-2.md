@@ -24,6 +24,8 @@ tags:
 
 Typed throws does more than attach an error enum to a function. It turns "throwing" from a binary distinction into a spectrum.
 
+This post is about the semantic model — how throwing function types relate to each other in the type system. [Part 3](/blog/typed-throws-part-3) will cover present-day behavior in released toolchains.
+
 ## The throwing spectrum
 
 In [Part 1](/blog/typed-throws-part-1), we saw functions that can't fail, functions that fail with `Result`, and functions that fail with `throws`. Typed throws adds `throws(E)`. But these aren't separate categories. They're points on a spectrum.
@@ -227,13 +229,44 @@ The covariance works at the type level. But the benefit disappears behind the pr
 
 This matters most with stdlib protocols. `Codable` declares `init(from:) throws` and `encode(to:) throws`. A conformer *can* narrow to `throws(DecodingError)`. But the downstream APIs — `Decoder.container(keyedBy:)`, `container.decode(_:forKey:)` — all use untyped `throws`. The conformer must wrap every call in a `do`/`catch` to bridge back to the typed error. The conformance covariance is *possible* but often not *practical*.
 
-## Error type design
+## Aside: error type design
 
-Part 1 introduced leaf error types — `Port.Error`, `Retries.Error` — composed into `Service.Error` via wrapping cases. Two brief design notes for when typed throws meets generics.
+Part 1 introduced leaf error types — `Port.Error`, `Retries.Error` — composed into `Service.Error` via wrapping cases. Two brief design notes for when typed throws meets generics. These are tangential to the function-type semantics above — skip ahead to ["What's next"](#whats-next) if you're focused on the model.
 
 **Leaf errors vs god errors.** A god error accumulates cases from every operation: `invalidPort`, `portOutOfRange`, `invalidRetries`, `negativeRetries`, `missingKey`, `networkTimeout`... Every function throws the same type. Every catch site handles cases that can't happen for that particular call. Leaf errors model each domain independently — `Port.Error` has two cases, `Retries.Error` has two cases, and `Service.Error` composes them by wrapping. The compiler enforces only the cases that actually apply.
 
-**Hoisted vs generic-nested errors.** When a generic type like `Buffer<Element>` defines an error type, the question is whether the error cases need `Element`. If the failures are structural — out of bounds, full — the error type is independent of `Element` (hoisted). If the failures carry domain data — `invalid(Element)`, `duplicate(Element, existing: Element)` — the error type uses `Element` (generic-nested). Hoist when the failure is structural. Nest when the failure carries domain data.
+**Hoisted vs generic-nested errors.** When a generic type like `Buffer<Element>` defines an error type, the question is whether the error cases need `Element`.
+
+A hoisted error is independent of the generic parameter — the failure is structural:
+
+```swift
+enum __BufferError: Error {
+    case outOfBounds(index: Int, count: Int)
+    case full(capacity: Int)
+}
+
+struct Buffer<Element> { ... }
+
+extension Buffer {
+    typealias Error = __BufferError
+}
+```
+
+The cases describe *buffer* failures. They don't mention `Element` because the failure has nothing to do with what's stored. The `__` prefix marks the top-level enum as an implementation detail — callers use `Buffer.Error`, which is the same type regardless of `Element`.
+
+A generic-nested error carries domain data:
+
+```swift
+enum SetError<Element>: Error {
+    case duplicate(Element, existing: Element)
+}
+```
+
+Here the error *must* know `Element` — you can't describe "duplicate" without showing the values.
+
+Hoist when the failure is structural. Nest when the failure carries domain data.
+
+> **A language gap.** Ideally, you'd write `extension Buffer { enum Error { ... } }` and the nested type would not inherit `Element`. Swift doesn't support this — the extension produces `Buffer<Element>.Error` regardless. The `__` prefix + typealias pattern is the pragmatic workaround.
 
 ## What's next
 

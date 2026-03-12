@@ -38,7 +38,7 @@ Central backlog of blog post ideas captured from Swift Institute work.
 | BLOG-IDEA-010 | Phantom Types Meet Affine Geometry: Index Type Design | Technical Deep Dive | [Research/index-type-consistency.md](Research/index-type-consistency.md) | 2026-01-23 | Category theory grounding, 100% consistency across 9 packages |
 | BLOG-IDEA-011 | State-Tracking Pattern for Consuming Accessors | Pattern Documentation | [Property Experiments](/Users/coen/Developer/swift-primitives/swift-property-primitives/Experiments/_index.md) | 2026-01-23 | .forEach.consuming via reference-type state tracking |
 | BLOG-IDEA-012 | Reference Primitives Taxonomy: 23 Ownership Patterns | Pattern Documentation | [Tier 0 Analysis](/Users/coen/Developer/swift-primitives/Sources/Swift Primitives/Swift Primitives.docc/Research/Tier%200%20Comparative%20Analysis.md) | 2026-01-23 | Complete reference type taxonomy, exemplar package |
-| BLOG-IDEA-013 | Typed Throws Wrapper Pattern for stdlib Functions | Pattern Documentation | [Tier 0 Analysis](/Users/coen/Developer/swift-primitives/Sources/Swift Primitives/Swift Primitives.docc/Research/Tier%200%20Comparative%20Analysis.md) | 2026-01-23 | 60+ typed throws functions, error preservation pattern |
+| ~~BLOG-IDEA-013~~ | ~~Typed Throws Wrapper Pattern for stdlib Functions~~ | — | — | 2026-01-23 | Moved to In Progress — part of [typed-throws series](Series/typed-throws.md) |
 | BLOG-IDEA-014 | Combining ~Copyable and ~Escapable for Lifetime Safety | Technical Deep Dive | [Tier 0 Analysis](/Users/coen/Developer/swift-primitives/Sources/Swift Primitives/Swift Primitives.docc/Research/Tier%200%20Comparative%20Analysis.md) | 2026-01-23 | String primitives double-safety pattern |
 | BLOG-IDEA-015 | Seven Patterns of Best-in-Class Technical Blog Posts | Tutorial | [Research/Best-in-Class Blog Post Pattern.md](Research/Best-in-Class%20Blog%20Post%20Pattern.md) | 2026-01-23 | Evidence-based writing patterns, actionable framework |
 | BLOG-IDEA-024 | The Pointer Acquisition Problem: Why Swift Can't Project Pointers from Borrowed Values | Technical Deep Dive | [Experiments/_index.md](Experiments/_index.md) | 2026-01-23 | Was "In Progress" — no draft exists. Reset to Ready. |
@@ -47,7 +47,7 @@ Central backlog of blog post ideas captured from Swift Institute work.
 | BLOG-IDEA-027 | The Dual Protocol Conformance Trap: Swift.Comparable vs Comparison.Protocol | Technical Deep Dive | [Experiments/_index.md](Experiments/_index.md) | 2026-01-24 | Was "In Progress" — no draft exists. Reset to Ready. |
 | BLOG-IDEA-028 | What Swift 6.2.4 fixed (and didn't fix) for ~Copyable | Lessons Learned | [Experiments/_index.md](Experiments/_index.md) | 2026-03-10 | 4 bugs fixed, 9 limitations remain. Revalidation of 13 experiments. Strong angle for external readers. |
 | BLOG-IDEA-029 | The Sequence Copyable wall: why ~Copyable containers can't conform to Sequence | Technical Deep Dive | [Experiments/_index.md](Experiments/_index.md) | 2026-03-10 | 6 experiments all hit the same wall — Sequence inherits Copyable. Implications for library design. |
-| BLOG-IDEA-030 | Typed throws in practice: the stdlib compatibility matrix you need | Pattern Documentation | [Research/typed-throws-standards-inventory.md](Research/typed-throws-standards-inventory.md) | 2026-03-10 | Which stdlib functions support typed throws, which don't, and the closure annotation cost. |
+| ~~BLOG-IDEA-030~~ | ~~Typed throws in practice: the stdlib compatibility matrix you need~~ | — | — | 2026-03-10 | Moved to In Progress — part of [typed-throws series](Series/typed-throws.md) |
 
 ---
 
@@ -78,9 +78,13 @@ Central backlog of blog post ideas captured from Swift Institute work.
 
 | ID | Title | Category | Writer | Started | Draft |
 |----|-------|----------|--------|---------|-------|
-| — | — | — | — | — | No drafts in progress |
+| BLOG-IDEA-013 | Typed throws in Swift, part 1: error handling from first principles | Technical Deep Dive | — | 2026-03-11 | [Draft](Draft/typed-throws-part-1.md) |
+| BLOG-IDEA-013 | Typed throws in Swift, part 2: the throwing spectrum | Technical Deep Dive | — | 2026-03-11 | [Draft](Draft/typed-throws-part-2.md) |
+| BLOG-IDEA-030 | Typed throws in Swift, part 3: typed throws in practice | Technical Deep Dive | — | 2026-03-11 | [Draft](Draft/typed-throws-part-3.md) |
 
 > **Note**: BLOG-IDEA-024, 025, 027 were previously listed as "In Progress" but no draft files exist. Moved back to Ready for Drafting.
+>
+> **Series**: BLOG-IDEA-013 and BLOG-IDEA-030 combined into the [typed-throws series](Series/typed-throws.md) (3 parts).
 
 ---
 

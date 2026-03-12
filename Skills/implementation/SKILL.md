@@ -982,36 +982,47 @@ The following rules are absorbed from the former `anti-patterns` skill. Each des
 
 ---
 
-### [PATTERN-022] ~Copyable Constraint Poisoning Prevents File Splitting
+### [PATTERN-022] ~Copyable Nested Types in Separate Files
 
-**Statement**: When a namespace type has `~Copyable` generic parameters, all nested types that reference those parameters MUST remain in the same file as the parent type. [API-IMPL-005] (one type per file) does not apply in this case.
+**Statement**: Nested types inside `~Copyable`-generic parents MUST be defined in separate files via `extension Parent where Element: ~Copyable { }`, following [API-IMPL-005] (one type per file).
 
-Moving nested types into separate files (via `extension Parent { ... }`) triggers constraint poisoning: the compiler infers a `Copyable` requirement on the generic parameter in the extension, producing `'Element' required to be 'Copyable' but is marked with '~Copyable'` errors.
+**History**: Prior to Swift 6.2.4, constraint poisoning prevented this — the compiler inferred `Copyable` on the generic parameter in cross-file extensions. This is fixed in Swift 6.2.4+. The `where Element: ~Copyable` constraint on the extension is the mechanism that makes it work.
 
-**Affected patterns**:
-- Nested enums, structs, or classes inside a `~Copyable`-generic parent
-- `ManagedBuffer` subclasses nested inside a `~Copyable`-generic namespace
-- Conditional conformances on nested types (e.g., `Sendable where Element: Sendable`)
-
-**What must stay together**:
+**Pattern**:
 ```swift
-// All in one file — cannot be split
-public enum Namespace<Element: ~Copyable> {
+// File: Namespace.swift
+public enum Namespace<Element: ~Copyable> {}
+
+// File: Namespace.NestedData.swift
+extension Namespace where Element: ~Copyable {
     public enum NestedData: Sendable, Equatable { ... }
-    public final class NestedHeap: ManagedBuffer<...> { ... }
-    public struct NestedInline<let N: Int>: ~Copyable { ... }
 }
 
+// File: Namespace.NestedHeap.swift
+extension Namespace where Element: ~Copyable {
+    public final class NestedHeap: ManagedBuffer<...> { ... }
+}
+
+// File: Namespace.NestedInline.swift
+extension Namespace where Element: ~Copyable {
+    public struct NestedInline<let N: Int>: ~Copyable { ... }
+}
+```
+
+**Conditional conformances** can live in the same file as their type or in a dedicated conformances file:
+```swift
 extension Namespace.NestedInline: @unchecked Sendable where Element: Sendable {}
 ```
 
-**What CAN be in separate files**: Extensions that add methods or computed properties (not type declarations) to already-declared nested types, provided the extension uses `where Element: ~Copyable`:
+**Deeply nested types** use extensions on the intermediate parent:
 ```swift
-// Separate file — OK
+// File: Namespace.NestedHeap.Cyclic.swift
 extension Namespace.NestedHeap where Element: ~Copyable {
-    public func someMethod() { ... }
+    public struct Cyclic<let capacity: Int>: Copyable, Sendable { ... }
 }
 ```
+
+**Validated**: buffer-primitives `Buffer.swift` — all ~50 nested types moved to separate extensions, 391 tests pass (Swift 6.2.4).
 
 **Cross-references**: [API-IMPL-005], [API-IMPL-008], [MEM-COPY-006]
 
