@@ -107,11 +107,6 @@ package_overrides() {
 !/Scripts/
 !/Documentation.docc/
 !/.gitmodules
-
-# Claude config (selective)
-!/.claude/
-/.claude/*
-!/.claude/skills/
 OVERRIDES
                 ;;
             swift-standards)
@@ -131,11 +126,6 @@ OVERRIDES
 !/Scripts/
 !/Documentation.docc/
 !/.gitmodules
-
-# Claude config (selective)
-!/.claude/
-/.claude/*
-!/.claude/skills/
 OVERRIDES
                 ;;
             swift-institute)
@@ -146,11 +136,6 @@ OVERRIDES
 !/Implementation/
 !/SE-Pitches/
 !/Scripts/
-
-# Claude config (selective)
-!/.claude/
-/.claude/*
-!/.claude/skills/
 
 # Additional markdown whitelists
 !**/Implementation/**/*.md

@@ -66,11 +66,6 @@ Thumbs.db
 !/SE-Pitches/
 !/Scripts/
 
-# Claude config (selective)
-!/.claude/
-/.claude/*
-!/.claude/skills/
-
 # Additional markdown whitelists
 !**/Implementation/**/*.md
 !**/SE-Pitches/**/*.md
