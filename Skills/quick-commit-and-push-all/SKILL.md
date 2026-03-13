@@ -12,6 +12,14 @@ requires:
 applies_to:
   - swift-primitives
   - swift-standards
+  - swift-ietf
+  - swift-iso
+  - swift-w3c
+  - swift-whatwg
+  - swift-ieee
+  - swift-iec
+  - swift-ecma
+  - swift-incits
   - swift-foundations
   - swift-institute
 ---
@@ -31,14 +39,24 @@ commit messages.
 1. **Parent-level git repos** — The directory itself if it has a `.git` directory (not file).
 2. **Sub-repos** — Each `swift-*/` subdirectory that has a `.git` directory or `.git` file (submodule).
 
+All directories are flat siblings under `/Users/coen/Developer/`.
+
 The skill MUST iterate over these directories:
 
 | # | Directory | Parent is git repo? | Sub-repo pattern |
 |---|-----------|---------------------|------------------|
-| 1 | `/Users/coen/Developer/swift-primitives/` | Yes (standalone `.git/`) | `swift-*/` with standalone `.git/` directories |
-| 2 | `/Users/coen/Developer/swift-standards/` | **No** (no `.git` at all) | `swift-*/` with standalone `.git/` directories |
-| 3 | `/Users/coen/Developer/swift-foundations/` | Yes (standalone `.git/`) | `swift-*/` with submodule `.git` files |
-| 4 | `/Users/coen/Developer/swift-institute/` | Yes (standalone `.git/`) | No sub-repos |
+| 1 | `swift-primitives/` | Yes (standalone `.git/`) | `swift-*/` with standalone `.git/` directories |
+| 2 | `swift-ietf/` | No | `swift-rfc-*/`, `swift-bcp-*/` with standalone `.git/` directories |
+| 3 | `swift-iso/` | No | `swift-iso-*/` with standalone `.git/` directories |
+| 4 | `swift-w3c/` | No | `swift-w3c-*/`, `swift-cssom/` with standalone `.git/` directories |
+| 5 | `swift-whatwg/` | No | `swift-whatwg-*/` with standalone `.git/` directories |
+| 6 | `swift-ieee/` | No | `swift-ieee-*/` with standalone `.git/` directories |
+| 7 | `swift-iec/` | No | `swift-iec-*/` with standalone `.git/` directories |
+| 8 | `swift-ecma/` | No | `swift-ecma-*/` with standalone `.git/` directories |
+| 9 | `swift-incits/` | No | `swift-incits-*/` with standalone `.git/` directories |
+| 10 | `swift-standards/` | No | `swift-*-standard/` with standalone `.git/` directories |
+| 11 | `swift-foundations/` | Yes (standalone `.git/`) | `swift-*/` with submodule `.git` files |
+| 12 | `swift-institute/` | Yes (standalone `.git/`) | No sub-repos |
 
 **Statement**: For each directory, first process all sub-repos (`swift-*/`), then process the
 parent repo (if it is a git repo). Parent must go last so submodule pointer updates are captured
@@ -46,8 +64,9 @@ in the parent commit.
 
 **Statement**: Sub-directories without `.git` (directory or file) MUST be silently skipped.
 
-**Rationale**: swift-standards has no parent git repo. Some sub-directories are not yet initialized
-as git repos. Processing sub-repos before the parent ensures submodule pointer changes are included.
+**Rationale**: Standards body directories (swift-ietf, swift-iso, etc.) and swift-standards have no
+parent git repo. Some sub-directories are not yet initialized as git repos. Processing sub-repos
+before the parent ensures submodule pointer changes are included.
 
 ---
 
@@ -70,14 +89,30 @@ Example script structure:
 
 ```bash
 DATE=$(date +%Y-%m-%d)
-DIRS=("swift-primitives" "swift-standards" "swift-foundations")
+
+# All directories with sub-repos (standards body orgs + layer repos)
+DIRS=(
+  "swift-primitives"
+  "swift-ietf"
+  "swift-iso"
+  "swift-w3c"
+  "swift-whatwg"
+  "swift-ieee"
+  "swift-iec"
+  "swift-ecma"
+  "swift-incits"
+  "swift-standards"
+  "swift-foundations"
+)
 
 for parent_dir in "${DIRS[@]}"; do
   base="/Users/coen/Developer/$parent_dir"
+  [ -d "$base" ] || continue
   for repo in "$base"/swift-*/; do
     [ -d "$repo/.git" ] || [ -f "$repo/.git" ] || continue
     cd "$repo"
     if [ -n "$(git status --porcelain)" ]; then
+      echo "COMMIT: $repo"
       git add -A
       git commit -m "Save progress: $DATE"
       git push
@@ -87,6 +122,7 @@ for parent_dir in "${DIRS[@]}"; do
   if [ -d "$base/.git" ]; then
     cd "$base"
     if [ -n "$(git status --porcelain)" ]; then
+      echo "COMMIT: $base"
       git add -A
       git commit -m "Save progress: $DATE"
       git push
@@ -97,6 +133,7 @@ done
 # swift-institute (no sub-repos)
 cd /Users/coen/Developer/swift-institute
 if [ -n "$(git status --porcelain)" ]; then
+  echo "COMMIT: swift-institute"
   git add -A
   git commit -m "Save progress: $DATE"
   git push
