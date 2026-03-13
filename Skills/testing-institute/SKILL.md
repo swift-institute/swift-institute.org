@@ -28,7 +28,7 @@ The Swift Institute ecosystem has two testing layers:
 | Layer | Framework | Features | Where |
 |-------|-----------|----------|-------|
 | Unit + Edge Case | Apple Testing (toolchain) | `@Test`, `@Suite`, `#expect` | Main `Package.swift` test targets |
-| Performance + Snapshot | swift-foundations/swift-testing | `.timed()`, `#snapshot`, `#Tests` macro | Nested `Tests/Testing/` package |
+| Performance + Snapshot | swift-foundations/swift-testing | `.timed()`, `#snapshot`, `#Tests` macro | Nested `Tests/` package |
 
 The nested package pattern keeps the swift-testing dependency isolated from the parent `Package.swift`. This is mandatory for all ecosystem packages — even those that are not transitive dependencies of swift-testing — to maintain a uniform structure and prevent swift-testing from polluting the main dependency graph.
 
@@ -38,7 +38,7 @@ The nested package pattern keeps the swift-testing dependency isolated from the 
 
 ### [INST-TEST-001] Nested Package Requirement
 
-**Statement**: ALL ecosystem packages MUST use the nested `Tests/Testing/` package pattern for performance tests, snapshot tests, and any tests requiring swift-testing features. Direct dependencies on swift-testing in a package's main `Package.swift` are forbidden.
+**Statement**: ALL ecosystem packages MUST use the nested `Tests/Package.swift` package pattern for performance tests, snapshot tests, and any tests requiring swift-testing features. Direct dependencies on swift-testing in a package's main `Package.swift` are forbidden.
 
 **Rationale**: Uniformity. Every package follows the same structure regardless of whether it's a transitive dependency of swift-testing. This keeps main `Package.swift` files clean, avoids pulling swift-syntax and the full swift-testing dependency graph into regular builds, and makes the testing approach discoverable and consistent across primitives, standards, and foundations.
 
@@ -50,27 +50,36 @@ The nested package pattern keeps the swift-testing dependency isolated from the 
 
 ### [INST-TEST-002] Nested Package Location
 
-**Statement**: The nested testing package MUST be located at `Tests/Testing/` within the parent package.
+**Statement**: The nested testing package MUST be located at `Tests/Package.swift` within the parent package. All test directories — both Apple Testing (unit) and swift-testing (performance, snapshot) — are flat siblings under `Tests/`.
+
+**Statement**: The parent `Package.swift` MUST declare test targets with explicit `path:` parameters, since SwiftPM skips automatic target discovery in directories with their own `Package.swift`.
 
 **Correct**:
 ```
 swift-{package}/
-  Package.swift                          # Parent — no swift-testing dependency
+  Package.swift                          # Parent — explicit path: for test targets
   Sources/
     {Module}/
   Tests/
+    Package.swift                        # Nested — depends on parent + swift-testing
     {Module} Tests/                      # Apple Testing (unit + edge case)
-    Testing/
-      Package.swift                      # Nested — depends on parent + swift-testing
-      Tests/
-        {Module} Performance Tests/
-          {Type} Performance Tests.swift
-        {Module} Snapshot Tests/
-          {Type} Snapshot Tests.swift
-          __Snapshots__/                 # Committed reference files
+    {Module} Performance Tests/          # swift-testing performance tests
+      {Type} Performance Tests.swift
+    {Module} Snapshot Tests/             # swift-testing snapshot tests
+      {Type} Snapshot Tests.swift
+      __Snapshots__/                     # Committed reference files
 ```
 
-**Rationale**: SwiftPM ignores subdirectories with their own `Package.swift`. The `Testing/` name directly communicates "this uses our Testing framework." A single nested package avoids duplicating swift-syntax compilation (~40MB) across multiple nested packages.
+**Parent Package.swift** test target declaration:
+```swift
+.testTarget(
+    name: "{Module} Tests",
+    dependencies: [...],
+    path: "Tests/{Module} Tests"         // explicit path required
+)
+```
+
+**Rationale**: SwiftPM ignores subdirectories with their own `Package.swift` during automatic target discovery, but explicit `path:` overrides this. The flat sibling layout eliminates the `Tests/Testing/Tests/` stutter (validated by experiment `nested-package-source-ownership`). A single nested package avoids duplicating swift-syntax compilation (~40MB) across multiple nested packages.
 
 ---
 
@@ -112,7 +121,7 @@ extension {Type}.Test.Snapshot {
 
 ### [INST-TEST-004] Nested Package.swift Template
 
-**Statement**: The nested `Package.swift` MUST declare dependencies on the parent package via `../..` and on swift-testing via relative path.
+**Statement**: The nested `Package.swift` MUST declare dependencies on the parent package via `..` and on swift-testing via relative path. Test targets MUST use explicit `path:` parameters since the package root is `Tests/` (SwiftPM would otherwise look for targets in `Tests/Tests/`).
 
 **Template**:
 ```swift
@@ -126,7 +135,7 @@ let package = Package(
         .macOS(.v26),
     ],
     dependencies: [
-        .package(path: "../.."),
+        .package(path: ".."),
         .package(path: "{relative-path-to-swift-testing}"),
     ],
     targets: [
@@ -135,14 +144,16 @@ let package = Package(
             dependencies: [
                 .product(name: "{Module}", package: "swift-{package}"),
                 .product(name: "Testing", package: "swift-testing"),
-            ]
+            ],
+            path: "{Module} Performance Tests"
         ),
         .testTarget(
             name: "{Module} Snapshot Tests",
             dependencies: [
                 .product(name: "{Module}", package: "swift-{package}"),
                 .product(name: "Testing", package: "swift-testing"),
-            ]
+            ],
+            path: "{Module} Snapshot Tests"
         ),
     ],
     swiftLanguageModes: [.v6]
@@ -150,14 +161,10 @@ let package = Package(
 
 for target in package.targets where ![.system, .binary, .plugin, .macro].contains(target.type) {
     let ecosystem: [SwiftSetting] = [
-        .strictMemorySafety(),
         .enableUpcomingFeature("ExistentialAny"),
         .enableUpcomingFeature("InternalImportsByDefault"),
         .enableUpcomingFeature("MemberImportVisibility"),
         .enableUpcomingFeature("NonisolatedNonsendingByDefault"),
-        .enableExperimentalFeature("Lifetimes"),
-        .enableExperimentalFeature("SuppressedAssociatedTypes"),
-        .enableExperimentalFeature("SuppressedAssociatedTypesWithDefaults"),
     ]
 
     target.swiftSettings = (target.swiftSettings ?? []) + ecosystem
@@ -170,15 +177,15 @@ for target in package.targets where ![.system, .binary, .plugin, .macro].contain
 
 ### [INST-TEST-005] Relative Path Calculation
 
-**Statement**: Relative paths MUST be calculated from `Tests/Testing/` as the working directory.
+**Statement**: Relative paths MUST be calculated from `Tests/` as the working directory.
 
-| Parent Repo | Path to swift-testing |
-|-------------|----------------------|
-| `swift-primitives/swift-{pkg}/` | `../../../../swift-foundations/swift-testing` |
-| `swift-standards/swift-{pkg}/` | `../../../../swift-foundations/swift-testing` |
-| `swift-foundations/swift-{pkg}/` | `../../../swift-testing` |
+| Parent Repo | Path to parent | Path to swift-testing |
+|-------------|---------------|----------------------|
+| `swift-primitives/swift-{pkg}/` | `..` | `../../../swift-foundations/swift-testing` |
+| `swift-standards/swift-{pkg}/` | `..` | `../../../swift-foundations/swift-testing` |
+| `swift-foundations/swift-{pkg}/` | `..` | `../../swift-testing` |
 
-The parent package is always `../..`.
+The parent package is always `..`.
 
 **Rationale**: Incorrect relative paths cause "no package found" errors.
 
@@ -283,12 +290,16 @@ extension MyType {
 
 ### [INST-TEST-010] Build and Test Commands
 
-**Statement**: Tests MUST be built and run from `Tests/Testing/`, not from the parent package root.
+**Statement**: Unit tests run from the parent package root. Performance and snapshot tests run from `Tests/`.
 
 ```bash
-cd swift-{package}/Tests/Testing
+# Unit tests (Apple Testing)
+cd swift-{package}
+swift test
+
+# Performance + snapshot tests (swift-testing)
+cd swift-{package}/Tests
 swift package resolve    # First run only
-swift build
 swift test
 
 # Filter by target:
@@ -304,7 +315,27 @@ swift test --filter Snapshot
 
 ### [INST-TEST-011] .gitignore
 
-**Statement**: The nested `.build/` and `.swiftpm/` directories SHOULD be excluded via `.gitignore`. The parent package's gitignore typically covers this already.
+**Statement**: The nested `.build/`, `.swiftpm/`, and `.benchmarks/` directories SHOULD be excluded via `.gitignore`. The parent package's gitignore typically covers this already.
+
+---
+
+## Migration from `Tests/Testing/` (Legacy)
+
+### [INST-TEST-012] Migration Procedure
+
+**Statement**: Packages using the legacy `Tests/Testing/` pattern SHOULD migrate to `Tests/Package.swift`.
+
+| Step | Action |
+|------|--------|
+| 1 | Move `Tests/Testing/Tests/{Module} * Tests/` → `Tests/{Module} * Tests/` |
+| 2 | Move `Tests/Testing/Package.swift` → `Tests/Package.swift` |
+| 3 | Update nested `Package.swift`: parent `../..` → `..`, swift-testing path loses one `../` |
+| 4 | Add explicit `path:` to nested test targets (e.g., `path: "{Module} Snapshot Tests"`) |
+| 5 | Add explicit `path:` to parent `Package.swift` test targets (e.g., `path: "Tests/{Module} Tests"`) |
+| 6 | Remove old `Tests/Testing/` directory |
+| 7 | Verify: `swift test` from parent runs unit tests only; `swift test` from `Tests/` runs performance + snapshot |
+
+**Rationale**: Eliminates the `Tests/Testing/Tests/` stutter and reduces `__Snapshots__/` path depth from 5 to 3 levels.
 
 ---
 
@@ -312,4 +343,6 @@ swift test --filter Snapshot
 
 - **testing** skill — [TEST-*] for unit test organization with Apple Testing
 - **platform** skill — [PLAT-ARCH-*] for Package.swift configuration
+- Research: `swift-institute/Research/nested-testing-package-flattening.md`
 - Research: `swift-institute/Research/nested-testing-package-structure.md`
+- Experiment: `swift-institute/Experiments/nested-package-source-ownership/`

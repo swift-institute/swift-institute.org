@@ -73,9 +73,15 @@ Primitives are types that standards require but do not define. Memory abstractio
 
 ### Standards
 
-**Role**: Faithful implementations of external normative specifications.
+**Role**: Faithful implementations of external normative specifications, plus domain-concept packages that converge and stabilize them.
 
-RFCs, ISO standards, protocol formats, wire encodings, cryptographic specs, file formats. Semantics are dictated externally; correctness is defined by conformance.
+The standards layer has two sub-layers:
+
+**Specification implementations** — RFCs, ISO standards, protocol formats, wire encodings, cryptographic specs, file formats. Semantics are dictated externally; correctness is defined by conformance. Housed in standards-body orgs (`swift-ietf/`, `swift-w3c/`, `swift-iso/`, etc.).
+
+**Domain-concept packages** — Converge multiple specs that define the same concept into a single canonical type, and insulate consumers from spec evolution. Housed in `swift-standards/`. For example, `swift-emailaddress-standard` unifies RFC 2822, 5321, 5322, and 6531 into a single `EmailAddress` type. Even single-spec packages like `swift-epub-standard` provide stability: when a spec is updated or obsoleted, only the `-standard` package changes internally — consumers keep importing the stable module name.
+
+Both sub-layers are policy-free. Domain-concept packages do not add opinion or ecosystem integration — they faithfully compose externally-defined concepts. The distinction is granularity (individual spec vs. unified domain concept), not layer.
 
 ### Foundations
 
@@ -83,7 +89,7 @@ RFCs, ISO standards, protocol formats, wire encodings, cryptographic specs, file
 
 File systems, IO abstractions, HTTP types, JSON, TLS plumbing, diagnostics, configuration parsing, logging backends, scheduling primitives. Reusable across domains, infrastructure-level, minimal defaults, no application workflows.
 
-**Distinction from Standards**: Foundations are *compositions*, not implementations of external specifications. A JSON parser implements RFC 8259 (standards layer), but a configuration system that uses JSON is a foundation—it composes the standard with file I/O, validation, and type coercion.
+**Distinction from Standards**: Foundations are *ecosystem integrations*, not implementations of external specifications. A JSON parser implements RFC 8259 (standards layer), but a configuration system that uses JSON is a foundation — it composes the standard with file I/O, validation, and type coercion. Similarly, `swift-emailaddress-standard` (standards layer) converges multiple RFCs into a canonical `EmailAddress` type, while `swift-emailaddress` (foundations layer) would integrate that type with validation middleware, database storage, and service APIs.
 
 **Distinction from Primitives**: Foundations have dependencies on standards. A TLS foundation depends on cryptographic standards; a logging foundation may depend on timestamp standards. Primitives depend only on other primitives.
 
@@ -105,15 +111,43 @@ Calendar systems, reminders, email clients/services, CLIs, vertical products. Do
 
 ## Repository Organization
 
-The Swift Institute comprises multiple GitHub organizations, one per layer:
+The Swift Institute comprises multiple GitHub organizations. The standards layer spans multiple orgs — one per standards body plus one for domain-concept packages:
 
 | Layer | GitHub Organization | Repository Pattern | Example |
 |-------|---------------------|-------------------|---------|
 | **Primitives** | `swift-primitives` | `swift-*-primitives` | `swift-geometry-primitives` |
-| **Standards** | `swift-standards` | `swift-{spec-id}` | `swift-iso-32000`, `swift-rfc-3986` |
+| **Standards** (specs) | `swift-ietf`, `swift-w3c`, `swift-iso`, `swift-ieee`, `swift-iec`, `swift-ecma`, `swift-whatwg`, `swift-incits` | `swift-{spec-id}` | `swift-rfc-3986`, `swift-iso-32000`, `swift-w3c-css` |
+| **Standards** (domain concepts) | `swift-standards` | `swift-{concept}-standard` | `swift-emailaddress-standard`, `swift-pdf-standard` |
 | **Foundations** | `swift-foundations` | `swift-*` (clean names) | `swift-json`, `swift-logging` |
 | **Components** | `swift-components` | `swift-*` or product names | `swift-pdf-rendering` |
 | **Applications** | Product-specific | Product names | Domain-specific |
+
+### Domain concept packaging
+
+A domain concept may span up to four tiers across the architecture:
+
+```
+swift-foundations/swift-{concept}              Layer 3   Ecosystem integration (volatile)
+         ↑
+swift-standards/swift-{concept}-standard       Layer 2   Convergence + stability (stable)
+         ↑
+swift-{body}/swift-{spec-id}                   Layer 2   Spec implementation (stable)
+         ↑
+swift-primitives/swift-{concept}-primitives    Layer 1   Primitive concept (when applicable)
+```
+
+Not every domain concept has all four tiers. The **domain shape** determines which tiers exist:
+
+| Shape | Primitives | Spec implementations | `-standard` | Foundations | Example |
+|-------|-----------|---------------------|-------------|-------------|---------|
+| Primitive-first, multi-spec | Yes | Multiple | Convergence + stability | Yes | Time |
+| Standard-first, multi-spec | No | Multiple | Convergence + stability | Yes | EmailAddress |
+| Standard-first, single-spec | No | One | Stability only | Yes | EPUB |
+| Mixed | Partial | Multiple, cross-body | Convergence + stability | Yes | Color |
+
+The **stable-vs-volatile separation** is key: spec implementations and `-standard` packages rarely change (specifications are stable documents). Foundations packages change frequently as ecosystem integrations evolve. This separation ensures that a Mailgun API change doesn't touch `swift-emailaddress-standard`, and a new RFC version doesn't touch `swift-emailaddress` (the foundations package).
+
+See [Standard Facade Package Organization](../Research/standard-facade-package-organization.md) for the full analysis.
 
 The `swift-institute` organization itself serves as the umbrella identity and documentation home, not a package publisher. This separation ensures:
 
