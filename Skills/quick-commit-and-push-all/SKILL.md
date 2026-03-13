@@ -48,7 +48,7 @@ The skill MUST iterate over these directories:
 | 1 | `swift-primitives/` | Yes (standalone `.git/`) | `swift-*/` with standalone `.git/` directories |
 | 2 | `swift-ietf/` | No | `swift-rfc-*/`, `swift-bcp-*/` with standalone `.git/` directories |
 | 3 | `swift-iso/` | No | `swift-iso-*/` with standalone `.git/` directories |
-| 4 | `swift-w3c/` | No | `swift-w3c-*/`, `swift-cssom/` with standalone `.git/` directories |
+| 4 | `swift-w3c/` | No | `swift-w3c-*/` with standalone `.git/` directories |
 | 5 | `swift-whatwg/` | No | `swift-whatwg-*/` with standalone `.git/` directories |
 | 6 | `swift-ieee/` | No | `swift-ieee-*/` with standalone `.git/` directories |
 | 7 | `swift-iec/` | No | `swift-iec-*/` with standalone `.git/` directories |
