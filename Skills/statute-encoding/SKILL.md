@@ -23,10 +23,16 @@ applies_to:
 
 # Statute Encoding
 
-Encode statute text as algebraic Swift types. Each provision is encoded literally —
-the statute text is the sole source of truth. Domain modeling uses enums for statutory
-alternatives and structs for conjunctions. Composition happens at the article level;
-cross-article composition belongs in the law layer (`rule-law-*`).
+Encode statute text as executable Swift types. Stay as close to the legal text as
+possible, introducing as few new concepts as possible. The statute text is the sole
+source of truth.
+
+The approach is **uniform and deterministic**: every provision uses the same
+`@Splat` + `Arguments` + `Error` + `CustomStringConvertible` pattern. Inputs are
+`Bool?` properties named after the literal statutory conditions. Outputs are `Bool?`
+conclusions derived via `Bool?.all { }` / `Bool?.any { }` from Logic Ternary Primitives.
+Composition happens at the article level; cross-article composition belongs in the
+law layer (`rule-law-*`).
 
 **Layer context**: This skill governs the legislature layer (`swift-*-legislature`).
 See ARCHITECTURE.md §1 for the full layer stack (legislature → judiciary → law → legal).
@@ -55,321 +61,13 @@ of truth.
 
 ---
 
-## Domain Modeling
+## The Uniform Pattern
 
-### [LEG-ENC-002] Enums for Distinct Procedural Paths
+### [LEG-ENC-002] @Splat + Arguments + Error
 
-**Statement**: When a statute defines distinct procedural paths with different conditions
-or legal consequences (typically using lettered sub-items a/b/c, semicolons separating
-categories, or "hetzij... hetzij"), the paths MUST be modeled as an enum. Each case
-corresponds to exactly one path and carries only its own conditions as associated data.
-
-**When to use an enum**: The statute defines distinct paths where:
-- Each path has its own conditions or consequences
-- The caller must choose ONE path (they are procedurally exclusive)
-- The path choice determines which conditions are relevant
-
-**Correct** — statute defines 6 distinct ontbindingsgronden, each with own conditions:
-```swift
-public enum Grond: Sendable {
-    case a(Besluit)           // besluit — has sub-structure (AV vs bestuur)
-    case b(... : Bool?)       // statutaire gebeurtenis — has condition
-    case c(Faillissement)     // faillissement — has sub-structure
-    case d(Ledenverband)      // ontbreken leden — encodes rechtsvorm constraint
-    case e                    // KvK beschikking
-    case f                    // rechterlijk
-}
-```
-
-**When NOT to use an enum**: The statute merely lists entities or items that share the
-same legal consequence without distinct conditions per item. Use a struct with `Bool?`
-per item instead (see [LEG-ENC-002a]).
-
-**Cross-references**: [LEG-ENC-002a], [LEG-ENC-003], [API-NAME-001], ARCHITECTURE.md §2.3
-
----
-
-### [LEG-ENC-002a] Structs for Listed Items
-
-**Statement**: When a statute lists entities, types, or items that all share the same
-legal consequence (e.g., "X, Y, Z bezitten rechtspersoonlijkheid"), the list MUST be
-modeled as a struct with one `Bool?` property per item. Do NOT invent a collective
-enum type.
-
-**Correct** — statute says "De Staat, de provincies, de gemeenten, de waterschappen, alsmede alle lichamen waaraan krachtens de Grondwet verordenende bevoegdheid is verleend, bezitten rechtspersoonlijkheid":
-```swift
-public struct `1`: Sendable {
-    public let `betreft het de Staat`: Bool?
-    public let `betreft het een provincie`: Bool?
-    public let `betreft het een gemeente`: Bool?
-    public let `betreft het een waterschap`: Bool?
-    public let `is het een lichaam waaraan krachtens de Grondwet verordenende bevoegdheid is verleend`: Bool?
-
-    public let `het bezit rechtspersoonlijkheid`: Bool?  // OR of above
-}
-```
-
-**Incorrect** — invented collective noun, adds interpretation:
-```swift
-public enum Overheidslichaam: Sendable {   // ❌ "Overheidslichaam" is not in the statute
-    case `de Staat`                         // ❌ De Staat is not a "lichaam"
-    ...
-}
-```
-
-**Rationale**: Three reasons to prefer the struct approach for listed items:
-
-1. **Literal encoding** — the property names ARE the statute text. An enum requires
-   inventing a collective noun not present in the statute.
-2. **Ternary logic preservation** — each item is independently assessable. You might
-   know "it is NOT de Staat" (`false`) while not yet knowing about the others (`nil`).
-   An enum collapses "not one of these" and "don't know" into the same `nil`.
-3. **No added interpretation** — the statute does not assert mutual exclusivity.
-   Even if the items happen to be mutually exclusive in the real world, encoding that
-   is interpretation, not literal transcription.
-
-The conclusion (`het bezit rechtspersoonlijkheid`) is derived via `Bool?.any { }` (OR)
-from the individual items. If ANY item is `true`, the conclusion is `true`. If ALL are
-`false`, it's `false`. If some are `nil` with none `true`, it's `nil` (indeterminate).
-
-**Cross-references**: [LEG-ENC-001], [LEG-ENC-006]
-
----
-
-### [LEG-ENC-003] Sum-of-Products for Conditional Alternatives
-
-**Statement**: When different statutory alternatives carry different conditions, each enum
-case MUST carry only the associated data relevant to that alternative. A case MUST NOT
-require data that is irrelevant to its statutory path.
-
-**Correct** — each case carries only its relevant conditions:
-```swift
-public enum Verzoeker: Sendable {
-    /// Alleen indien stichting
-    case belanghebbende(`betreft het een stichting`: Bool?)
-    /// Alleen indien bestuur niet voldaan aan art 19b lid 1
-    case schuldeiser(`heeft het bestuur voldaan aan artikel 19b lid 1`: Bool?)
-    /// Moet redelijk belang aantonen
-    case `voormalig betrokkene`(betrokkenheid: Betrokkenheid, `toont redelijk belang aan`: Bool?)
-}
-```
-
-**Incorrect** — flat product type, every field for every case:
-```swift
-public struct Arguments: Sendable {
-    public let `betreft het een stichting`: Bool?           // ❌ Irrelevant for schuldeiser
-    public let `heeft het bestuur voldaan`: Bool?            // ❌ Irrelevant for belanghebbende
-    public let `toont redelijk belang aan`: Bool?            // ❌ Irrelevant for both above
-    public let hoedanigheid: Hoedanigheid?                   // ❌ Irrelevant for first two
-}
-```
-
-**Rationale**: The statute ties specific conditions to specific alternatives. A flat product
-type allows irrelevant combinations (asking a belanghebbende about redelijk belang). The
-sum-of-products makes illegal states unrepresentable.
-
-**Cross-references**: [IMPL-INTENT], ARCHITECTURE.md §2.2, §2.3
-
----
-
-### [LEG-ENC-004] Nested Enums for Sub-Alternatives
-
-**Statement**: When a statutory alternative itself contains sub-choices, the sub-choices
-MUST be modeled as a nested enum on the parent case or type.
-
-**Correct** — the statute distinguishes the appointing organ by rechtsvorm:
-```swift
-extension Aanwijzing {
-    public enum Orgaan: Sendable {
-        case `de algemene vergadering`  // non-stichting
-        case `het bestuur`              // stichting
-    }
-}
-```
-
-**Rationale**: Nesting mirrors the statute's hierarchical structure. Per [API-NAME-001],
-sub-concepts are nested within their parent concept.
-
-**Cross-references**: [API-NAME-001], [LEG-ENC-002]
-
----
-
-### [LEG-ENC-005] Case Selection Encodes Constraints
-
-**Statement**: When a statutory alternative is restricted to a specific context (e.g.,
-a particular rechtsvorm), the choice of enum case MUST encode that constraint. Selecting
-the case asserts the constraint. No separate boolean input is needed for the constraint.
-
-**Correct** — choosing `het bestuur` asserts stichting:
-```swift
-case `door het bevoegde orgaan`(Orgaan)
-
-enum Orgaan: Sendable {
-    case `de algemene vergadering`   // choosing this asserts: has an AV (non-stichting)
-    case `het bestuur`               // choosing this asserts: stichting
-}
-```
-
-**Incorrect** — redundant boolean alongside the case:
-```swift
-case `door het bestuur`(`betreft het een stichting`: Bool?)  // ❌ The case IS the assertion
-```
-
-**Rationale**: If a statutory path is only available in context X, constructing that path
-IS the proof of context X. A separate boolean creates representable-but-illegal states
-(e.g., `door het bestuur` with `betreft het een stichting: false`).
-
-**Exception**: When the statute states a condition as a separate testable fact rather than
-a contextual restriction. Use judgment: if the condition gates availability of the path,
-encode it in the case. If the condition is a factual input that the provision evaluates,
-use associated data.
-
-**Cross-references**: [LEG-ENC-003]
-
----
-
-### [LEG-ENC-006] Bool? for Simple Factual Conditions
-
-**Statement**: When the statute asks a simple yes/no factual question (not a structured
-choice), the condition MUST be modeled as `Bool?` using ternary logic.
-
-- `true` — condition is met
-- `false` — condition is not met
-- `nil` — condition is not assessed / unknown
-
-```swift
-public let `is de laatste vereffenaar bereid te bewaren`: Bool?
-public let `is er een verzoek van een belanghebbende`: Bool?
-```
-
-Use `Bool?.all { }` and `Bool?.any { }` from Logic Ternary Primitives for Kleene
-composition of multiple conditions.
-
-**Cross-references**: ARCHITECTURE.md §3
-
----
-
-### [LEG-ENC-007] Conclusion Types for Structured Outputs
-
-**Statement**: When the statute's conclusion distinguishes categories, grounds, or bases,
-the output MUST be modeled as an enum that preserves the statutory basis. A flat `Bool?`
-is insufficient when the statute tells you not just "yes/no" but "yes, because X."
-
-**Correct** — the statute distinguishes three qualifying bases:
-```swift
-public enum Conclusie: Sendable {
-    case gekwalificeerd(Grond)
-    case `niet gekwalificeerd`
-    case onbeoordeeld
-}
-
-extension Conclusie {
-    public enum Grond: Sendable {
-        case `belanghebbende bij stichting`
-        case `schuldeiser bij niet-nakoming artikel 19b lid 1`
-        case `voormalig betrokkene met redelijk belang`(Betrokkenheid)
-    }
-}
-```
-
-**Incorrect** — loses the statutory basis:
-```swift
-public let `de kantonrechter kan machtiging geven`: Bool?  // ❌ Which category? Which basis?
-```
-
-**When Bool? IS sufficient**: When the provision's conclusion is genuinely binary (the
-statute says "X happens" or "X does not happen" with no further distinction), `Bool?` is
-the correct output type.
-
-**Cross-references**: [IMPL-INTENT], [LEG-ENC-001]
-
----
-
-## Provision Structure
-
-### [LEG-ENC-010] Each Provision Is Self-Contained
-
-**Statement**: Each provision (lid) MUST define its own domain types (enums, structs)
-as nested types within its struct. Types MUST NOT be shared across provisions within
-the same article. Each provision has its own input types, its own conclusion types,
-and its own logic.
-
-```swift
-extension `Artikel 24` {
-    public struct `1`: Sendable { ... }       // own Aanwijzing enum
-}
-extension `Artikel 24` {
-    public struct `4`: Sendable { ... }       // own Verzoeker enum, own Conclusie enum
-}
-```
-
-If two provisions happen to use similar concepts, they each define their own version.
-The composition layer (`rule-law-*`) can unify later.
-
-**Rationale**: The legislature layer encodes literal text. Different provisions may use
-the same word with different legal meaning. Self-containment prevents accidental semantic
-coupling.
-
-**Cross-references**: [LEG-ENC-001]
-
----
-
-### [LEG-ENC-011] Normative Provisions
-
-**Statement**: When a provision states an unconditional obligation, prohibition, or
-definition with no conditions, it MUST be modeled as a struct with a parameterless
-`init()` and normative output properties defaulting to `true`.
-
-```swift
-public struct `3`: Sendable {
-    public let `de bewaarder moet zijn naam en adres opgeven aan de registers`: Bool? = true
-
-    public init() {}
-}
-```
-
-**Rationale**: Normative provisions make statements, not computations. Their truth is
-inherent in the statutory text.
-
-**Cross-references**: [LEG-ENC-001]
-
----
-
-### [LEG-ENC-012] Conditional Provisions
-
-**Statement**: When a provision contains conditions ("indien", "voor zover", "tenzij",
-"mits", temporal clauses, "kan... op verzoek van"), it MUST take those conditions as
-inputs and derive conclusions.
-
-The input types depend on the statutory structure:
-- Simple conditions → `Bool?` per [LEG-ENC-006]
-- Enumerated alternatives → enum per [LEG-ENC-002]
-- Conditional alternatives → sum-of-products per [LEG-ENC-003]
-
-The output types depend on the conclusion structure:
-- Binary conclusion → `Bool?`
-- Structured conclusion → enum per [LEG-ENC-007]
-
-**Dutch condition indicators** (non-exhaustive):
-- "indien" / "wanneer" / "als" → condition
-- "voor zover" / "in zoverre" → scope condition
-- "tenzij" → exception (negated condition)
-- "mits" → prerequisite condition
-- "kan... op verzoek van" → requires request
-- "op grond van" / "krachtens" → basis condition
-- Enumerated alternatives (a, b, c) → OR conditions
-- Cumulative requirements ("en", "alsmede") → AND conditions
-
-**Cross-references**: [LEG-ENC-001], [LEG-ENC-002], [LEG-ENC-006], [LEG-ENC-007]
-
----
-
-### [LEG-ENC-013] @Splat, Arguments, and Error Pattern
-
-**Statement**: Conditional provisions and provisions with listed items (per [LEG-ENC-002a])
-SHOULD use the `@Splat` macro with `Arguments`, `Error`, and `CustomStringConvertible`.
-
-The pattern:
+**Statement**: Every conditional provision MUST use the `@Splat` + `Arguments` +
+`Error` + `CustomStringConvertible` pattern. This is the uniform, deterministic
+approach — the same structure every time.
 
 ```swift
 @Splat
@@ -384,13 +82,17 @@ public struct `1`: Sendable {
     public struct Arguments: Sendable {
         public let `betreft het de Staat`: Bool?
         public let `betreft het een provincie`: Bool?
-        // ...
+        public let `betreft het een gemeente`: Bool?
+        public let `betreft het een waterschap`: Bool?
+        public let `is het een lichaam waaraan krachtens de Grondwet verordenende bevoegdheid is verleend`: Bool?
 
         public init(
             `betreft het de Staat`: Bool? = nil,
             `betreft het een provincie`: Bool? = nil,
-            // ...
-        ) { /* assign */ }
+            `betreft het een gemeente`: Bool? = nil,
+            `betreft het een waterschap`: Bool? = nil,
+            `is het een lichaam waaraan krachtens de Grondwet verordenende bevoegdheid is verleend`: Bool? = nil
+        ) { /* assign each */ }
     }
 
     @_documentation(visibility: package)
@@ -398,7 +100,9 @@ public struct `1`: Sendable {
         self.`het bezit rechtspersoonlijkheid` = Bool?.any {
             arguments.`betreft het de Staat`
             arguments.`betreft het een provincie`
-            // ...
+            arguments.`betreft het een gemeente`
+            arguments.`betreft het een waterschap`
+            arguments.`is het een lichaam waaraan krachtens de Grondwet verordenende bevoegdheid is verleend`
         }
         self.arguments = arguments
     }
@@ -424,17 +128,175 @@ extension `Artikel 1`.`1`.Error: CustomStringConvertible {
 }
 ```
 
-**Benefits**:
-- `Arguments` captures all inputs as a reusable type
-- `Error` stores the arguments for substantiation (explaining WHY something didn't qualify)
-- `@Splat` generates a convenience `init` with labeled arguments
-- `CustomStringConvertible` on Error provides human-readable Dutch substantiation
+**The pattern provides**:
+- `Arguments` — captures all inputs as a reusable type
+- `Error` — stores the arguments for substantiation
+- `@Splat` — generates convenience `init` with labeled arguments
+- `CustomStringConvertible` — human-readable Dutch substantiation
+- `Bool?.any { }` / `Bool?.all { }` — Kleene ternary logic composition
 
-**When to omit**: Normative provisions [LEG-ENC-011] and provisions where the input
-is a single domain enum (e.g., `Verzoeker`) do not benefit from @Splat — the domain
-type IS the argument.
+**Inputs**: `Bool?` properties named after the literal statutory conditions.
+Property names ARE the statute text. Do NOT invent terms not in the statute.
 
-**Cross-references**: [LEG-ENC-011], [LEG-ENC-012], ARCHITECTURE.md §5
+**Outputs**: `Bool?` conclusions derived from the inputs. Property names describe
+the legal effect in the statute's own words.
+
+**Cross-references**: [LEG-ENC-001], ARCHITECTURE.md §3, §5
+
+---
+
+### [LEG-ENC-003] Bool? for All Factual Conditions
+
+**Statement**: Every factual condition from the statute MUST be modeled as `Bool?`
+using ternary logic (Kleene K₃).
+
+- `true` — condition is met
+- `false` — condition is not met
+- `nil` — condition is not assessed / unknown
+
+Each condition is independently assessable. You might know "it is NOT de Staat"
+(`false`) while not yet knowing about the others (`nil`).
+
+Use `Bool?.all { }` for AND composition and `Bool?.any { }` for OR composition
+from Logic Ternary Primitives.
+
+**Cross-references**: [LEG-ENC-002], ARCHITECTURE.md §3
+
+---
+
+### [LEG-ENC-004] Normative Provisions
+
+**Statement**: When a provision states an unconditional obligation, prohibition, or
+definition with no conditions, it MUST be modeled as a struct with a parameterless
+`init()` and normative output properties defaulting to `true`.
+
+```swift
+public struct `3`: Sendable {
+    public let `de bewaarder moet zijn naam en adres opgeven aan de registers`: Bool? = true
+
+    public init() {}
+}
+```
+
+**Rationale**: Normative provisions make statements, not computations. Their truth is
+inherent in the statutory text.
+
+**Cross-references**: [LEG-ENC-001]
+
+---
+
+### [LEG-ENC-005] Conditional Provisions
+
+**Statement**: When a provision contains conditions, it MUST use the @Splat pattern
+[LEG-ENC-002] with those conditions as `Bool?` inputs and derive `Bool?` conclusions.
+
+**Dutch condition indicators** (non-exhaustive):
+- "indien" / "wanneer" / "als" → condition
+- "voor zover" / "in zoverre" → scope condition
+- "tenzij" → exception (negated condition)
+- "mits" → prerequisite condition
+- "kan... op verzoek van" → requires request
+- "op grond van" / "krachtens" → basis condition
+- Listed items with shared consequence → OR (`Bool?.any { }`)
+- Cumulative requirements ("en", "alsmede") → AND (`Bool?.all { }`)
+
+**Cross-references**: [LEG-ENC-001], [LEG-ENC-002], [LEG-ENC-003]
+
+---
+
+## Enums (Narrow Exception)
+
+Enums are the exception, not the default. Use them ONLY when the statute itself
+defines categorized paths where different conditions are bound to different categories.
+Even then, the enum serves the statute's own structure — do not invent collective nouns
+or impose mutual exclusivity the statute doesn't state.
+
+### [LEG-ENC-010] When to Use Enums
+
+**Statement**: An enum SHOULD be used only when the statute defines distinct categories
+where:
+1. Each category carries its own conditions (not shared across categories)
+2. Asking the wrong category's conditions would be meaningless
+3. The category choice is a factual input, not derived
+
+**Example** — Art 24 lid 4 defines three categories of persons, each with own gate:
+```swift
+public enum Verzoeker: Sendable {
+    case belanghebbende(`betreft het een stichting`: Bool?)
+    case schuldeiser(`heeft het bestuur voldaan aan artikel 19b lid 1`: Bool?)
+    case `voormalig betrokkene`(betrokkenheid: Betrokkenheid, `toont redelijk belang aan`: Bool?)
+}
+```
+
+A `belanghebbende` should never be asked about `toont redelijk belang aan`.
+The category determines which conditions are relevant. The enum captures this.
+
+**When NOT to use an enum**: The statute lists items that share the same consequence
+without distinct conditions per item (e.g., "X, Y, Z bezitten rechtspersoonlijkheid").
+Use `Bool?` per item with the @Splat pattern instead.
+
+**Cross-references**: [LEG-ENC-002], [LEG-ENC-001]
+
+---
+
+### [LEG-ENC-011] Sum-of-Products
+
+**Statement**: When using enums per [LEG-ENC-010], each case MUST carry only the
+associated data relevant to that alternative. Do not mix enum and flat Bool? for
+the same set of alternatives.
+
+**Cross-references**: [LEG-ENC-010]
+
+---
+
+### [LEG-ENC-012] Nested Enums and Case Constraints
+
+**Statement**: When an enum case itself has sub-choices, model as a nested enum.
+When a case is restricted to a specific context, the choice of case encodes that
+constraint — no separate boolean needed.
+
+```swift
+public enum Orgaan: Sendable {
+    case `de algemene vergadering`   // choosing this asserts: non-stichting
+    case `het bestuur`               // choosing this asserts: stichting
+}
+```
+
+**Cross-references**: [API-NAME-001], [LEG-ENC-010]
+
+---
+
+### [LEG-ENC-013] Conclusion Enums
+
+**Statement**: When the statute's conclusion distinguishes categories or bases,
+the output MAY be modeled as an enum that preserves the statutory basis.
+
+```swift
+public enum Conclusie: Sendable {
+    case gekwalificeerd(Grond)
+    case `niet gekwalificeerd`
+    case onbeoordeeld
+}
+```
+
+**When Bool? IS sufficient**: When the provision's conclusion is genuinely binary
+(the statute says "X happens" or "X does not happen" with no further distinction),
+`Bool?` is the correct output type. This is the common case.
+
+**Cross-references**: [LEG-ENC-001]
+
+---
+
+## Provision Structure
+
+### [LEG-ENC-020] Each Provision Is Self-Contained
+
+**Statement**: Each provision (lid) MUST define its own types as nested types within
+its struct. Types MUST NOT be shared across provisions. If two provisions use similar
+concepts, they each define their own version. The composition layer (`rule-law-*`)
+can unify later.
+
+**Cross-references**: [LEG-ENC-001]
 
 ---
 
