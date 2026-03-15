@@ -48,6 +48,7 @@ Central backlog of blog post ideas captured from Swift Institute work.
 | BLOG-IDEA-028 | What Swift 6.2.4 fixed (and didn't fix) for ~Copyable | Lessons Learned | [Experiments/_index.md](Experiments/_index.md) | 2026-03-10 | 4 bugs fixed, 9 limitations remain. Revalidation of 13 experiments. Strong angle for external readers. |
 | BLOG-IDEA-029 | The Sequence Copyable wall: why ~Copyable containers can't conform to Sequence | Technical Deep Dive | [Experiments/_index.md](Experiments/_index.md) | 2026-03-10 | 6 experiments all hit the same wall — Sequence inherits Copyable. Implications for library design. |
 | ~~BLOG-IDEA-030~~ | ~~Typed throws in practice: the stdlib compatibility matrix you need~~ | — | — | 2026-03-10 | Moved to In Progress — part of [typed-throws series](Series/typed-throws.md) |
+| ~~BLOG-IDEA-031~~ | ~~The associated type trap: when your protocol's Body meets SwiftUI's Body~~ | — | — | 2026-03-13 | Moved to In Progress |
 
 ---
 
@@ -81,6 +82,7 @@ Central backlog of blog post ideas captured from Swift Institute work.
 | BLOG-IDEA-013 | Typed throws in Swift, part 1: error handling from first principles | Technical Deep Dive | — | 2026-03-11 | [Draft](Draft/typed-throws-part-1.md) |
 | BLOG-IDEA-013 | Typed throws in Swift, part 2: the throwing spectrum | Technical Deep Dive | — | 2026-03-11 | [Draft](Draft/typed-throws-part-2.md) |
 | BLOG-IDEA-030 | Typed throws in Swift, part 3: typed throws in practice | Technical Deep Dive | — | 2026-03-11 | [Draft](Draft/typed-throws-part-3.md) |
+| BLOG-IDEA-031 | The associated type trap: when your protocol's Body meets SwiftUI's Body | Technical Deep Dive | — | 2026-03-13 | [Draft](Draft/associated-type-trap.md) |
 
 > **Note**: BLOG-IDEA-024, 025, 027 were previously listed as "In Progress" but no draft files exist. Moved back to Ready for Drafting.
 >
