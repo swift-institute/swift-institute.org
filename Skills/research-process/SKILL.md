@@ -423,7 +423,25 @@ For trade-offs: Context → Question ("How to balance A vs B?") → Concerns wit
 
 Scope defines: packages, decision types, relevant conventions. Inventory catalogs all design decisions. Evaluation uses criteria like convention compliance and cross-package consistency. Recommendations propose actions.
 
-**Cross-references**: [RES-014], [RES-015]
+**Cross-references**: [RES-013a], [RES-014], [RES-015]
+
+---
+
+### [RES-013a] Synthesis Verification
+
+**Statement**: When a research document synthesizes findings from prior documents, each carried-forward finding MUST be verified against current source before inclusion. Prior documents are leads, not ground truth.
+
+Each finding MUST include a verification tag:
+
+| Tag | Meaning |
+|-----|---------|
+| `Verified: YYYY-MM-DD` | Finding confirmed against current code |
+| `Carried forward (unverified)` | Taken from prior document, not re-checked |
+| `Resolved: YYYY-MM-DD` | Finding no longer applies (with explanation) |
+
+**Rationale**: Code changes between the prior document's date and the synthesis date can silently resolve findings. Carrying forward stale findings without verification creates false positives that waste investigation effort and erode trust in the research corpus.
+
+**Cross-references**: [RES-013], [RES-008], [META-*]
 
 ---
 

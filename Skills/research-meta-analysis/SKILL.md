@@ -2,7 +2,8 @@
 name: research-meta-analysis
 description: |
   Meta-analysis of research and experiment corpus: staleness detection,
-  supersession protocol, experiment revalidation, index freshness, and pruning.
+  findings verification, supersession protocol, consolidation, scope migration,
+  experiment revalidation/spawning, index freshness, and pruning.
   Apply periodically (monthly or at milestones) to maintain corpus health.
 
 layer: process
@@ -22,8 +23,9 @@ applies_to:
 # Research Meta-Analysis
 
 Workflows for maintaining the health of the research and experiment corpus across
-the Swift Institute ecosystem. Covers staleness detection, supersession, experiment
-revalidation, index freshness, infrastructure compliance, and pruning.
+the Swift Institute ecosystem. Covers staleness detection, findings verification,
+supersession, consolidation, scope migration, experiment revalidation/spawning,
+index freshness, infrastructure compliance, and full corpus sweeps.
 
 **Trigger**: Apply periodically (monthly or at ecosystem milestones), or when the
 corpus exceeds a size where manual tracking becomes unreliable.
@@ -250,21 +252,242 @@ idea has been ready for >30 days.
 
 ---
 
+## Findings Verification
+
+### [META-015] Findings Verification Sweep
+
+**Statement**: During meta-analysis, RECOMMENDATION and DECISION documents MUST have
+their key findings verified against current source. Each finding MUST be tagged with
+a verification status.
+
+| Tag | Meaning | Action |
+|-----|---------|--------|
+| `Verified: YYYY-MM-DD` | Finding confirmed against current code | No action |
+| `Resolved: YYYY-MM-DD` | Finding no longer applies | Update finding with resolution note |
+| `Stale (unverified)` | Not checked this sweep | Flag for next sweep or verify now |
+
+**Verification process**:
+1. For each finding in the document, identify the specific code it references
+   (files, types, functions, patterns)
+2. Check whether the referenced code still exhibits the described behavior
+3. If resolved (e.g., by refactoring, migration, or deletion), update the finding
+   inline with a resolution note and date
+4. If the document's priority matrix includes the finding, update it there too
+5. If all findings are resolved, consider marking the document SUPERSEDED or
+   updating its status to reflect completion
+
+**Scope**: This sweep covers all documents with actionable findings — primarily
+audits and RECOMMENDATION documents. Pure analysis documents (design rationale,
+trade-off discussions) are exempt unless they contain specific code-level claims.
+
+**Rationale**: Metadata-based staleness detection ([META-001]) catches documents
+that stop being updated. Findings verification catches documents that are current
+by date but stale by content — their findings were resolved by code changes that
+occurred independently of the research process. This was demonstrated when the
+swift-pdf-stack-audit (2026-03-15) carried forward three resolved findings from a
+prior audit (2026-03-12) because the witness migration (2026-03-13) occurred between
+the two documents.
+
+**Cross-references**: [RES-013a], [META-001], [META-002]
+
+---
+
+### [META-015a] Verification Prioritization
+
+**Statement**: Not all findings require equal verification effort. Prioritize by
+severity and age.
+
+| Priority | Criteria |
+|----------|----------|
+| HIGH | Findings rated High/Critical in the original document |
+| HIGH | Findings from documents that synthesize prior documents ([RES-013a]) |
+| MEDIUM | Findings rated Medium, or any finding >30 days old |
+| LOW | Findings rated Low, or documents recently authored with original analysis |
+
+**Statement**: When time is limited, verify HIGH-priority findings first. LOW-priority
+findings MAY be deferred to the next sweep with a `Stale (unverified)` tag.
+
+**Cross-references**: [META-015], [META-019]
+
+---
+
+## Consolidation
+
+### [META-016] Consolidation Protocol
+
+**Statement**: When multiple research documents cover overlapping ground, they MUST
+be consolidated into a single authoritative document. The remaining documents MUST
+be marked SUPERSEDED with a reference to the consolidated document.
+
+**Detection rules** — documents are candidates for consolidation when:
+- Two or more documents share the same Question or investigate the same subsystem
+- A synthesis/audit document repeats findings from a prior focused audit
+- Multiple package-specific documents reveal the same ecosystem-wide pattern
+
+**Consolidation process**:
+1. **Identify** the candidate set (overlapping documents)
+2. **Designate** one document as the consolidation target — prefer the most recent,
+   broadest-scoped, or most complete document
+3. **Merge** non-overlapping findings from other documents into the target. For each
+   merged finding, add a provenance note: `(from {source-filename}, {date})`
+4. **Verify** merged findings against current source per [META-015]
+5. **Mark** source documents as SUPERSEDED per [META-003] or [META-004], with a
+   reference to the consolidated document
+6. **Update** all `_index.md` files affected
+
+**Statement**: Consolidation MUST NOT discard findings. Every finding from every
+source document must appear in the consolidated document (as active, resolved, or
+explicitly out-of-scope with rationale).
+
+**Rationale**: Without consolidation, the same finding lives in multiple documents
+at different stages of resolution. Fixing it in one place doesn't update the others,
+creating the false-positive problem that triggered this requirement. A single
+authoritative document per topic eliminates this class of staleness.
+
+**Cross-references**: [META-003], [META-004], [META-015]
+
+---
+
+## Scope Migration
+
+### [META-017] Scope Migration Protocol
+
+**Statement**: During meta-analysis, research and experiment documents MUST be
+evaluated for scope correctness. Documents at the wrong scope level MUST be migrated.
+
+| Current Scope | Signal for Promotion | New Scope |
+|---------------|---------------------|-----------|
+| Package-specific | Finding applies to 3+ packages | Primitives-wide or ecosystem-wide |
+| Package-specific | Finding is about architecture, not one package | Ecosystem-wide |
+| Primitives-wide | Finding applies to standards or foundations too | Ecosystem-wide |
+
+| Current Scope | Signal for Demotion | New Scope |
+|---------------|---------------------|-----------|
+| Ecosystem-wide | Finding only affects one package | Package-specific |
+| Primitives-wide | Finding only affects one package | Package-specific |
+
+**Migration process**:
+1. **Move** the document to the correct `Research/` directory per [RES-002a]:
+   - Package-specific: `{package-repo}/{package}/Research/`
+   - Primitives-wide: `swift-primitives/Documentation.docc/Research/`
+   - Ecosystem-wide: `swift-institute/Research/`
+2. **Update** the document's metadata to reflect the new scope
+3. **Update** `_index.md` in both the source and destination directories
+4. **Update** any cross-references in other documents that pointed to the old path
+5. **Git-move** (not copy-delete) to preserve history
+
+**Statement**: Scope migration also applies to experiments. An experiment that
+validates a cross-package pattern belongs in `swift-institute/Experiments/`, not
+in a single package.
+
+**Rationale**: Documents at the wrong scope are either invisible to the audience
+that needs them (too narrow) or create noise for an audience that doesn't (too broad).
+Correct scoping per [RES-002a] ensures research reaches the right consumers.
+
+**Cross-references**: [RES-002a], [RES-004b], [META-016]
+
+---
+
+## Research–Experiment Linkage
+
+### [META-018] Research→Experiment Spawning
+
+**Statement**: During meta-analysis, RECOMMENDATION documents MUST be checked for
+findings that require empirical validation but have no corresponding experiment.
+
+**Detection rule**: A finding needs an experiment when:
+- It recommends a code change but the recommendation's feasibility is unproven
+- It identifies a compiler/runtime behavior that should be verified
+- It proposes an architectural pattern that has not been tested in isolation
+
+**Spawning process**:
+1. **Identify** the unvalidated recommendation
+2. **Check** whether an experiment already exists (search `Experiments/` directories
+   and `_index.md` files across all repos)
+3. If no experiment exists, **create** one per [EXP-002] with a cross-reference
+   back to the research document
+4. **Update** the research document's finding with a link to the spawned experiment
+5. **Update** relevant `_index.md` files
+
+**Statement**: The reverse link also applies. When an experiment's results contradict
+or resolve a research finding, the research document MUST be updated. Experiments
+are not fire-and-forget — their results flow back into the research corpus.
+
+**Rationale**: Research without validation produces recommendations that may be
+infeasible. Experiments without research context produce results that may be
+misinterpreted. The bidirectional link ensures the corpus is self-correcting.
+
+**Cross-references**: [EXP-002], [RES-011], [META-015]
+
+---
+
+## Full Corpus Sweep
+
+### [META-019] Full Corpus Sweep Sequence
+
+**Statement**: A full corpus sweep is a single activatable process that runs all
+META-* checks in a defined order. It is the primary entry point for corpus
+maintenance.
+
+**Sequence**:
+
+| Phase | Check | IDs | Scope |
+|-------|-------|-----|-------|
+| 1. Staleness | Triage stale IN_PROGRESS documents | [META-001], [META-002] | All repos |
+| 2. Verification | Verify findings in RECOMMENDATION/DECISION docs | [META-015], [META-015a] | All repos |
+| 3. Supersession | Identify and mark superseded documents | [META-003], [META-004] | All repos |
+| 4. Consolidation | Merge overlapping documents | [META-016] | All repos |
+| 5. Scope migration | Promote/demote misscoped documents | [META-017] | All repos |
+| 6. Experiment linkage | Spawn experiments, back-propagate results | [META-018] | All repos |
+| 7. Experiment revalidation | Re-run experiments if toolchain changed | [META-006], [META-007] | All repos |
+| 8. Index freshness | Audit all `_index.md` files | [META-008], [META-009] | All repos |
+| 9. Infrastructure | References, Reflections, Blog pipeline | [META-010]–[META-012] | swift-institute |
+| 10. Report | Produce corpus health report | [META-013] | Conversation output |
+
+**Statement**: Phases 1–6 are the core loop. Phases 7–9 are supplementary checks.
+When time is limited, the sweep MAY stop after phase 6 and defer phases 7–9 to the
+next sweep. Phase 10 (report) MUST always be produced, covering whichever phases
+were executed.
+
+**Statement**: The sweep operates across all four repositories: swift-institute,
+swift-primitives, swift-standards, swift-foundations. Each repository's `Research/`
+and `Experiments/` directories are included.
+
+**Parallelization**: Phases 1 and 2 may run concurrently (staleness is metadata-only,
+verification is content-based — they examine different things). Phases 3–6 are
+sequential because each may change document status that affects the next phase.
+Phase 7 is independent of 3–6 and may run in parallel with them. Phases 8–9 run
+last because prior phases may have created or moved documents.
+
+**Rationale**: Without a defined sequence, individual META-* checks are invoked
+ad hoc and inconsistently. A single sweep ensures completeness and prevents the
+"I checked staleness but forgot verification" failure mode. The defined order
+prevents cascading issues (e.g., consolidating before verifying would merge
+stale findings into the consolidated document).
+
+**Cross-references**: [META-013], [META-014]
+
+---
+
 ## Corpus Health Report
 
 ### [META-013] Report Structure
 
 **Statement**: A meta-analysis session MUST produce a summary report covering:
 
-| Section | Content |
-|---------|---------|
-| Corpus Size | Total counts by type (research, experiments, reflections) and status |
-| Staleness | IN_PROGRESS documents exceeding threshold, with triage decisions |
-| Supersession | Newly identified superseded documents, with actions taken |
-| Revalidation | Experiments due for toolchain revalidation |
-| Index Freshness | Missing or stale `_index.md` files |
-| Infrastructure | Gaps in References/, Reflections/, Blog/ |
-| Future Work | Research or experiments identified as needed but not yet created |
+| Section | Content | Phase |
+|---------|---------|-------|
+| Corpus Size | Total counts by type (research, experiments, reflections) and status | — |
+| Staleness | IN_PROGRESS documents exceeding threshold, with triage decisions | 1 |
+| Verification | Findings checked against current source: verified, resolved, or stale | 2 |
+| Supersession | Newly identified superseded documents, with actions taken | 3 |
+| Consolidation | Overlapping documents merged, with provenance trail | 4 |
+| Scope Migration | Documents promoted or demoted, with rationale | 5 |
+| Experiment Linkage | Experiments spawned from research, results back-propagated | 6 |
+| Revalidation | Experiments due for toolchain revalidation | 7 |
+| Index Freshness | Missing or stale `_index.md` files | 8 |
+| Infrastructure | Gaps in References/, Reflections/, Blog/ | 9 |
+| Future Work | Research or experiments identified as needed but not yet created | — |
 
 **Output location**: The report is ephemeral (conversation output). Durable actions
 (status changes, archival, index updates) are committed to git.

@@ -209,6 +209,9 @@ User asks about Dutch law
     │     │                 ├── Found → go to path check
     │     │                 └── Not found → [NL-WET-006] SRU search
     │     │
+    │     ├── Need STRUCTURAL INDEX (which articles/leden exist)?
+    │     │     └── YES → [NL-WET-017] fetch XML, extract structure
+    │     │
     │     ├── Article path known?
     │     │     ├── YES → construct /afdrukken URL [NL-WET-001]
     │     │     └── NO  → [NL-WET-005] discover path from TOC
@@ -258,6 +261,57 @@ https://repository.officiele-overheidspublicaties.nl/bwb/{BWBID}/{DATE}_{VERSION
 **The `bwb-ng-variabel-deel` attribute value maps directly to the URL path** used in `/afdrukken` URLs. This is how path discovery works when inspecting XML.
 
 **Rationale**: XML gives structure that HTML cannot. Use it when you need to parse, not just read.
+
+---
+
+## Statute Structure Index
+
+### [NL-WET-017] Structural Index via XML Repository
+
+**Statement**: When an agent needs an overview of a statute's structure (which articles, leden, afdelingen, titels exist), it MUST fetch the XML from the repository and extract the structural elements. The HTML TOC ([NL-WET-005]) gives only article ranges; the XML gives individual articles with their leden.
+
+**URL pattern:**
+
+```
+https://repository.officiele-overheidspublicaties.nl/bwb/{BWBID}/{DATE}_0/xml/{BWBID}_{DATE}_0.xml
+```
+
+**Example:**
+
+```
+https://repository.officiele-overheidspublicaties.nl/bwb/BWBR0003045/2025-01-01_0/xml/BWBR0003045_2025-01-01_0.xml
+```
+
+**Extraction**: Use `WebFetch` with a prompt requesting the structural index. The XML contains:
+
+| Element | Attribute/Child | Gives you |
+|---------|-----------------|-----------|
+| `<boek>`, `<titeldeel>`, `<afdeling>` | `<kop>` → `<label>` + `<nr>` | Hierarchy level + number |
+| `<artikel>` | `bwb-ng-variabel-deel` | Exact `/afdrukken` path |
+| `<artikel>` | `<kop>` → `<nr>` | Article number (e.g., `8`, `10a`) |
+| `<lid>` | `<lidnr>` | Lid numbers within each article |
+
+**WebFetch prompt template:**
+
+```
+Extract the complete structural index of this law. For every artikel element, list:
+1) the article number (from kop/nr)
+2) the bwb-ng-variabel-deel path
+3) how many lid elements it contains and their lidnr values
+Group by boek/titeldeel/afdeling hierarchy.
+```
+
+**Large statutes**: For laws with many articles (e.g., BW Boek 2 has 455+), WebFetch may truncate. In that case, request specific titeldelen in separate calls, or ask for a summary first and drill down.
+
+**Use cases:**
+- User asks "which articles does Titel 4 of BW Boek 2 contain?"
+- Agent needs to enumerate all leden of a specific article
+- Building a table of contents for navigation
+- Discovering path components without guessing
+
+**Rationale**: The XML repository is the only source that provides article-level and lid-level granularity in a machine-readable format. The HTML TOC gives ranges (e.g., "Artikel 64-78a") but not individual article metadata. The XML is authoritative and includes the exact `bwb-ng-variabel-deel` paths needed for `/afdrukken` URLs.
+
+**Cross-references**: [NL-WET-009], [NL-WET-005], [NL-WET-003]
 
 ---
 
