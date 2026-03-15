@@ -47,6 +47,7 @@ This is the root meta-skill for the Swift Institute ecosystem.
 - **memory-safety** - [MEM-SAFE-*, MEM-SEND-*, MEM-REF-*, MEM-LIFE-*] Strict safety, reference primitives
 - **copyable-remediation** - [COPY-FIX-*, COPY-REM-*] ~Copyable constraint fixes
 - **existing-infrastructure** - [INFRA-*] Catalog of typed boundary overloads, Standard Library Integration modules, Tagged functors, Ratio scaling
+- **statute-encoding** - [LEG-ENC-*] Algebraic domain modeling for literal statute encoding (enums for alternatives, sum-of-products, composition at article level)
 - **testing** - [TEST-001–018] Test organization, Swift Testing patterns
 - **documentation** - [DOC-001–053] Inline DocC comments, .docc catalogue conventions, code comment quality
 - **readme** - [README-001–022] README structure, badges, maturity tiers, monorepo patterns
