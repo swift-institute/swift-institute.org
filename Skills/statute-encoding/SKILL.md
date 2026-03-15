@@ -57,31 +57,82 @@ of truth.
 
 ## Domain Modeling
 
-### [LEG-ENC-002] Enums for Statutory Alternatives
+### [LEG-ENC-002] Enums for Distinct Procedural Paths
 
-**Statement**: When a statute enumerates alternatives (using "of", "dan wel", semicolons,
-or lettered sub-items a/b/c), the alternatives MUST be modeled as an enum. Each case
-corresponds to exactly one statutory alternative.
+**Statement**: When a statute defines distinct procedural paths with different conditions
+or legal consequences (typically using lettered sub-items a/b/c, semicolons separating
+categories, or "hetzij... hetzij"), the paths MUST be modeled as an enum. Each case
+corresponds to exactly one path and carries only its own conditions as associated data.
 
-**Correct** — statute says "bij of krachtens de statuten, dan wel door de algemene vergadering of... door het bestuur":
+**When to use an enum**: The statute defines distinct paths where:
+- Each path has its own conditions or consequences
+- The caller must choose ONE path (they are procedurally exclusive)
+- The path choice determines which conditions are relevant
+
+**Correct** — statute defines 6 distinct ontbindingsgronden, each with own conditions:
 ```swift
-public enum Aanwijzing: Sendable {
-    case `bij de statuten`
-    case `krachtens de statuten`
-    case `door het bevoegde orgaan`(Orgaan)
+public enum Grond: Sendable {
+    case a(Besluit)           // besluit — has sub-structure (AV vs bestuur)
+    case b(... : Bool?)       // statutaire gebeurtenis — has condition
+    case c(Faillissement)     // faillissement — has sub-structure
+    case d(Ledenverband)      // ontbreken leden — encodes rechtsvorm constraint
+    case e                    // KvK beschikking
+    case f                    // rechterlijk
 }
 ```
 
-**Incorrect** — flattened to separate booleans:
+**When NOT to use an enum**: The statute merely lists entities or items that share the
+same legal consequence without distinct conditions per item. Use a struct with `Bool?`
+per item instead (see [LEG-ENC-002a]).
+
+**Cross-references**: [LEG-ENC-002a], [LEG-ENC-003], [API-NAME-001], ARCHITECTURE.md §2.3
+
+---
+
+### [LEG-ENC-002a] Structs for Listed Items
+
+**Statement**: When a statute lists entities, types, or items that all share the same
+legal consequence (e.g., "X, Y, Z bezitten rechtspersoonlijkheid"), the list MUST be
+modeled as a struct with one `Bool?` property per item. Do NOT invent a collective
+enum type.
+
+**Correct** — statute says "De Staat, de provincies, de gemeenten, de waterschappen, alsmede alle lichamen waaraan krachtens de Grondwet verordenende bevoegdheid is verleend, bezitten rechtspersoonlijkheid":
 ```swift
-public let `is aangewezen bij de statuten`: Bool?        // ❌ Loses mutual exclusivity
-public let `is aangewezen door de algemene vergadering`: Bool?  // ❌ Multiple can be true
+public struct `1`: Sendable {
+    public let `betreft het de Staat`: Bool?
+    public let `betreft het een provincie`: Bool?
+    public let `betreft het een gemeente`: Bool?
+    public let `betreft het een waterschap`: Bool?
+    public let `is het een lichaam waaraan krachtens de Grondwet verordenende bevoegdheid is verleend`: Bool?
+
+    public let `het bezit rechtspersoonlijkheid`: Bool?  // OR of above
+}
 ```
 
-**Rationale**: Statutory alternatives are disjoint — exactly one applies. An enum enforces
-this at the type level. Flat booleans allow illegal states (multiple true simultaneously).
+**Incorrect** — invented collective noun, adds interpretation:
+```swift
+public enum Overheidslichaam: Sendable {   // ❌ "Overheidslichaam" is not in the statute
+    case `de Staat`                         // ❌ De Staat is not a "lichaam"
+    ...
+}
+```
 
-**Cross-references**: [API-NAME-001], ARCHITECTURE.md §2.3
+**Rationale**: Three reasons to prefer the struct approach for listed items:
+
+1. **Literal encoding** — the property names ARE the statute text. An enum requires
+   inventing a collective noun not present in the statute.
+2. **Ternary logic preservation** — each item is independently assessable. You might
+   know "it is NOT de Staat" (`false`) while not yet knowing about the others (`nil`).
+   An enum collapses "not one of these" and "don't know" into the same `nil`.
+3. **No added interpretation** — the statute does not assert mutual exclusivity.
+   Even if the items happen to be mutually exclusive in the real world, encoding that
+   is interpretation, not literal transcription.
+
+The conclusion (`het bezit rechtspersoonlijkheid`) is derived via `Bool?.any { }` (OR)
+from the individual items. If ANY item is `true`, the conclusion is `true`. If ALL are
+`false`, it's `false`. If some are `nil` with none `true`, it's `nil` (indeterminate).
+
+**Cross-references**: [LEG-ENC-001], [LEG-ENC-006]
 
 ---
 
