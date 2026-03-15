@@ -364,6 +364,80 @@ The output types depend on the conclusion structure:
 
 ---
 
+### [LEG-ENC-013] @Splat, Arguments, and Error Pattern
+
+**Statement**: Conditional provisions and provisions with listed items (per [LEG-ENC-002a])
+SHOULD use the `@Splat` macro with `Arguments`, `Error`, and `CustomStringConvertible`.
+
+The pattern:
+
+```swift
+@Splat
+public struct `1`: Sendable {
+    @_documentation(visibility: package)
+    public let arguments: Arguments
+
+    /// Conclusion derived from the statute text.
+    public let `het bezit rechtspersoonlijkheid`: Bool?
+
+    @_documentation(visibility: package)
+    public struct Arguments: Sendable {
+        public let `betreft het de Staat`: Bool?
+        public let `betreft het een provincie`: Bool?
+        // ...
+
+        public init(
+            `betreft het de Staat`: Bool? = nil,
+            `betreft het een provincie`: Bool? = nil,
+            // ...
+        ) { /* assign */ }
+    }
+
+    @_documentation(visibility: package)
+    public init(_ arguments: Arguments) throws(Error) {
+        self.`het bezit rechtspersoonlijkheid` = Bool?.any {
+            arguments.`betreft het de Staat`
+            arguments.`betreft het een provincie`
+            // ...
+        }
+        self.arguments = arguments
+    }
+}
+
+extension `Artikel 1`.`1` {
+    @_documentation(visibility: package)
+    public struct Error: Swift.Error, Sendable {
+        @_documentation(visibility: package)
+        public let arguments: Arguments
+    }
+}
+
+extension `Artikel 1`.`1`.Error: CustomStringConvertible {
+    public var description: String {
+        """
+        Niet voldaan aan de voorwaarden van artikel 1, eerste lid, ...
+
+        Voorwaarden:
+        \(conditions.joined(separator: "\n"))
+        """
+    }
+}
+```
+
+**Benefits**:
+- `Arguments` captures all inputs as a reusable type
+- `Error` stores the arguments for substantiation (explaining WHY something didn't qualify)
+- `@Splat` generates a convenience `init` with labeled arguments
+- `CustomStringConvertible` on Error provides human-readable Dutch substantiation
+
+**When to omit**: Normative provisions [LEG-ENC-011] and provisions where the input
+is a single domain enum (e.g., `Verzoeker`) do not benefit from @Splat — the domain
+type IS the argument.
+
+**Cross-references**: [LEG-ENC-011], [LEG-ENC-012], ARCHITECTURE.md §5
+
+---
+
 ## Composition
 
 ### [LEG-ENC-020] Composition at Article Level
