@@ -469,35 +469,59 @@ Both give access through the `BW` namespace.
 
 ---
 
-### [LEG-ENC-045] Composition Layer Integration
+### [LEG-ENC-045] Four-Layer Stack
 
-**Statement**: The namespace pattern enables clean composition at the `rule-law-*`
-layer. The composition layer imports statute umbrellas (or individual books) and
-gets namespaced access without collisions.
+**Statement**: The full legal encoding stack has four layers. Each layer is a
+separate GitHub organization with one repo per unit. Dependencies flow strictly
+downward.
 
-```swift
-// rule-law-nl/Sources/Rule Law NL/Rule Law NL.swift
-import Burgerlijk_Wetboek
-import Advocatenwet
-
-// No collision: `Burgerlijk Wetboek`.`2`.`Artikel 1` vs Advocatenwet.`Artikel 1`
-// Consumers can use the BW typealias for brevity:
-// BW.`2`.`Artikel 1` ≡ `Burgerlijk Wetboek`.`2`.`Artikel 1`
-
-// Case law can extend the namespace:
-extension `Burgerlijk Wetboek`.`2`.`Artikel 1` {
-    /// HR 15 maart 2019, ECLI:NL:HR:2019:377
-    public var `rechtspersoonlijkheid naar jurisprudentie`: Bool? { ... }
-}
+```
+Layer 4: rule-legal-{jurisdiction}/          Products (commercial)
+             rule-besloten-vennootschap          Aandeelhoudersregister, etc.
+                 │
+Layer 3: rule-law-{jurisdiction}/            Composition (commercial)
+             rule-burgerlijk-wetboek-2           Binds statute + case law
+                 │
+         ┌───────┴───────┐
+         │               │
+Layer 2a: swift-{jurisdiction}-wetgever/     Legislature (open source)
+              burgerlijk-wetboek-boek-2          BW.`2`.`Artikel N`.`M`
+                  │
+Layer 2b: swift-{jurisdiction}-hoge-raad/    Judiciary (open source)
+              ecli-nl-hr-YYYY-NNN                1 repo per verdict
+                  │
+Layer 1:  burgerlijk-wetboek-core/           Namespace (open source)
+              public enum `Burgerlijk Wetboek` {}
 ```
 
-The composition layer (`rule-law-*`) adds:
-- Cross-article composition
-- Case law extensions on statute namespaces
-- Questioning strategy (which `Bool?` to ask next)
-- Conflict resolution between statutes
+| Layer | GitHub org (NL) | Responsibility | License |
+|-------|-----------------|---------------|---------|
+| Products | `rule-legal-nl` | Domain products (BV, register) | Commercial |
+| Composition | `rule-law-nl` | Statute + case law binding | Commercial |
+| Legislature | `swift-nl-wetgever` | 1 repo per statute, literal encoding | Apache 2.0 |
+| Judiciary | `swift-nl-hoge-raad` | 1 repo per verdict, literal encoding | Apache 2.0 |
 
-The legislature layer (`swift-nl-wetgever`) provides only the literal encoding
-per [LEG-ENC-006].
+**Naming conventions**:
 
-**Cross-references**: [LEG-ENC-006], ARCHITECTURE.md §1, §12
+| Layer | Package name pattern | Example |
+|-------|---------------------|---------|
+| Products | `rule-{domain}` | `rule-besloten-vennootschap` |
+| Composition | `rule-{statute}` | `rule-burgerlijk-wetboek-2` |
+| Legislature | `{statute-name}` | `burgerlijk-wetboek-boek-2` |
+| Judiciary | `ecli-{court}-{year}-{number}` | `ecli-nl-hr-2019-377` |
+
+**Dependency inversion**: Legislature and judiciary packages have ZERO
+cross-dependencies. Statutes do not import other statutes. Verdicts do not
+import statutes or other verdicts. Cross-references are modeled as `Bool?`
+inputs using dependency inversion. The composition layer is the only place
+where statute conclusions feed into verdict inputs and vice versa.
+
+**Validated dependency chain** (BW2 case study, all compile):
+```
+rule-besloten-vennootschap          (product)
+  → rule-burgerlijk-wetboek-2       (composition)
+    → burgerlijk-wetboek-boek-2     (legislature)
+      → burgerlijk-wetboek-core     (namespace)
+```
+
+**Cross-references**: [LEG-ENC-006], [LEG-ENC-040], ARCHITECTURE.md §1, §12
