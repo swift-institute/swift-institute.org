@@ -3,6 +3,8 @@ name: statute-encoding
 description: |
   Encoding statute text as flat structs of Bool? questions with ternary logic conclusions.
   Legislature layer only — composition and questioning strategy belong in rule-law-*.
+  Includes namespace packaging: root namespace enums, multi-book three-package pattern
+  (core/per-book/umbrella), and composition layer integration.
   ALWAYS apply when encoding statute text as executable Swift types.
 
 layer: implementation
@@ -294,3 +296,208 @@ Do NOT invent terms not in the statute. Legislative cross-references belong in
 documentation comments, not in identifiers.
 
 **Cross-references**: Legal Encoding Standard.md §Naming Conventions
+
+---
+
+## Statute Namespace Packaging
+
+### [LEG-ENC-040] Root Namespace Type
+
+**Statement**: Every statute MUST define a root namespace enum so that its types
+can be disambiguated at the composition layer. Without a namespace, multiple
+statutes exporting `Artikel 1` collide when imported together.
+
+**Single-statute packages** define the namespace directly:
+```swift
+// advocatenwet/Sources/Advocatenwet/Advocatenwet.swift
+public enum Advocatenwet {}
+
+// advocatenwet/Sources/Advocatenwet/Artikel 1.swift
+extension Advocatenwet {
+    @Splat
+    public struct `Artikel 1`: Sendable { ... }
+}
+```
+
+Access: `Advocatenwet.`Artikel 1`.`1``
+
+**Multi-book statutes** use a separate core package (see [LEG-ENC-041]).
+
+**Naming convention**: The canonical namespace uses the full Dutch legal name.
+A typealias provides the standard abbreviation for convenience:
+
+```swift
+public enum `Burgerlijk Wetboek` {}
+public typealias BW = `Burgerlijk Wetboek`
+```
+
+| Statute | Canonical | Typealias |
+|---------|-----------|-----------|
+| Burgerlijk Wetboek | `` `Burgerlijk Wetboek` `` | `BW` |
+| Wetboek van Strafrecht | `` `Wetboek van Strafrecht` `` | `WvSr` |
+| Wetboek van Strafvordering | `` `Wetboek van Strafvordering` `` | `WvSv` |
+| Wetboek van Burgerlijke Rechtsvordering | `` `Wetboek van Burgerlijke Rechtsvordering` `` | `Rv` |
+| Wetboek van Koophandel | `` `Wetboek van Koophandel` `` | `WvK` |
+| Advocatenwet | `Advocatenwet` | — (no standard abbreviation) |
+
+Both paths are valid:
+- `` `Burgerlijk Wetboek`.`2`.`Artikel 1`.`1` `` (canonical)
+- `` BW.`2`.`Artikel 1`.`1` `` (convenience)
+
+**Cross-references**: ARCHITECTURE.md §4, §12
+
+---
+
+### [LEG-ENC-041] Multi-Book Statute Packaging
+
+**Statement**: When a statute comprises multiple books, it MUST use a three-package
+pattern:
+
+1. **Core package** (`{statute}-core`): Exports the root namespace enum only
+2. **Per-book packages** (`{statute}-boek-{N}`): Depend on core, extend namespace
+3. **Umbrella package** (`{statute}`): Depends on all book packages, re-exports all
+
+```
+swift-nl-wetgever/
+├── burgerlijk-wetboek-core/           # public enum BW {}
+├── burgerlijk-wetboek-boek-1/         # extension BW { public enum `1` {} }
+├── burgerlijk-wetboek-boek-2/         # extension BW { public enum `2` {} }
+├── ...
+├── burgerlijk-wetboek-boek-10/        # extension BW { public enum `10` {} }
+└── burgerlijk-wetboek/                # umbrella: @_exported import all
+```
+
+**Rationale**: Consumers can depend on individual books (pay only for what you use)
+or the umbrella (convenience). The core ensures all books share the same root
+namespace type.
+
+**Cross-references**: [LEG-ENC-040], ARCHITECTURE.md §4
+
+---
+
+### [LEG-ENC-042] Core Package
+
+**Statement**: The core package MUST export exactly one type — the root namespace
+enum. It has no dependencies beyond standard infrastructure.
+
+```swift
+// burgerlijk-wetboek-core/Sources/Burgerlijk Wetboek Core/Burgerlijk Wetboek.swift
+public enum `Burgerlijk Wetboek` {}
+public typealias BW = `Burgerlijk Wetboek`
+```
+
+The core package name follows the pattern `{statute}-core`. The module name is
+the statute name plus "Core" (e.g., `Burgerlijk Wetboek Core`). The canonical
+type uses the full legal name; the typealias provides the standard abbreviation.
+
+**Cross-references**: [LEG-ENC-040], [LEG-ENC-041]
+
+---
+
+### [LEG-ENC-043] Book Extension Pattern
+
+**Statement**: Each per-book package MUST depend on the core package and extend
+the root namespace with a book-level enum. All article types nest under the book.
+
+```swift
+// burgerlijk-wetboek-boek-2/Sources/Burgerlijk Wetboek Boek 2/Burgerlijk Wetboek.2.swift
+import Burgerlijk_Wetboek_Core
+
+extension `Burgerlijk Wetboek` {
+    public enum `2` {}
+}
+```
+
+```swift
+// burgerlijk-wetboek-boek-2/Sources/Burgerlijk Wetboek Boek 2/Artikel 1.swift
+extension `Burgerlijk Wetboek`.`2` {
+    @Splat
+    public struct `Artikel 1`: Sendable {
+        // ... (same @Splat + Arguments + Error pattern as [LEG-ENC-003])
+    }
+}
+```
+
+```swift
+// burgerlijk-wetboek-boek-2/Sources/Burgerlijk Wetboek Boek 2/Artikel 1.1.swift
+extension `Burgerlijk Wetboek`.`2`.`Artikel 1` {
+    @Splat
+    public struct `1`: Sendable {
+        // ... lid encoding
+    }
+}
+```
+
+**Access paths** (both valid):
+- `` `Burgerlijk Wetboek`.`2`.`Artikel 1`.`1` `` (canonical)
+- `` BW.`2`.`Artikel 1`.`1` `` (via typealias)
+
+Books use bare numeric identifiers (`` `2` ``, not `` `Boek 2` ``), consistent with
+the lid naming convention (`` `1` `` not `` `Lid 1` ``).
+
+**Cross-references**: [LEG-ENC-041], [LEG-ENC-003]
+
+---
+
+### [LEG-ENC-044] Umbrella Package
+
+**Statement**: The umbrella package MUST `@_exported import` all book modules
+and the core module. It contains no types of its own.
+
+```swift
+// burgerlijk-wetboek/Sources/Burgerlijk Wetboek/exports.swift
+@_exported import Burgerlijk_Wetboek_Core
+@_exported import Burgerlijk_Wetboek_Boek_1
+@_exported import Burgerlijk_Wetboek_Boek_2
+@_exported import Burgerlijk_Wetboek_Boek_3
+@_exported import Burgerlijk_Wetboek_Boek_4
+@_exported import Burgerlijk_Wetboek_Boek_5
+@_exported import Burgerlijk_Wetboek_Boek_6
+@_exported import Burgerlijk_Wetboek_Boek_7
+@_exported import Burgerlijk_Wetboek_Boek_7A
+@_exported import Burgerlijk_Wetboek_Boek_8
+@_exported import Burgerlijk_Wetboek_Boek_10
+```
+
+Consumers choose their dependency granularity:
+- `import Burgerlijk_Wetboek_Boek_2` — single book, minimal compilation
+- `import Burgerlijk_Wetboek` — all books via umbrella
+
+Both give access through the `BW` namespace.
+
+**Cross-references**: [LEG-ENC-041], [LEG-ENC-042], [LEG-ENC-043]
+
+---
+
+### [LEG-ENC-045] Composition Layer Integration
+
+**Statement**: The namespace pattern enables clean composition at the `rule-law-*`
+layer. The composition layer imports statute umbrellas (or individual books) and
+gets namespaced access without collisions.
+
+```swift
+// rule-law-nl/Sources/Rule Law NL/Rule Law NL.swift
+import Burgerlijk_Wetboek
+import Advocatenwet
+
+// No collision: `Burgerlijk Wetboek`.`2`.`Artikel 1` vs Advocatenwet.`Artikel 1`
+// Consumers can use the BW typealias for brevity:
+// BW.`2`.`Artikel 1` ≡ `Burgerlijk Wetboek`.`2`.`Artikel 1`
+
+// Case law can extend the namespace:
+extension `Burgerlijk Wetboek`.`2`.`Artikel 1` {
+    /// HR 15 maart 2019, ECLI:NL:HR:2019:377
+    public var `rechtspersoonlijkheid naar jurisprudentie`: Bool? { ... }
+}
+```
+
+The composition layer (`rule-law-*`) adds:
+- Cross-article composition
+- Case law extensions on statute namespaces
+- Questioning strategy (which `Bool?` to ask next)
+- Conflict resolution between statutes
+
+The legislature layer (`swift-nl-wetgever`) provides only the literal encoding
+per [LEG-ENC-006].
+
+**Cross-references**: [LEG-ENC-006], ARCHITECTURE.md §1, §12
