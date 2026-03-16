@@ -435,6 +435,24 @@ extension `Burgerlijk Wetboek`.`2`.`Artikel 1` {
 Books use bare numeric identifiers (`` `2` ``, not `` `Boek 2` ``), consistent with
 the lid naming convention (`` `1` `` not `` `Lid 1` ``).
 
+**Name resolution warning**: After nesting under a namespace, bare type names
+in extension bodies may not resolve. Inside `extension BW.\`2\`.\`Artikel 24\``,
+a reference to `` `Artikel 24`.\`1\`.Aanwijzing `` fails because `` `Artikel 24` ``
+is not at module level. Use fully qualified paths in enum associated values and
+type references within extensions:
+
+```swift
+// ❌ Fails — `Artikel 24` not found at module level
+case aangewezen(`Artikel 24`.`1`.Aanwijzing)
+
+// ✅ Fully qualified
+case aangewezen(`Burgerlijk Wetboek`.`2`.`Artikel 24`.`1`.Aanwijzing)
+```
+
+Inside the struct body itself, self-references like `` `Artikel 24`.\`1\` ``
+resolve correctly (Swift finds the enclosing type). The issue is only in
+**extension** bodies and **enum case associated values**.
+
 **Cross-references**: [LEG-ENC-041], [LEG-ENC-003]
 
 ---
@@ -525,3 +543,41 @@ rule-besloten-vennootschap          (product)
 ```
 
 **Cross-references**: [LEG-ENC-006], [LEG-ENC-040], ARCHITECTURE.md §1, §12
+
+---
+
+## Judiciary Encoding
+
+### [LEG-ENC-050] Verdict Encoding Pattern
+
+**Statement**: Each court verdict MUST be encoded as a standalone package
+following the same `@Splat` + `Arguments` + `Bool?` pattern as statutes.
+One repo per verdict. Zero cross-dependencies — verdicts do NOT import
+statutes or other verdicts.
+
+**Package naming**: `ecli-{court}-{year}-{number}` (kebab-case from ECLI).
+Example: `ecli-nl-hr-2019-377` for ECLI:NL:HR:2019:377.
+
+**GitHub org**: `swift-{jurisdiction}-hoge-raad` (or equivalent per court level).
+Example: `swift-nl-hoge-raad/ecli-nl-hr-2019-377`.
+
+**Dependency inversion**: When a verdict's reasoning depends on whether a
+statutory condition was met, that becomes a `Bool?` input — NOT an import
+of the statute package:
+
+```swift
+// ❌ WRONG — verdict imports statute
+import Burgerlijk_Wetboek_Boek_2
+let result = try BW.`2`.`Artikel 194`(...)
+
+// ✅ CORRECT — statutory condition as Bool? input
+public let `is voldaan aan artikel 194 lid 1`: Bool?
+```
+
+The composition layer (`rule-law-*`) is where statute conclusions are wired
+into verdict inputs and vice versa.
+
+**Status**: Pattern established, no reference implementation yet. First
+verdict encoding will validate the pattern.
+
+**Cross-references**: [LEG-ENC-001], [LEG-ENC-045], ARCHITECTURE.md §1
