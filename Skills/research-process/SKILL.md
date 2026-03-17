@@ -114,7 +114,9 @@ Research-first prevents implementation thrashing, documents rationale, and creat
 |-------|----------|
 | Package-specific | `{package-repo}/Research/` |
 | Primitives-wide | `swift-primitives/.../docc/Research/` |
-| Ecosystem-wide | `swift-institute/.../docc/Research/` |
+| Ecosystem-wide (Swift) | `swift-institute/.../docc/Research/` |
+| Legislature-wide (legal) | `swift-nl-wetgever/Research/` |
+| Ecosystem-wide (legal) | `rule-law/Research/` |
 
 **Cross-references**: [RES-002a], [RES-008]
 
@@ -124,12 +126,16 @@ Research-first prevents implementation thrashing, documents rationale, and creat
 
 **Statement**: Before creating a research document, determine scope. Package-specific decisions go in the package repo. Primitives-wide patterns go in swift-primitives. Ecosystem-wide analysis goes in swift-institute.
 
-| Criterion | Package-Specific | Primitives-Wide | Ecosystem-Wide |
-|-----------|------------------|-----------------|----------------|
-| One package's types | ✓ | | |
-| Multiple primitives packages | | ✓ | |
-| Packages across layers | | | ✓ |
-| General design philosophy | | | ✓ |
+| Criterion | Package-Specific | Primitives-Wide | Ecosystem-Wide (Swift) | Legislature-Wide | Ecosystem-Wide (Legal) |
+|-----------|------------------|-----------------|------------------------|-----------------|----------------------|
+| One package's types | ✓ | | | | |
+| Multiple primitives packages | | ✓ | | | |
+| Swift packages across layers | | | ✓ | | |
+| General Swift design philosophy | | | ✓ | | |
+| One statute's encoding | ✓ | | | | |
+| Cross-statute legal patterns | | | | ✓ | |
+| Cross-layer legal architecture | | | | | ✓ |
+| Legal skill/process design | | | | | ✓ |
 
 **Cross-references**: [RES-002], [RES-006a]
 

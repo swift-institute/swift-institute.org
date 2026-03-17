@@ -110,7 +110,9 @@ Sequence: (1) Identify uncertainty, (2) create minimal experiment, (3) run — s
 | Scope | Location |
 |-------|----------|
 | Package-specific | `{package-repo}/Experiments/` |
-| Ecosystem-wide | `swift-institute/.../docc/Experiments/` |
+| Ecosystem-wide (Swift) | `swift-institute/.../docc/Experiments/` |
+| Legislature-wide (legal) | `swift-nl-wetgever/Experiments/` |
+| Ecosystem-wide (legal) | `rule-law/Experiments/` |
 
 **Cross-references**: [EXP-002a], [EXP-008]
 
@@ -118,7 +120,7 @@ Sequence: (1) Identify uncertainty, (2) create minimal experiment, (3) run — s
 
 ### [EXP-002a] Experiment Triage
 
-**Statement**: Package-specific experiments (one package's types, reproducing a bug in one module) go in `{package-repo}/Experiments/`. Ecosystem-wide experiments (general Swift behavior, cross-package interaction, language feature exploration) go in `swift-institute/.../Experiments/`.
+**Statement**: Package-specific experiments (one package's types, reproducing a bug in one module) go in `{package-repo}/Experiments/`. Ecosystem-wide experiments (general Swift behavior, cross-package interaction, language feature exploration) go in `swift-institute/.../Experiments/`. Legislature-wide experiments (cross-statute encoding patterns, @Splat macro behavior) go in `swift-nl-wetgever/Experiments/`. Legal ecosystem-wide experiments go in `rule-law/Experiments/`.
 
 **Cross-references**: [EXP-002], [EXP-006a]
 

@@ -1,8 +1,8 @@
 ---
 name: quick-commit-and-push-all
 description: |
-  Commit all changes and push every sub-repo across all Swift Institute directories to remote.
-  Apply when the user wants to save progress across all repositories.
+  Commit all changes and push every sub-repo across all Swift Institute and legal encoding
+  directories to remote. Apply when the user wants to save progress across all repositories.
 
 layer: process
 
@@ -22,13 +22,15 @@ applies_to:
   - swift-incits
   - swift-foundations
   - swift-institute
+  - rule-law
+  - swift-nl-wetgever
 ---
 
 # Quick Commit and Push All
 
-Commit all uncommitted changes in every git repository across Swift Institute directories
-and push to remote. This is a quick "save everything" workflow — not for crafting meaningful
-commit messages.
+Commit all uncommitted changes in every git repository across Swift Institute and legal
+encoding directories and push to remote. This is a quick "save everything" workflow —
+not for crafting meaningful commit messages.
 
 ---
 
@@ -37,7 +39,7 @@ commit messages.
 **Statement**: The skill MUST process repositories at two levels:
 
 1. **Parent-level git repos** — The directory itself if it has a `.git` directory (not file).
-2. **Sub-repos** — Each `swift-*/` subdirectory that has a `.git` directory or `.git` file (submodule).
+2. **Sub-repos** — Each subdirectory that has a `.git` directory or `.git` file (submodule).
 
 All directories are flat siblings under `/Users/coen/Developer/`.
 
@@ -57,6 +59,10 @@ The skill MUST iterate over these directories:
 | 10 | `swift-standards/` | No | `swift-*-standard/` with standalone `.git/` directories |
 | 11 | `swift-foundations/` | Yes (standalone `.git/`) | `swift-*/` with submodule `.git` files |
 | 12 | `swift-institute/` | Yes (standalone `.git/`) | No sub-repos |
+| 13 | `swift-nl-wetgever/` | Yes (standalone `.git/`) | `*/` with standalone `.git/` directories (1057 statute packages) |
+| 14 | `swift-us-nv-legislature/` | Yes (standalone `.git/`) | `*/` with standalone `.git/` directories (820 NRS packages) |
+| 15 | `swift-law/` | Yes (standalone `.git/`) | Submodules to org-repos (not checked out locally) |
+| 16 | `rule-law/` | Yes (standalone `.git/`) | `rule-*/` with standalone `.git/` directories |
 
 **Statement**: For each directory, first process all sub-repos (`swift-*/`), then process the
 parent repo (if it is a git repo). Parent must go last so submodule pointer updates are captured
@@ -103,12 +109,24 @@ DIRS=(
   "swift-incits"
   "swift-standards"
   "swift-foundations"
+  "swift-nl-wetgever"
+  "swift-us-nv-legislature"
+  "rule-law"
 )
+
+# swift-law (org-of-orgs, no sub-repos to iterate)
+cd /Users/coen/Developer/swift-law
+if [ -n "$(git status --porcelain)" ]; then
+  echo "COMMIT: swift-law"
+  git add -A
+  git commit -m "Save progress: $DATE"
+  git push
+fi
 
 for parent_dir in "${DIRS[@]}"; do
   base="/Users/coen/Developer/$parent_dir"
   [ -d "$base" ] || continue
-  for repo in "$base"/swift-*/; do
+  for repo in "$base"/*/; do
     [ -d "$repo/.git" ] || [ -f "$repo/.git" ] || continue
     cd "$repo"
     if [ -n "$(git status --porcelain)" ]; then
