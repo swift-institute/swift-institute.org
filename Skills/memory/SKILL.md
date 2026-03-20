@@ -64,14 +64,14 @@ struct FileDescriptor {
 
 ```swift
 // CORRECT
-enum RegistrationOutcome {
-    case success(RegisteredToken)
-    case failure(UnregisteredToken, RegistrationError)
+enum Registration.Outcome {
+    case success(Registration.Token)
+    case failure(Unregistration.Token, Registration.Error)
 }
-func register(_ token: consuming UnregisteredToken) -> RegistrationOutcome
+func register(_ token: consuming Unregistration.Token) -> Registration.Outcome
 
 // INCORRECT - Token lost on failure
-func register(_ token: consuming UnregisteredToken) throws -> RegisteredToken
+func register(_ token: consuming Unregistration.Token) throws -> Registration.Token
 ```
 
 ---
@@ -170,7 +170,7 @@ extension Storage.Heap where Element: ~Copyable {
 | Consuming | Transfers ownership | Yes |
 | Non-consuming | Borrows or copies | No |
 
-For `~Copyable` containers, choose: keep container Copyable, use direct methods (`container.peekBack()` instead of `container.peek.back`), or wait for language evolution.
+For `~Copyable` containers, choose: keep container Copyable, use direct methods (`container.peek.back()` — flattened to avoid the intermediate accessor struct), or wait for language evolution.
 
 **Cross-references**: [API-NAME-002], [MEM-COPY-001]
 
@@ -293,10 +293,10 @@ func withSpan<R>(_ body: (Span<Element>) -> R) -> R
 **Statement**: When Swift doesn't support `associatedtype T: ~Copyable`, use `Reference.Box<T>` as a workaround. Document the intent.
 
 ```swift
-protocol ResourceManager {
+protocol Resource.Manager {
     associatedtype Token  // Implicitly Copyable
-    func acquire() -> Reference.Box<ActualToken>  // Workaround
-    func release(_ token: consuming Reference.Box<ActualToken>)
+    func acquire() -> Reference.Box<Resource.Token>  // Workaround
+    func release(_ token: consuming Reference.Box<Resource.Token>)
 }
 ```
 

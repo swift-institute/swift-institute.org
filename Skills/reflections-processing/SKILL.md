@@ -123,6 +123,7 @@ Triage accumulated session reflections into knowledge improvements. Each invocat
 | Consistency | Proposed change contradicts existing requirements | Escalate to ResearchTopic |
 | Scope | Change affects requirements outside the named target | Expand scope or escalate |
 | Specificity | Action item is too vague to execute | Return to reflection author for refinement |
+| Generality | Proposed skill rule only makes sense with reference to its origin incident | Generalize before integrating — extract the principle, use the incident as one example among possible scenarios ([REFL-PROC-005a]) |
 
 **The Meta-Reflection Trap**: Reflections about the reflection process itself (this skill, the triage function, documentation structure) are valuable but MUST NOT be integrated into skills/docs if the insight is already captured in the skill system. Check process skills first.
 
@@ -141,12 +142,13 @@ Triage accumulated session reflections into knowledge improvements. Each invocat
 1. **Read** the target skill's SKILL.md
 2. **Verify current code state** — check the actual implementation to confirm the reflection's claims are still accurate. Reflections are point-in-time observations; subsequent sessions may have changed the code. If the implementation has evolved, adjust the proposed skill update to reflect current reality, or reclassify as NoAction if the item is now moot.
 3. **Identify** the specific requirement to modify (or determine a new requirement is needed)
-4. **Apply minimal revision** [SKILL-LIFE-001] — the smallest edit that addresses the reflection (FORTE principle, Richards & Mooney 1995)
-4. **Verify consistency** — check that the modification does not contradict requirements in dependent or depended-on skills
-5. **Classify the change** [SKILL-LIFE-003] as additive, clarifying, or breaking
-6. **If breaking**: flag for explicit discussion before applying. Do not apply unilaterally.
-7. **If new requirement**: assign the next available ID in the skill's prefix range
-8. **Ensure provenance** [SKILL-LIFE-002] — the reflection entry is the provenance record
+4. **Generalize** [REFL-PROC-005a] — extract the principle from the concrete finding before writing the rule
+5. **Apply minimal revision** [SKILL-LIFE-001] — the smallest edit that addresses the reflection (FORTE principle, Richards & Mooney 1995)
+6. **Verify consistency** — check that the modification does not contradict requirements in dependent or depended-on skills
+7. **Classify the change** [SKILL-LIFE-003] as additive, clarifying, or breaking
+8. **If breaking**: flag for explicit discussion before applying. Do not apply unilaterally.
+9. **If new requirement**: assign the next available ID in the skill's prefix range
+10. **Ensure provenance** [SKILL-LIFE-002] — the reflection entry is the provenance record
 
 **Correct**:
 ```markdown
@@ -168,7 +170,33 @@ Action: Rewrite [API-NAME-001] to allow compound names for macros
 
 **Rationale**: Minimal revision prevents knowledge drift. Consistency checking prevents cascading errors. Breaking change flagging preserves the "no drift without discussion" collaboration protocol.
 
-**Cross-references**: [REFL-PROC-003], [SKILL-CREATE-005], [SKILL-CREATE-006]
+**Cross-references**: [REFL-PROC-003], [REFL-PROC-005a], [SKILL-CREATE-005], [SKILL-CREATE-006]
+
+---
+
+### [REFL-PROC-005a] Generalization Requirement
+
+**Statement**: When a reflection produces a SkillUpdate, the resulting rule MUST be stated as a general principle that stands without reference to its origin. The concrete incident that prompted the reflection is an example, not the definition.
+
+**The test**: Remove the provenance line and the concrete example. Does the rule still make sense? Could someone who never saw the reflection understand when and how to apply it? If not, the rule needs generalization.
+
+| Concrete finding (reflection) | General principle (skill rule) |
+|-------------------------------|-------------------------------|
+| "`_Tuple` interleaving bug happened because we mixed immediate and deferred execution for child nodes" | "When deferring computation to a work queue, all items at the same structural level must use the same execution model. Mixing immediate and deferred execution creates ordering violations." |
+| "Storing the VIEW instead of the BODY dissolved the ~Copyable constraint blocker in the rendering pipeline" | "When ownership prevents storing a computed value, store the minimum necessary to recompute it later. The storable unit is often the container (Copyable), not the content (~Copyable)." |
+| "Names should describe mechanism, not origin" | Already general — no transformation needed. |
+
+**Structure of a well-generalized rule**:
+1. **Statement**: The principle, stated without reference to any specific type, package, or incident
+2. **Examples**: Concrete code showing correct and incorrect usage — the origin incident MAY be one example, but MUST NOT be the only one
+3. **Rationale**: Why the principle holds in general, not just why it mattered in one case
+4. **Provenance**: A one-line reference to the reflection (for traceability, not for understanding)
+
+**Anti-pattern**: A rule whose Statement names a specific type (`Thunk`, `_Tuple`, `Renderable`), whose examples only work for one domain, and whose rationale describes one bug. This is a finding with a requirement ID — not a rule.
+
+**Rationale**: Skills are institutional knowledge. Rules outlive the sessions that produced them. A rule tied to one incident becomes opaque as context fades, while a general principle remains actionable indefinitely.
+
+**Cross-references**: [REFL-PROC-004] (Generality check), [REFL-PROC-008] (Expansion), [SKILL-LIFE-001] (Minimal revision)
 
 ---
 
@@ -228,6 +256,7 @@ Action: Rewrite [API-NAME-001] to allow compound names for macros
 | Single code snippet | Correct AND Incorrect examples with explanations |
 | Implicit rationale | Explicit Rationale section |
 | Mentioned related concepts | Formal Cross-references with requirement IDs |
+| Concrete finding about one type/package | General principle applicable across domains ([REFL-PROC-005a]) |
 
 **Correct**:
 ```markdown

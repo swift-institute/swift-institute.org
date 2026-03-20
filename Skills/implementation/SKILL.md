@@ -727,62 +727,67 @@ guard slot < unsafe base.pointee.slotCapacity else { throw .capacityExceeded }
 
 ---
 
-### [IMPL-035] Heap-Deferred Traversal: All-or-Nothing
+### [IMPL-035] Uniform Execution Model
 
-**Statement**: When converting a recursive tree walk to an iterative heap-managed work stack, ALL children at each level MUST be deferred as work items. Mixing immediate execution for some children (e.g., leaves) with deferred execution for others (e.g., composites) creates ordering violations.
+**Statement**: When computation is deferred to a work queue or stack, ALL items at the same structural level MUST use the same execution model. Mixing immediate execution for some items with deferred execution for others creates ordering violations that are invisible at the dispatch site.
 
-**Perfect** — all children deferred:
+**Perfect** — uniform deferral:
 ```swift
-// _Tuple pushes ALL children as work items, then reversal restores order
-for child in children.reversed() {
-    stack.push(.render(Thunk(child)))
+// All siblings deferred uniformly — ordering preserved by the queue
+for item in items.reversed() {
+    workStack.push(.process(item))
 }
 ```
 
-**Incorrect** — mixed immediate/deferred:
+**Incorrect** — mixed execution models:
 ```swift
-for child in children {
-    if child.isLeaf {
-        child._render(context: &context)  // ❌ Immediate — breaks interleaving
+for item in items {
+    if item.isSimple {
+        item.process(context: &context)     // ❌ Immediate
     } else {
-        stack.push(.render(Thunk(child))) // Deferred
+        workStack.push(.process(item))      // Deferred
     }
 }
+// Ordering between simple and complex items is now broken
 ```
 
-**Rationale**: Once computation moves to a heap-managed stack, partial deferral breaks the semantic ordering of push/pop pairs, attribute scoping, and sibling interleaving. This is the heap-vs-stack dichotomy: going iterative must be all-in.
+**Applies to**: Any recursive-to-iterative conversion, work queue dispatch, event loop scheduling, or batched processing where items at the same level have ordering dependencies (parent/child scoping, sibling interleaving, push/pop pairing).
 
-**Provenance**: Reflection `2026-03-18-iterative-render-machine-stack-overflow-fix.md` — `_Tuple` interleaving bug.
+**Rationale**: Once a computation model moves from call-stack to heap-managed work, partial deferral breaks any invariant that depends on execution order at a given level. The fix is always the same: defer everything uniformly, then let the work queue enforce ordering.
+
+**Provenance**: Reflection `2026-03-18-iterative-render-machine-stack-overflow-fix.md`.
 
 **Cross-references**: [IMPL-INTENT], [IMPL-033]
 
 ---
 
-### [IMPL-036] Store Container, Compute Content Transiently
+### [IMPL-036] Minimal Storage for Deferred Computation
 
-**Statement**: When a protocol has a `~Copyable` associated type and you need to defer computation (e.g., push to a work stack), store the *conforming type* (typically `Copyable`) and compute the `~Copyable` value during dispatch — not at enqueue time.
+**Statement**: When ownership prevents storing a computed value (e.g., the value is `~Copyable` or `~Escapable`), store the minimum necessary to *recompute* it later. The storable unit is typically the source (often `Copyable`) rather than the result (often `~Copyable`).
 
-**Perfect** — store the view, compute body on demand:
+**Perfect** — store the source, compute on demand:
 ```swift
-// Thunk stores VIEW (Copyable), computes BODY (potentially ~Copyable) at dispatch
+// Store the Copyable container; compute the ~Copyable content at dispatch time
 struct Thunk {
     let dispatch: (inout Context) -> Void
-    init<V: Renderable>(_ view: V) {
+    init<Source: Container>(_ source: Source) {
         dispatch = { context in
-            V.Body._render(view.body, context: &context)
+            Source.Content.process(source.content, context: &context)
         }
     }
 }
 ```
 
-**Incorrect** — store the body directly:
+**Incorrect** — store the result directly:
 ```swift
-struct Thunk<Body: ~Copyable> {
-    let body: Body  // ❌ Requires Body: Copyable for heap storage
+struct Thunk<Content: ~Copyable> {
+    let content: Content  // ❌ Requires Content: Copyable for heap storage
 }
 ```
 
-**Key insight**: The body is a computed property whose value is needed only transiently during dispatch. Storing the view and computing the body on demand preserves the `borrowing` flow. This is a general principle: when ownership blocks you, ask what the minimal storable unit is.
+**Applies to**: Any scenario where a computed value cannot be stored due to ownership constraints — work queues holding `~Copyable` results, closures capturing `~Escapable` views, deferred evaluation of protocol associated types. The pattern generalizes: when you cannot store X, find Y such that X = f(Y) and store Y instead.
+
+**Rationale**: The value needed for deferred work is often a computed property whose source has weaker ownership requirements. Storing the source and recomputing the value at dispatch time sidesteps the ownership constraint entirely. This also applies beyond `~Copyable` — any case where the result is harder to store than its inputs.
 
 **Provenance**: Reflection `2026-03-18-store-view-not-body-noncopyable-rendering.md`.
 

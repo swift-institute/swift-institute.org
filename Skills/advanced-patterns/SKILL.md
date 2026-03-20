@@ -98,7 +98,7 @@ extension Binary.Bytes {
 }
 
 // Bridge for cross-world reuse
-struct OwnedBridge<P: Parsing.Parser>: Binary.Bytes.Parser { ... }
+struct Bridge<P: Parsing.Parser>: Binary.Bytes.Parser { ... }
 
 // INCORRECT — Forcing unification
 public protocol Parser<Input, Output, Failure> {

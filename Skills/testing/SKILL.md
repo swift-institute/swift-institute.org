@@ -479,7 +479,7 @@ import Kernel_Test_Support
 
 @Test
 func `thread coordination`() {
-    let harness = KernelThreadTest.Harness(0)
+    let harness = Kernel.Thread.Test.Harness(0)
     let gate = Gate()
     let signal = Signal()
 
@@ -567,15 +567,15 @@ These modules provide no unique API — they exist to aggregate upstream re-expo
 
 | Module | Unique API |
 |--------|-----------|
-| **ISO 9945 Kernel TS** | `KernelThreadTest.Harness<State>` (condvar coordination: `update`, `wait`, `withLocked`). `LockedBox<T>` (mutex-protected box). `Gate` (condition-based barrier). `Signal` (one-shot handshake). `Kernel.Event.Test` (pipe helpers: `makePipe`, `writeByte`, `readDrain`). `Kernel.Temporary` (temp dir/file paths). `KernelIOTest` (temp file lifecycle: `withTempFile`, `withTempFileWithContent`). Lock Helper executable (multi-process lock contention). |
+| **ISO 9945 Kernel TS** | `Kernel.Thread.Test.Harness<State>` (condvar coordination: `update`, `wait`, `withLocked`). `Locked.Box<T>` (mutex-protected box). `Gate` (condition-based barrier). `Signal` (one-shot handshake). `Kernel.Event.Test` (pipe helpers: `makePipe`, `writeByte`, `readDrain`). `Kernel.Temporary` (temp dir/file paths). `Kernel.IO.Test` (temp file lifecycle: `temporary(...)`, `temporary(content:...)`). Lock Helper executable (multi-process lock contention). |
 
 #### Foundations Layer
 
 | Module | Unique API |
 |--------|-----------|
 | **Kernel TS** | `expectThrows<E,R>(_:_:)` (typed-throws assertion). Same harness/primitives as ISO 9945 TS but targeting foundations `Kernel` module. Re-exports: Kernel Primitives TS. |
-| **IO TS** | `ThreadPoolTesting.waitUntilIdle(...)`. `IOBenchmarkFixture` (standardized thread pool for benchmarks). `IO.Blocking.Threads.checkSubmit()`. `IO.Blocking.Lane.runImmediate(...)`. `Barrier` typealias. Re-exports: Kernel TS. |
-| **File System TS** | `File.Directory.Temporary.Scope` (scoped temp dir with cleanup). `File.Temporary` (scoped temp file). `Test.Delay.milliseconds(...)`. `Test.Retry.withDelay(...)`. `createGlobTestFiles(in:)`. |
+| **IO TS** | `Thread.Pool.Testing.idle.wait(...)`. `IO.Benchmark.Fixture` (standardized thread pool for benchmarks). `IO.Blocking.Threads.checkSubmit()`. `IO.Blocking.Lane.runImmediate(...)`. `Barrier` typealias. Re-exports: Kernel TS. |
+| **File System TS** | `File.Directory.Temporary.Scope` (scoped temp dir with cleanup). `File.Temporary` (scoped temp file). `Test.Delay.milliseconds(...)`. `Test.Retry.withDelay(...)`. `Glob.Test.create(in:)`. |
 | **Parsers TS** | Snapshot testing utilities. Located at `Sources/Parsers Test Support/`. |
 | **Dependencies TS** | `Dependency.Test.withOverrides(...)`. `assertMode(...)`, `assertValue(...)`. `__DependencyTestTrait` (suite/test trait for dependency isolation: `.dependencies`, `.dependency(_:_:)`). |
 
@@ -818,7 +818,7 @@ Provide reusable coordination infrastructure for complex test scenarios (e.g., t
 
 ```swift
 // ISO 9945 Kernel Test Support
-public enum KernelThreadTest {
+extension Kernel.Thread.Test {
     public final class Harness<State: Sendable>: @unchecked Sendable {
         public func update(_ body: (inout State) -> Void) { ... }
         public func wait(until predicate: (State) -> Bool) throws(Timeout) { ... }
