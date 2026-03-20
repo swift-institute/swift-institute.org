@@ -26,7 +26,7 @@ last_reviewed: 2026-03-20
 
 Typed index patterns and conversion APIs for primitives types. These rules ensure type-safe arithmetic, clean call-sites, and proper encapsulation of layer boundaries.
 
-**Core Principle**: Arithmetic stays typed. `.rawValue` and `.position` access belong in extension initializers only. Call-sites pass higher-level types.
+**Core Principle**: Tagged is a functor. Use `.retag()` to change the domain and `.map()` to transform the value. These are the primary conversion tools — reach for them first. Typed arithmetic (`.zero + count`, `index + .one`) is the secondary tool for composed operations. `.rawValue` access and `__unchecked` construction are last resort — confined to extension initializers and same-package internals only.
 
 ---
 
@@ -73,6 +73,113 @@ public typealias Count = Tagged<Tag, Cardinal>
 **Properties**:
 - `.count: Cardinal` --- underlying count value (via `.rawValue`)
 - `.zero: Index<T>.Count` --- empty count
+
+---
+
+## Tagged Functor Operations
+
+Tagged provides two fundamental operations. **Every conversion should be attempted with these first.** Only fall through to typed arithmetic, typed initializers, or rawValue access when neither retag nor map applies.
+
+### [CONV-016] Master Preference Hierarchy
+
+**Statement**: When converting between Tagged types, follow this strict preference order. Higher tiers MUST be attempted before lower tiers.
+
+| Tier | Approach | When it applies | Example |
+|------|----------|-----------------|---------|
+| **1. retag** | Change phantom tag, preserve value | Same RawValue, different domain | `index.retag(Byte.self)` |
+| **2. map** | Transform RawValue, preserve tag | Same domain, different representation | `count.map { Ordinal($0) }` |
+| **3. Typed arithmetic** | Composed operations | Multi-step (advance, scale, chain) | `.zero + count`, `index + .one` |
+| **4. Typed initializer** | Enter typed system from untyped | System boundary (Int, UInt) | `try Index(int)`, `Ordinal(uint)` |
+| **5. rawValue / \_\_unchecked** | Manual extraction and reconstruction | **Last resort** — no typed path exists | Same-package internals only |
+
+**Decision rule**: Before writing any conversion, ask: "Can I retag? Can I map?" If the answer to both is no, proceed to tier 3. If tier 3 doesn't apply, proceed to tier 4. Tier 5 requires justification.
+
+---
+
+### [CONV-017] retag — Domain Change
+
+**Statement**: Use `.retag()` when the phantom type changes but the underlying value is unchanged. This is zero-cost — the compiler eliminates it.
+
+**Signatures**:
+```swift
+// Static
+Tagged.retag(tagged, to: NewTag.self) -> Tagged<NewTag, RawValue>
+
+// Instance
+tagged.retag(NewTag.self) -> Tagged<NewTag, RawValue>
+```
+
+**When to use retag**:
+- `Index<A>` → `Index<B>` when domains have 1:1 correspondence
+- `Index<A>.Offset` → `Index<B>.Offset` for cross-domain offset transfer
+- `Index<A>.Count` → `Index<B>.Count` when count semantics are preserved
+- Any `Tagged<A, V>` → `Tagged<B, V>` where the value is meaningful in both domains
+
+**Examples**:
+```swift
+// Cross-domain offset transfer
+let bitOffset: Index<Bit>.Offset = 5
+let byteOffset: Index<Byte>.Offset = bitOffset.retag(Byte.self)  // ✓ Tier 1
+
+// Cross-domain count transfer (1:1)
+let sourceCount: Index<Source>.Count = 10
+let targetCount: Index<Target>.Count = sourceCount.retag(Target.self)  // ✓ Tier 1
+```
+
+**Incorrect** — manually unwrapping when retag applies:
+```swift
+// ❌ Tier 5 when Tier 1 works
+let byteOffset = Index<Byte>.Offset(__unchecked: (), bitOffset.rawValue)
+
+// ❌ Tier 4 when Tier 1 works
+let targetCount = Index<Target>.Count(Cardinal(sourceCount.rawValue))
+```
+
+**Note**: When domains have different scales (e.g., bits vs bytes), retag does NOT apply — the numeric value must change. Use ratio-based conversion [CONV-011] instead.
+
+---
+
+### [CONV-018] map — Value Transformation
+
+**Statement**: Use `.map()` when the RawValue type changes but the phantom tag is preserved. This is the functorial lift — apply a transform to the wrapped value without unwrapping manually.
+
+**Signatures**:
+```swift
+// Static
+Tagged.map(tagged, transform: (RawValue) -> NewRawValue) -> Tagged<Tag, NewRawValue>
+
+// Instance
+tagged.map { transform($0) } -> Tagged<Tag, NewRawValue>
+```
+
+**When to use map**:
+- `Index<T>` (Tagged\<T, Ordinal\>) → `Index<T>.Count` (Tagged\<T, Cardinal\>) — position to count
+- `Index<T>.Count` → `Index<T>` — count to position
+- Any `Tagged<T, A>` → `Tagged<T, B>` where the tag is preserved
+
+**Examples**:
+```swift
+// Index → Count (position → cardinality, same domain)
+let position: Index<Int> = .zero + 5
+let count: Index<Int>.Count = position.map { Cardinal($0) }  // ✓ Tier 2
+
+// Count → Index (cardinality → position, same domain)
+let count: Index<Int>.Count = 10
+let index: Index<Int> = count.map { Ordinal($0) }  // ✓ Tier 2
+```
+
+**Incorrect** — manually unwrapping when map applies:
+```swift
+// ❌ Tier 5 when Tier 2 works
+let count = Index<Int>.Count(__unchecked: (), Cardinal(position.rawValue))
+
+// ❌ Tier 5 when Tier 2 works
+let index = Index<Int>(__unchecked: (), Ordinal(count.rawValue))
+```
+
+**Note on typed arithmetic equivalence**: For `Count → Index`, `.zero + count` (tier 3) is also acceptable and idiomatic in chain contexts. But when the conversion stands alone, `.map { Ordinal($0) }` (tier 2) is preferred because it directly expresses the intent: "transform the value, keep the tag."
+
+**Cross-references**: [CONV-015], [IDX-006c]
 
 ---
 
@@ -166,31 +273,37 @@ let i = Int(bitPattern: index.position.rawValue)  // ❌ Never
 
 ### [CONV-003] Index Conversions
 
-**Statement**: Use these APIs for `Index<T>` (aka `Tagged<T, Ordinal>`) conversions. Prefer typed arithmetic over conversion to `Int`. Prefer typed arithmetic over `__unchecked` rawValue extraction.
+**Statement**: Use these APIs for `Index<T>` (aka `Tagged<T, Ordinal>`) conversions. Follow the preference hierarchy [CONV-016]: retag/map first, typed arithmetic second, rawValue/Int last resort.
 
-| From | To | API | Throws | Notes |
-|------|-----|-----|--------|-------|
-| `Ordinal` | `Index<T>` | `Index(ordinal)` | No | Total (from `Ordinal.Protocol`) |
-| `Cardinal` | `Index<T>` | `Index(cardinal)` | No | Total |
-| `Int` | `Index<T>` | `try Index(int)` | Yes | Throws if negative |
-| `Int` | `Index<T>` | `Index(exactly: int)` | No | nil if negative |
-| `Index<T>.Count` | `Index<T>` | `.zero + count` | No | **Preferred** --- typed arithmetic |
-| Integer literal | `Index<T>` | `let i: Index<T> = 5` | No | **Test only** --- requires Test Support [CONV-007] |
-| `Index<T>` | `Ordinal` | `.position` | No | Property access |
-| `Index<T>` | `Int` | `try Int(index)` | Yes | Throws if > Int.max |
-| `Index<T>` | `Int` | `Int(exactly: index)` | No | nil if > Int.max |
-| `Index<T>` | `Int` | `Int(bitPattern: index)` | No | **Last resort** --- interop only |
+| From | To | API | Throws | Tier | Notes |
+|------|-----|-----|--------|------|-------|
+| `Index<A>` | `Index<B>` | `index.retag(B.self)` | No | **1** | Same value, different domain |
+| `Index<T>.Count` | `Index<T>` | `count.map { Ordinal($0) }` | No | **2** | Value transform, same domain |
+| `Index<T>` | `Index<T>.Count` | `index.map { Cardinal($0) }` | No | **2** | Value transform, same domain |
+| `Index<T>.Count` | `Index<T>` | `.zero + count` | No | 3 | Typed arithmetic (chains) |
+| `Ordinal` | `Index<T>` | `Index(ordinal)` | No | 4 | Typed initializer |
+| `Cardinal` | `Index<T>` | `Index(cardinal)` | No | 4 | Typed initializer |
+| `Int` | `Index<T>` | `try Index(int)` | Yes | 4 | System boundary |
+| `Int` | `Index<T>` | `Index(exactly: int)` | No | 4 | System boundary |
+| Integer literal | `Index<T>` | `let i: Index<T> = 5` | No | --- | **Test only** [CONV-007] |
+| `Index<T>` | `Ordinal` | `.position` | No | 5 | Property access --- same-package only |
+| `Index<T>` | `Int` | `try Int(index)` | Yes | 4 | System boundary |
+| `Index<T>` | `Int` | `Int(exactly: index)` | No | 4 | System boundary |
+| `Index<T>` | `Int` | `Int(bitPattern: index)` | No | 5 | **Last resort** --- interop only |
 
 **Example**:
 ```swift
 let count: Index<Int>.Count = ...
 
-// Typed arithmetic --- PREFERRED
+// Tier 2 --- map (standalone conversion)
+let endIndex: Index<Int> = count.map { Ordinal($0) }
+
+// Tier 3 --- typed arithmetic (composed operations)
 let endIndex: Index<Int> = .zero + count  // Count → Index via typed +
 let next = index + .one                   // Advance by one
 let distance = otherIndex - index         // Displacement
 
-// Int conversion --- ONLY for interop
+// Tier 5 --- ONLY for stdlib interop
 array[Int(bitPattern: index)]  // Standard Library needs Int
 ```
 
@@ -326,28 +439,34 @@ position = try position - .one  // .one resolves to Tagged<Int, Affine.Discrete.
 
 ### [IDX-006c] Index <-> Count Conversions
 
-**Statement**: Convert between `Index<T>` and `Index<T>.Count` using typed arithmetic. Both directions are total because both represent non-negative values.
+**Statement**: Convert between `Index<T>` and `Index<T>.Count` using `.map()` (tier 2) for standalone conversions, or typed arithmetic (tier 3) when composing with further operations. Both directions are total because both represent non-negative values.
 
 ```swift
-let position: Index<Int> = .zero + count
+// PREFERRED --- map (tier 2, standalone conversion)
+let consumed: Index<Int>.Count = position.map { Cardinal($0) }
+let endIndex: Index<Int> = count.map { Ordinal($0) }
 
-// Index -> Count (total)
-let consumed: Index<Int>.Count = Index<Int>.Count(position)
-
-// Count -> Index (total) --- prefer .zero + count
-let count: Index<Int>.Count = ...
+// ALSO CORRECT --- typed arithmetic (tier 3, useful in chains)
 let endIndex: Index<Int> = .zero + count
 ```
 
-**Prefer `.zero + count` over `__unchecked`**: The `Ordinal.Protocol` defines `+ Count` as a total operator. Using `.zero + count` is typed arithmetic that stays within the type system. Avoid `Index(__unchecked: (), Ordinal(count.rawValue))` when `.zero + count` achieves the same result.
+**When to use map vs typed arithmetic**:
+- **Standalone conversion** (count to index or index to count): prefer `.map()` — it directly expresses intent
+- **Part of a chain** (e.g., `.zero + count + offset`): prefer `.zero + count` — arithmetic composes naturally
+- **Never**: `Index(__unchecked: (), Ordinal(count.rawValue))` — tier 5, rawValue extraction
 
 ```swift
-// CORRECT --- typed arithmetic
-let endIndex: Index<Element> = .zero + count
+// CORRECT --- map for standalone (tier 2)
+let endIndex: Index<Element> = count.map { Ordinal($0) }
 
-// AVOID --- rawValue extraction (use only when no typed operator exists)
+// CORRECT --- arithmetic for chain (tier 3)
+let result = try .zero + count + offset
+
+// AVOID --- rawValue extraction (tier 5)
 let endIndex = Index<Element>(__unchecked: (), Ordinal(count.rawValue))
 ```
+
+**Cross-references**: [CONV-016], [CONV-018]
 
 ---
 
@@ -430,14 +549,19 @@ bitIndex.position == byteIndex.position  // true (Ordinal comparison)
 
 ### [IDX-010] Retag for Domain Conversion
 
-**Statement**: Use `.retag()` for zero-cost cross-domain conversion when the numeric value is unchanged.
+**Statement**: `.retag()` is the **first tool to reach for** when converting between domains [CONV-016 tier 1]. It is zero-cost — the compiler eliminates it entirely.
 
 ```swift
 let bitOffset: Index<Bit>.Offset = 5
 let byteOffset: Index<Byte>.Offset = bitOffset.retag(Byte.self)
+
+let sourceCount: Index<Source>.Count = 10
+let targetCount: Index<Target>.Count = sourceCount.retag(Target.self)
 ```
 
-**Note**: Retagging changes phantom type only --- underlying value unchanged. If domains have different scales (e.g., bits vs bytes), use ratio-based conversion [CONV-011] instead.
+**When retag does NOT apply**: If domains have different scales (e.g., bits vs bytes where 1 byte = 8 bits), the numeric value must change. Use ratio-based conversion [CONV-011] instead. But even then, consider whether parts of the conversion can use retag — e.g., the ratio multiplication may produce a correctly-valued `Tagged<A, Cardinal>` that only needs retagging to become `Tagged<B, Cardinal>`.
+
+**Cross-references**: [CONV-016], [CONV-017]
 
 ---
 
@@ -564,26 +688,30 @@ extension Affine.Discrete.Ratio where To == Bit, From: FixedWidthInteger {
 
 ---
 
-### [CONV-015] Prefer Typed Arithmetic over __unchecked
+### [CONV-015] Prefer retag/map over Typed Arithmetic over __unchecked
 
-**Statement**: When a typed arithmetic operator exists for a conversion, it MUST be preferred over `__unchecked` with rawValue extraction. `__unchecked` is a fallback for cases where no typed operator path exists.
+**Statement**: Conversions MUST follow the preference hierarchy [CONV-016]. retag and map are the primary tools. Typed arithmetic is the secondary tool. `__unchecked` with rawValue extraction is the last resort.
 
-**Preference order** (most preferred first):
+**Full preference order** (most preferred first):
 
-| Approach | Example | When to use |
-|----------|---------|-------------|
-| Typed arithmetic | `.zero + count` | Always, when available |
-| Typed initializer | `Index(ordinal)` | When arithmetic doesn't apply |
-| `__unchecked` with rawValue | `Index(__unchecked: (), Ordinal(count.rawValue))` | Only when no typed path exists |
+| Tier | Approach | Example | When to use |
+|------|----------|---------|-------------|
+| **1** | retag | `index.retag(B.self)` | Tag changes, value unchanged |
+| **2** | map | `count.map { Ordinal($0) }` | Value transforms, tag preserved |
+| **3** | Typed arithmetic | `.zero + count` | Composed operations (chains, advance/retreat) |
+| **4** | Typed initializer | `Index(ordinal)` | System boundary entry |
+| **5** | `__unchecked` with rawValue | `Index(__unchecked: (), ...)` | **Last resort** — no typed path exists |
 
-**Common typed arithmetic patterns**:
+**How each tier supersedes the one below**:
 
-| Operation | Typed arithmetic | `__unchecked` equivalent (avoid) |
-|-----------|-----------------|----------------------------------|
-| Count → Index | `.zero + count` | `Index(__unchecked: (), Ordinal(count.rawValue))` |
-| Advance by one | `index + .one` | `Index(__unchecked: (), Ordinal(index.position.rawValue + 1))` |
-| Retreat by one | `try index - .one` | `Index(__unchecked: (), Ordinal(index.position.rawValue &- 1))` |
-| Count chain | `.zero + Count(src) * .ratio` | `Index(__unchecked: (), Ordinal(...))` |
+| Operation | Best tier | Replaces | Why better |
+|-----------|-----------|----------|------------|
+| `Index<A>` → `Index<B>` (1:1) | `.retag(B.self)` (1) | `Index<B>(__unchecked: (), index.rawValue)` (5) | Zero-cost, no rawValue |
+| `Count` → `Index` (standalone) | `.map { Ordinal($0) }` (2) | `.zero + count` (3) | Direct intent, no arithmetic |
+| `Index` → `Count` (standalone) | `.map { Cardinal($0) }` (2) | `Count(__unchecked: (), Cardinal(index.rawValue))` (5) | No rawValue access |
+| `Count` → `Index` (in chain) | `.zero + count` (3) | `.map { Ordinal($0) }` (2) | Arithmetic composes with `+ offset` |
+| Advance by one | `index + .one` (3) | `Index(__unchecked: (), Ordinal(index.position.rawValue + 1))` (5) | Typed, self-documenting |
+| Count chain | `.zero + Count(src) * .ratio` (3) | `Index(__unchecked: (), Ordinal(...))` (5) | Entire chain stays typed |
 
 **In test code**: Test Support provides `ExpressibleByIntegerLiteral` for all Tagged types [CONV-007], so tests can use integer literals directly:
 ```swift
@@ -593,11 +721,11 @@ let index: Index<Int> = 5           // Test only — via ExpressibleByIntegerLit
 let count: Index<Int>.Count = 10    // Test only
 let offset: Index<Int>.Offset = -3  // Test only
 ```
-This is the preferred construction in tests. Production code uses typed arithmetic (`.zero + count`) or typed initializers (`Index(ordinal)`).
+This is the preferred construction in tests. Production code uses retag/map (tiers 1-2), typed arithmetic (tier 3), or typed initializers (tier 4).
 
-**Rationale**: Typed arithmetic preserves invariants, is self-documenting, and avoids coupling to internal representations. `__unchecked` bypasses validation and exposes rawValue — it should only appear where no typed operator exists (e.g., same-package implementation internals).
+**Rationale**: retag and map express conversion intent directly without exposing internals. Typed arithmetic composes well for multi-step operations. `__unchecked` bypasses validation and exposes rawValue — it should only appear where no typed path exists (e.g., same-package implementation internals).
 
-**Cross-references**: [CONV-007], [CONV-010], [PATTERN-021]
+**Cross-references**: [CONV-016], [CONV-017], [CONV-018], [CONV-007], [CONV-010], [PATTERN-021]
 
 ---
 
@@ -790,11 +918,15 @@ extension IndexTests.Unit {
 
 ## Post-Implementation Checklist
 
-Before presenting code as complete, verify EACH item:
+Before presenting code as complete, verify EACH item **in order**:
 
-- [ ] All arithmetic uses typed operators — no `.rawValue` extraction for computation [CONV-010]
-- [ ] Cross-domain conversions use `.map()` or `.retag()` — no `__unchecked` when a functor path exists [CONV-003]
+- [ ] **Tier 1 — retag**: Every cross-domain conversion where the value is unchanged uses `.retag()` [CONV-017]
+- [ ] **Tier 2 — map**: Every same-domain value transformation uses `.map()` [CONV-018]
+- [ ] **Tier 3 — typed arithmetic**: Composed operations (chains, advance, retreat) use typed operators [CONV-010]
+- [ ] **No tier 5 leaks**: No `.rawValue` or `__unchecked` at call-sites or in higher-layer packages [CONV-001, CONV-002]
 - [ ] No blanket `Tagged where RawValue == T` public inits that bypass bounded invariants [CONV-001]
+
+**Key question for every conversion**: "Can I retag? Can I map?" If the answer to both is no, THEN use typed arithmetic. If that doesn't apply, THEN use a typed initializer. rawValue/\_\_unchecked requires explicit justification.
 
 If ANY item fails, fix before presenting.
 
