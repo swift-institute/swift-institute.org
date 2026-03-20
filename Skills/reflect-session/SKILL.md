@@ -20,6 +20,7 @@ migrated_from:
   - Documentation.docc/_Reflections Consolidation.md
   - Research/session-reflection-meta-process.md
 migration_date: 2026-02-12
+last_reviewed: 2026-03-20
 ---
 
 # Reflect Session

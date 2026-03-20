@@ -16,6 +16,7 @@ applies_to:
 
 migrated_from: Blog/Blog Post Process.md
 migration_date: 2026-01-28
+last_reviewed: 2026-03-20
 ---
 
 # Blog Post Process

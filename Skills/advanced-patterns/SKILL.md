@@ -22,6 +22,7 @@ migrated_from:
   - Implementation/Unsafe Operations.md
   - Implementation/Package Refactoring.md
 migration_date: 2026-01-28
+last_reviewed: 2026-03-20
 ---
 
 # Advanced Patterns

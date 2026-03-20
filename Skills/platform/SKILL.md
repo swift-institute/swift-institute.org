@@ -23,6 +23,7 @@ applies_to:
   - windows
   - posix
   - platform
+last_reviewed: 2026-03-20
 ---
 
 # Platform

@@ -19,6 +19,7 @@ applies_to:
   - swift-pdf-html-rendering
   - swift-markdown-html-rendering
   - swift-foundations
+last_reviewed: 2026-03-20
 ---
 
 # Document Markup

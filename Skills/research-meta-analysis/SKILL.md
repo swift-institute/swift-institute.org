@@ -18,6 +18,7 @@ applies_to:
   - swift-primitives
   - swift-standards
   - swift-foundations
+last_reviewed: 2026-03-20
 ---
 
 # Research Meta-Analysis
@@ -507,6 +508,26 @@ record.
 
 **Rationale**: More frequent analysis at scale prevents accumulation of stale documents
 that become harder to triage over time.
+
+---
+
+## Skill Health
+
+### [META-020] Skill Health Check
+
+**Statement**: During corpus sweeps, skills MUST be checked for:
+
+| Check | Condition | Action |
+|-------|-----------|--------|
+| Staleness | `last_reviewed` date exceeds review cadence ([SKILL-LIFE-012]: 90 days for implementation, 180 days for process) | Flag for review |
+| Instability | 3+ updates within 30 days | Flag for review — the skill may need restructuring |
+| Superseded retention | `superseded_by` set but skill directory still exists after 90 days | Delete directory and symlink |
+| Cross-reference rot | Referenced skills that no longer exist or have been superseded | Update references to point to absorbing skill |
+| PIC drift | Post-Implementation Checklist items that don't match current requirements | Update PIC to reflect current rules |
+
+**Integration with [META-019] full corpus sweep**: Skill health checks run as phase 10 (after index freshness, before final report).
+
+**Cross-references**: [SKILL-LIFE-010], [SKILL-LIFE-011], [SKILL-LIFE-012], [SKILL-LIFE-020]
 
 ---
 

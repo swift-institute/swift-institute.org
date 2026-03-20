@@ -16,6 +16,7 @@ applies_to:
   - swift
   - swift6
   - primitives
+last_reviewed: 2026-03-20
 ---
 
 # Modularization

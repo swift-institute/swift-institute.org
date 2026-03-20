@@ -24,6 +24,7 @@ applies_to:
   - swift-institute
   - rule-law
   - swift-nl-wetgever
+last_reviewed: 2026-03-20
 ---
 
 # Quick Commit and Push All

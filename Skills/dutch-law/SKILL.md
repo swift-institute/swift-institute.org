@@ -15,6 +15,7 @@ applies_to:
   - dutch-law
   - wetten
   - legislation
+last_reviewed: 2026-03-20
 ---
 
 # Dutch Law Lookup

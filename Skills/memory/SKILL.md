@@ -18,6 +18,7 @@ applies_to:
 
 absorbs:
   - memory-safety
+last_reviewed: 2026-03-20
 ---
 
 # Memory Conventions

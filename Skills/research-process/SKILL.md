@@ -18,6 +18,7 @@ migrated_from:
   - Research/Research Investigation.md
   - Research/Research Discovery.md
 migration_date: 2026-01-28
+last_reviewed: 2026-03-20
 ---
 
 # Research Process

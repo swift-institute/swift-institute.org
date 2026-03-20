@@ -16,6 +16,7 @@ applies_to:
   - chatgpt
   - design
   - review
+last_reviewed: 2026-03-20
 ---
 
 # Collaborative Discussion
