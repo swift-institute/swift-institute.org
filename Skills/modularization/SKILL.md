@@ -552,3 +552,29 @@ Properties:
 | Semantic domain count | Manual analysis per Primitives Layering.md | 1 per package | Multiple domains → split needed |
 
 **Audit invocation**: "Audit {package} against /modularization" checks each MOD-* requirement against the package's Package.swift and source layout, producing a compliance table per [RES-015].
+
+---
+
+## Accepted Deviations
+
+### [MOD-EXCEPT-001] Platform Packages
+
+**Statement**: Platform-abstraction packages at Layer 1 and Layer 3 are exempt from MOD-001 (Core), MOD-005 (Umbrella), and MOD-011 (Test Support). These packages use a peer-products pattern where each target independently wraps a platform subsystem (kernel, loader, system/memory).
+
+**Affected packages**:
+- L1: `swift-darwin-primitives`, `swift-linux-primitives`, `swift-windows-primitives`
+- L3: `swift-darwin`, `swift-linux`, `swift-windows`
+
+**Rationale**: These packages have 1-8 files per target. The overhead of Core + umbrella exceeds the benefit. Each target wraps a different OS subsystem with no shared types between them — a Core would be empty or contain only re-exports with no added semantic value.
+
+**Established**: 2026-03-20 (ecosystem-wide modularization audit)
+
+### [MOD-EXCEPT-002] Placeholder/Stub Packages
+
+**Statement**: Packages with zero-byte source files that serve as architectural placeholders are exempt from MOD-006 (Dependency Minimization) and MOD-011 (Test Support). Their declared dependencies serve as a design intent record.
+
+**Affected packages** (L3 compiler toolchain family): `swift-abstract-syntax-tree`, `swift-backend`, `swift-compiler`, `swift-diagnostic`, `swift-driver`, `swift-intermediate-representation`, `swift-lexer`, `swift-module`, `swift-symbol`, `swift-syntax`, `swift-type`
+
+**Rationale**: These packages exist to reserve namespace and document intended dependency structure for a future compiler toolchain. Removing their dependencies would destroy design intent. Creating Test Support for empty packages is meaningless.
+
+**Established**: 2026-03-20 (ecosystem-wide modularization audit)
