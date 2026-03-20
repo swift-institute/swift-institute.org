@@ -44,7 +44,7 @@ Process workflow for auditing and fixing ~Copyable/Copyable constraint issues.
 | Extension methods unavailable for ~Copyable elements | 2 | [COPY-FIX-003] |
 | `ManagedBuffer` subclass fails in nested type | 1 | [COPY-FIX-002] |
 | ~Copyable element deinit NOT called (memory leak) | Runtime | [COPY-FIX-009] |
-| `InlineArray<capacity, ...>` with value generic | Runtime | [COPY-FIX-009] |
+| Cross-package `@_rawLayout` stored property | Runtime | [COPY-FIX-009] |
 | Extension on nested type within generic fails | 2 | [COPY-FIX-003] |
 
 ---
@@ -141,12 +141,12 @@ public struct Stack<Element: ~Copyable>: ~Copyable {
 
 ### [COPY-FIX-002] Nested Type Declaration Site
 
-**Status**: PARTIALLY RESOLVED in Swift 6.2.4.
+**Status**: RESOLVED in Swift 6.2.4.
 
-**Statement**: Value-generic nested types (e.g., `struct Static<let capacity: Int>`) CAN now be declared in extensions with `where Element: ~Copyable`. This was fixed in Swift 6.2.4.
+**Statement**: Value-generic nested types (e.g., `struct Static<let capacity: Int>`) CAN be declared in extensions with `where Element: ~Copyable`. This was a compiler bug, fixed in Swift 6.2.4.
 
 ```swift
-// NOW WORKS in Swift 6.2.4
+// WORKS in Swift 6.2.4+
 extension Container where Element: ~Copyable {
     public struct Static<let capacity: Int>: ~Copyable {
         var _buffer: Buffer<Element>.Linear.Inline<capacity>  // Works
@@ -154,10 +154,10 @@ extension Container where Element: ~Copyable {
 }
 ```
 
-**Remaining restriction**: Nested types declared in extensions CANNOT reference parent type context (typealiases, static properties, sentinel values). Types that need `Table.Bucket`, `Table.empty`, etc. MUST remain in the struct body.
+**Separate design constraint**: Nested types declared in extensions CANNOT reference parent type context (typealiases, static properties, sentinel values). This is unrelated to ~Copyable — it applies to all extension-nested types. Types that need `Table.Bucket`, `Table.empty`, etc. MUST remain in the struct body.
 
 ```swift
-// STILL REQUIRED IN BODY — references Table.Bucket, Table.empty
+// MUST BE IN BODY — references Table.Bucket, Table.empty (not a ~Copyable issue)
 public struct Table<Element: ~Copyable>: ~Copyable {
     public struct Static<let bucketCapacity: Int>: ~Copyable {
         public typealias Bucket = Table.Bucket  // Needs parent context
@@ -167,6 +167,8 @@ public struct Table<Element: ~Copyable>: ~Copyable {
 ```
 
 **Applied in Swift 6.2.4**: 13 value-generic types extracted to extension files across 6 packages (array, stack, heap, queue, dictionary, set). Hash.Table.Static remains in body due to parent context references.
+
+**Verification**: Experiment `value-generic-nested-type-bug` — both body and extension variants compile and run.
 
 **Cross-references**: [MEM-COPY-006] Category 1, [API-IMPL-005]
 
@@ -347,34 +349,43 @@ extension Container: @unchecked Sendable where Element: Sendable {}
 
 ---
 
-### [COPY-FIX-009] InlineArray + Value Generic Deinit Bug
+### [COPY-FIX-009] @_rawLayout Deinit Bug
 
-**Status**: PARTIALLY RESOLVED in Swift 6.2.4.
+**Status**: OPEN. Reproduced in Swift 6.2.4.
 
-**Statement**: When a `~Copyable` struct uses `InlineArray<capacity, ...>` with a value generic parameter and only value-type properties, element deinitializers silently fail for cross-module elements.
+**Statement**: The compiler does not synthesize member destruction for `~Copyable` structs whose stored property chain includes `@_rawLayout`-backed types across package boundaries. Element deinitializers silently fail.
 
-**All four conditions must be present**:
+**Root cause** (narrowed 2026-03-20): `@_rawLayout` is the critical ingredient. Value generics, nesting depth, enum wrapping, and cross-module generics are all **non-contributing factors** — verified by experiment `noncopyable-nested-deinit-chain` Group A (11 variants without `@_rawLayout`, all pass in 6.2.4).
+
+**Conditions**:
 
 | # | Condition |
 |---|-----------|
-| 1 | `InlineArray<capacity, ...>` where `capacity` is value generic |
-| 2 | Value-only struct (no reference type properties) |
-| 3 | Cross-module boundary |
-| 4 | deinit with manual cleanup |
+| 1 | Stored property uses `@_rawLayout` (directly or transitively) |
+| 2 | Cross-package boundary between container and `@_rawLayout` type |
+| 3 | Container is `~Copyable` |
 
-**Swift 6.2.4 status**:
-- `_deinitWorkaround` REMOVED from `Buffer.Ring.Inline`, `Buffer.Linear.Inline`, `Set.Ordered.Static`, `Set.Ordered.Small` — verified via cross-module experiment (`noncopyable-inline-deinit`).
-- **STILL PRESENT** for `Buffer.Ring.Inline`-based containers (`Queue.Static`, `Queue.Small`). Pre-existing failures: element deinit not called when container goes out of scope. Queue types never had `_deinitWorkaround`. Needs investigation — may be a distinct variant of the bug.
-
-**Workaround** (only if still affected):
+**Workaround** (two parts, both required):
 
 ```swift
 struct Container<Element: ~Copyable, let capacity: Int>: ~Copyable {
-    var _storage: InlineArray<capacity, (Int, Int, Int, Int, Int, Int, Int, Int)>
-    var _count: Int
-    var _deinitWorkaround: AnyObject? = nil  // Forces correct dispatch
+    var _buffer: Buffer<Element>.Ring.Inline<capacity>
+    var _deinitWorkaround: AnyObject? = nil  // Part 1: forces deinit body to execute
+
+    deinit {
+        // Part 2: manually clean up via mutating path
+        unsafe withUnsafePointer(to: _buffer) { ptr in
+            unsafe UnsafeMutablePointer(mutating: ptr).pointee.remove.all()
+        }
+    }
 }
 ```
+
+**Applied to**: All types wrapping `Storage<Element>.Inline<capacity>` across package boundaries (21 types across 9 packages).
+
+**Verification**: Experiment `noncopyable-nested-deinit-chain` Group B — V12/V14/V16 reproduce bug, V13/V15/V17 validate workaround.
+
+**Tracking**: swiftlang/swift #86652
 
 **Cross-references**: [MEM-COPY-001]
 
@@ -531,20 +542,26 @@ mutating func makeUnique() {
 }
 ```
 
-### Mistake 5: Missing Deinit Workaround for InlineArray + Value Generic
+### Mistake 5: Missing Workaround for @_rawLayout Deinit Bug
 
 ```swift
-// WRONG - Elements will leak
+// WRONG - Elements will leak (compiler skips member destruction)
 struct Container<Element: ~Copyable, let capacity: Int>: ~Copyable {
-    var _storage: InlineArray<capacity, (Int, Int, Int, Int, Int, Int, Int, Int)>
-    var _count: Int
+    var _buffer: Buffer<Element>.Ring.Inline<capacity>  // Uses @_rawLayout internally
+    deinit {}  // Empty — relies on compiler to destroy _buffer
 }
 
-// RIGHT - Reference property forces correct deinit dispatch
+// RIGHT - Two-part workaround: AnyObject? + manual cleanup
 struct Container<Element: ~Copyable, let capacity: Int>: ~Copyable {
-    var _storage: InlineArray<capacity, (Int, Int, Int, Int, Int, Int, Int, Int)>
-    var _count: Int
-    var _deinitWorkaround: AnyObject? = nil
+    var _buffer: Buffer<Element>.Ring.Inline<capacity>
+    var _deinitWorkaround: AnyObject? = nil  // Forces deinit body to execute
+
+    deinit {
+        // Manual cleanup via mutating path
+        unsafe withUnsafePointer(to: _buffer) { ptr in
+            unsafe UnsafeMutablePointer(mutating: ptr).pointee.remove.all()
+        }
+    }
 }
 ```
 

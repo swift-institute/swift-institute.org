@@ -180,23 +180,24 @@ For `~Copyable` containers, choose: keep container Copyable, use direct methods 
 
 **Scope**: All scenarios where `~Copyable` constraint suppression fails to propagate.
 
-**Statement**: Swift's `~Copyable` suppression fails across certain boundaries. All known categories:
+**Statement**: Swift's `~Copyable` suppression fails across certain boundaries. Known categories and status as of Swift 6.2.4:
 
-| Category | Boundary | Workaround |
-|----------|----------|------------|
-| 1 | Extension declaration site | PARTIALLY RESOLVED in 6.2.4 — value-generic types can use extensions; parent context refs still require body |
-| 2 | Implicit Copyable in extensions | Add explicit `where Element: ~Copyable` |
+| Category | Boundary | Status |
+|----------|----------|--------|
+| 1 | Extension declaration site (value-generic nested types) | RESOLVED in 6.2.4 — parent context refs are a separate design constraint, not a ~Copyable issue |
+| 2 | Implicit Copyable in extensions | By design — add explicit `where Element: ~Copyable` |
 | 3 | Protocol conformance in separate files | Move conformances to same file |
 | 4 | Sequence/Collection protocol requirements | No workaround; use `forEach` with borrowing closures |
 | 5 | Module emission phase (compound constraints + separate file + Lifetimes flag) | Consolidate to single file |
 
-**Root cause**: Generic parameter identity. `~Copyable` suppression propagates only when the same generic parameter is referenced, not across different generic parameters with identical constraints.
+**Cross-module propagation**: RESOLVED in Swift 6.2.4. Using `Container<Element: ~Copyable>` from module A with a `~Copyable` type from module B works correctly. Verification: experiment `noncopyable-cross-module-propagation`.
 
-**Workaround hierarchy** (most reliable first):
-1. Nest types inside outer type body (same generic parameter identity)
-2. Add explicit `where Element: ~Copyable` to extensions
-3. Move conformances to same file as declaration
-4. Module-level wrapper types (unreliable — different generic parameter)
+**Root cause** (remaining categories 2–5): Generic parameter identity. `~Copyable` suppression propagates only when the same generic parameter is referenced, not across different generic parameters with identical constraints.
+
+**Workaround hierarchy** (for remaining issues, most reliable first):
+1. Add explicit `where Element: ~Copyable` to extensions (category 2)
+2. Move conformances to same file as declaration (category 3)
+3. Consolidate to single file (category 5)
 
 **Tracking**: Category 5 — Swift issue #86669
 
