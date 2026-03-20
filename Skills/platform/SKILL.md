@@ -299,7 +299,7 @@ extension Kernel.Process {
 
 **Correct**:
 ```swift
-// In swift-io, swift-file-system, or any L4/L5 package
+// In any L4/L5 consumer package
 import Kernel
 
 func read(from descriptor: Kernel.Descriptor) throws(Kernel.Error) -> [UInt8] {
@@ -327,6 +327,45 @@ let events = try Kernel.Kqueue.kevent(...)
 **Exception**: L3 foundation packages (`swift-darwin`, `swift-linux`, `swift-windows`, `swift-kernel`) are the designated boundary where platform conditionals live. They exist precisely so that no one else needs them.
 
 **Rationale**: The entire point of the platform stack is that consumers never write `#if os(...)`. If platform conditionals appear in consumer code, it means the L3 abstraction is missing a capability.
+
+---
+
+### [PLAT-ARCH-008a] Domain Authority Exception (Limited)
+
+> **Status**: PROVISIONAL — this exception requires explicit user confirmation before applying. When you encounter a case that appears to qualify, present the four criteria and ask the user to confirm before treating the conditional as accepted.
+
+**Statement**: Non-platform-stack packages at any layer MAY contain `#if os(...)` or `#if canImport(...)` conditionals when **all four** of the following hold:
+
+1. **Domain authority**: The package is the canonical owner of the concept that varies by platform.
+2. **Kernel imports only**: All platform access goes through `import Kernel` (L3) or `import Kernel_Primitives` (L1) — never raw `import Darwin`/`Glibc`/`Musl`/`WinSDK`.
+3. **Domain strategy, not syscall selection**: The conditional selects between domain-level strategies or defines platform-varying vocabulary types — it does not wrap raw syscalls.
+4. **Irreducible**: The platform variation cannot be pushed to the platform stack without Kernel absorbing domain semantics it shouldn't own.
+
+**Examples of accepted domain authority conditionals**:
+
+| Package | Conditional | Justification |
+|---------|-------------|---------------|
+| swift-paths | `#if os(Windows)` for `\` vs `/` separator | Path separators are path domain knowledge, not kernel knowledge |
+| swift-io | `#if canImport(Darwin)` selecting kqueue vs epoll strategy | IO event loop strategy is IO domain logic; both backends use Kernel types |
+| swift-string-primitives | `#if os(Windows)` for `UInt16` vs `UInt8` char width | Character encoding width is string vocabulary, not kernel vocabulary |
+| swift-file-system | `#if os(Windows)` for permission model differences | File permission semantics are file-system domain knowledge |
+
+**Hard line — always a violation regardless of domain authority**:
+
+```swift
+// ❌ ALWAYS wrong: raw platform imports in non-platform-stack packages
+#if canImport(Darwin)
+import Darwin          // Must use import Kernel or import Kernel_Primitives
+#elseif canImport(Glibc)
+import Glibc           // If Kernel doesn't provide what you need, extend Kernel
+#endif
+```
+
+Direct `import Darwin`/`Glibc`/`Musl`/`WinSDK` remains a violation in ALL non-platform-stack packages. If the platform stack doesn't expose the needed API, the fix is to extend the platform stack — not bypass it.
+
+**Rationale**: The platform stack abstracts raw syscall interfaces. But domain packages that own platform-varying concepts (path separators, event loop strategies, character encodings) are the natural home for composing those abstractions differently per platform. Forcing all platform conditionals into Kernel would make Kernel absorb domain logic from every consumer, violating separation of concerns in the opposite direction.
+
+**Cross-references**: [PLAT-ARCH-008], [PLAT-ARCH-002]
 
 ---
 

@@ -9,9 +9,8 @@ layer: implementation
 
 requires:
   - swift-institute
-  - code-organization
-  - naming
-  - design
+  - code-surface
+  - implementation
 
 applies_to:
   - swift

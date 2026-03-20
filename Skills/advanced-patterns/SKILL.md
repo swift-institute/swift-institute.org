@@ -9,7 +9,7 @@ layer: implementation
 requires:
   - memory
   - memory-safety
-  - design
+  - implementation
 
 applies_to:
   - swift

@@ -3,16 +3,14 @@ name: implementation
 description: |
   Intent-over-mechanism as foundational axiom. Expression-first style,
   call-site-first design, typed arithmetic, boundary overloads,
-  property accessors. Absorbs anti-patterns.
+  property accessors. Absorbs anti-patterns and design patterns.
   ALWAYS apply when writing or reviewing implementation code.
 
 layer: implementation
 
 requires:
   - swift-institute
-  - naming
-  - errors
-  - code-organization
+  - code-surface
   - conversions
 
 applies_to:
@@ -156,6 +154,34 @@ For the complete catalog of principled absences, see [INFRA-200].
 **The test**: Does the operation preserve the mathematical properties of the types involved? If adding it would make a partial operation look total, mix dimensions, or violate affine space rules — the absence is a feature. Rethink the expression.
 
 **Cross-references**: [CONV-010], [MEM-ARITH-001]
+
+---
+
+## Dependency Strategy
+
+### [IMPL-060] Ecosystem Dependencies Over Ad-Hoc Implementation
+
+**Statement**: When the ecosystem already provides a type, operation, or infrastructure at any layer, it MUST be used via dependency rather than reimplemented ad-hoc. Adding a dependency to an existing ecosystem package is always preferred over writing a local implementation of equivalent functionality. "Minimizing dependencies" is NOT a valid reason to reimplement what the ecosystem already provides.
+
+**Decision procedure**:
+
+| Question | If Yes | If No |
+|----------|--------|-------|
+| Does the ecosystem provide this type/operation? | Import and use it | Implement it |
+| Does importing it violate tier constraints? | Investigate: wrong tier placement, or need join-point | Import it |
+| Is the local version "simpler"? | Still import — simplicity does not justify duplication | — |
+| Would the dependency be the package's first external dep? | Still import — dependency count is not a design goal | — |
+
+**Detection**: During code review, if a type, algorithm, or operation has the same semantics as something in the ecosystem — even if the local version is "simpler" or "smaller" — it is a duplication candidate. The ecosystem version is canonical.
+
+**Why**: Ad-hoc reimplementations create type incompatibility across packages, duplicate maintenance burden, miss upstream improvements, and fragment the ecosystem. The entire layered architecture exists so that higher layers consume lower layers. Not consuming them defeats the architecture.
+
+**Corollaries**:
+- [PATTERN-053] is a specific instance of this rule for primitives-layer types
+- [PATTERN-026] is a specific instance for centralized common patterns
+- [IMPL-000] "improve the infrastructure" means improving the *ecosystem* infrastructure, not local workarounds
+
+**Cross-references**: [PATTERN-053], [PATTERN-026], [IMPL-000], [API-LAYER-001], [SEM-DEP-009]
 
 ---
 
@@ -1028,15 +1054,142 @@ extension Namespace.NestedHeap where Element: ~Copyable {
 
 ---
 
+## Absorbed Design Patterns
+
+The following rules are absorbed from the former `design` skill.
+
+### [API-LAYER-001] Explicit Target Layers
+
+**Statement**: Code MUST be designed in layers, each depending only on layers below it.
+
+Typical shape:
+
+1. **Primitives** — Minimal tokens, IDs, events, handles. Zero policy, zero platform choice.
+2. **Driver / backend contracts** — Capability interfaces, leaf errors, stable testable contracts.
+3. **Platform backends** — kqueue, epoll, IOCP, etc.
+4. **Runtime orchestration** — Lifecycles, scheduling, cancellation, cross-thread coordination.
+5. **User-facing convenience** — Ergonomic wrappers, default policies, platform factories.
+
+| Question | Expected Answer |
+|----------|-----------------|
+| Depends only on layers below? | Yes |
+| Can be tested in isolation? | Yes |
+| Avoids lifecycle policy? | Yes (for primitives) |
+| Errors typed and layer-appropriate? | Yes |
+| Platform backends swappable? | Yes (for abstractions) |
+
+---
+
+### [PATTERN-052] @usableFromInline Access Level for Cross-Module Inlining
+
+**Statement**: `@inlinable` functions that reference internal types or properties MUST mark those declarations `@usableFromInline`. The access level determines the inlining boundary:
+
+| Declaration | Inlinable Within | Cross-Module Inlinable |
+|-------------|-----------------|----------------------|
+| `@usableFromInline internal` | Same module only | No |
+| `@usableFromInline package` | Same package | Yes (within package) |
+| `public` | Everywhere | Yes |
+
+**Correct**:
+```swift
+// Cross-module inlining required (e.g., primitives consumed by standards)
+@usableFromInline package var _storage: RawValue
+
+@inlinable
+public var value: RawValue { _storage }
+```
+
+**Incorrect**:
+```swift
+@usableFromInline internal var _storage: RawValue  // ❌ Cannot inline cross-module
+
+@inlinable
+public var value: RawValue { _storage }  // Compiler error in consuming module
+```
+
+**Rationale**: `@usableFromInline internal` enables inlining only within the declaring module. Cross-package `@inlinable` access requires `package` or `public` visibility.
+
+---
+
+### [PATTERN-053] Prefer Primitives Types Over Local Equivalents
+
+**Statement**: Packages MUST use primitives-layer types for common concepts (source location, error wrapping, indices) rather than defining local equivalents. When an existing primitives type covers the concept, import and use it. This rule is a specific instance of [IMPL-060].
+
+**Correct**:
+```swift
+import Text_Primitives
+
+// Use existing Text.Location from primitives
+func report(at location: Text.Location) { }
+```
+
+**Incorrect**:
+```swift
+// ❌ Reinventing a type that already exists in primitives
+struct SourceLocation {
+    var line: Int
+    var column: Int
+}
+```
+
+**Detection**: During code review, if a type has the same fields and semantics as an existing primitives type, it is a duplication candidate. Unify via import, not via typealias indirection.
+
+**Rationale**: Local equivalents create conversion overhead, type incompatibility across packages, and maintenance burden. Primitives exist to be consumed.
+
+**Cross-references**: [IMPL-060], [API-LAYER-001]
+
+---
+
+### [PATTERN-025] Type Erasure vs Sendable Tension
+
+**Statement**: Type erasure mechanisms (raw pointers, `Unmanaged`, unsafe bitcasts) are explicitly non-Sendable in Swift 6. When type erasure is required for heterogeneous storage, the composition with Sendable-requiring primitives creates a tension that MUST be resolved explicitly.
+
+| Approach | Trade-off |
+|----------|-----------|
+| Sendable wrapper (`Reference.Pointer`) | Encapsulates unsafety in one place |
+| Accept limitation | Some compositions aren't possible without unsafe opt-in |
+| `@unchecked Sendable` at use site | Makes unsafety visible but scattered |
+
+**Cross-references**: [PATTERN-021]
+
+---
+
+### Semantic Dependencies
+
+For detailed rules on semantic vs implementation dependencies, see `Documentation.docc/Semantic Dependencies.md`.
+
+| Rule | Statement |
+|------|-----------|
+| [SEM-DEP-006] | Distinguish essential vs incidental relationships; only essential creates SDG edges |
+| [SEM-DEP-008] | Join-point packages resolve conflicts where two domains have mutual relevance |
+| [SEM-DEP-009] | Package dependencies MUST be essential; orthogonal integrations require separate packages |
+
+---
+
+## Post-Implementation Checklist
+
+Before presenting code as complete, verify EACH item:
+
+- [ ] No `.rawValue` chains at call sites — use typed operators [IMPL-002]
+- [ ] No `Int(bitPattern:)` at call sites — push to boundary overloads [IMPL-010]
+- [ ] No intermediate variables that merely restate expressions [IMPL-EXPR-001]
+- [ ] Ecosystem types used where available — no ad-hoc reimplementations [IMPL-060]
+- [ ] Property.View used for verb-as-property patterns — no hand-rolled structs [IMPL-020/021]
+- [ ] Bounded indices for static-capacity types [IMPL-050]
+
+If ANY item fails, fix before presenting.
+
+---
+
 ## Cross-References
 
 See also:
 - **conversions** skill for [IDX-*], [CONV-*] type definitions and conversion APIs
-- **naming** skill for [API-NAME-*] namespace structure
-- **errors** skill for [API-ERR-*] typed throws
+- **code-surface** skill for [API-NAME-*], [API-ERR-*], [API-IMPL-*] naming, errors, file structure
 - **memory** skill for [MEM-*] ownership patterns
-- **design** skill for [API-LAYER-*] layering decisions
+- **advanced-patterns** skill for [PATTERN-026] centralization, memory ownership, unsafe operation patterns
 - **testing** skill for [TEST-018] literal conformances in tests
 - **existing-infrastructure** skill for [INFRA-*] catalog of typed operations, integration modules, and principled absences
+- **Semantic Dependencies.md** for [SEM-DEP-*] dependency classification rules
 - `Ordinal.Finite<N>` in swift-finite-primitives for bounded ordinal arithmetic infrastructure
 - `Index.Bounded.swift` in swift-finite-primitives for the typealias definition and narrowing/widening

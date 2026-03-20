@@ -7,6 +7,9 @@ description: |
 
 layer: implementation
 
+absorbs:
+  - primitives-conversions
+
 requires:
   - swift-institute
   - naming
@@ -167,6 +170,9 @@ let i = Int(bitPattern: index.position.rawValue)  // ❌ Never
 | From | To | API | Throws | Notes |
 |------|-----|-----|--------|-------|
 | `Ordinal` | `Index<T>` | `Index(ordinal)` | No | Total (from `Ordinal.Protocol`) |
+| `Cardinal` | `Index<T>` | `Index(cardinal)` | No | Total |
+| `Int` | `Index<T>` | `try Index(int)` | Yes | Throws if negative |
+| `Int` | `Index<T>` | `Index(exactly: int)` | No | nil if negative |
 | `Index<T>.Count` | `Index<T>` | `.zero + count` | No | **Preferred** --- typed arithmetic |
 | Integer literal | `Index<T>` | `let i: Index<T> = 5` | No | **Test only** --- requires Test Support [CONV-007] |
 | `Index<T>` | `Ordinal` | `.position` | No | Property access |
@@ -781,6 +787,18 @@ extension IndexTests.Unit {
 
 ---
 
+## Post-Implementation Checklist
+
+Before presenting code as complete, verify EACH item:
+
+- [ ] All arithmetic uses typed operators — no `.rawValue` extraction for computation [CONV-010]
+- [ ] Cross-domain conversions use `.map()` or `.retag()` — no `__unchecked` when a functor path exists [CONV-003]
+- [ ] No blanket `Tagged where RawValue == T` public inits that bypass bounded invariants [CONV-001]
+
+If ANY item fails, fix before presenting.
+
+---
+
 ## Cross-References
 
 See also:
@@ -789,4 +807,5 @@ See also:
 - **pointer-arithmetic** skill for `Pointer<T>` subscripts with `Index<T>`
 - **testing** skill for [TEST-018] literal conformances
 - Research: `swift-primitives/Research/blanket-tagged-init-audit.md`
+- Research: `swift-institute/Research/primitives-conversion-anti-patterns.md`
 - Test file: `Tests/Index Primitives Tests/Index Tests.swift`

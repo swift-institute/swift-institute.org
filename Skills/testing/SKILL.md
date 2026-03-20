@@ -8,8 +8,7 @@ layer: implementation
 
 requires:
   - swift-institute
-  - naming
-  - code-organization
+  - code-surface
 
 applies_to:
   - swift

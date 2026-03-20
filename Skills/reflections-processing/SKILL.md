@@ -10,7 +10,7 @@ layer: process
 requires:
   - swift-institute
   - reflect-session
-  - skill-creation
+  - skill-lifecycle
   - research-process
 
 applies_to:
@@ -135,16 +135,17 @@ Triage accumulated session reflections into knowledge improvements. Each invocat
 
 ### [REFL-PROC-005] SkillUpdate Execution
 
-**Statement**: When the triage outcome is SkillUpdate, the processor MUST:
+**Statement**: When the triage outcome is SkillUpdate, the processor MUST follow the skill-lifecycle conventions [SKILL-LIFE-001] through [SKILL-LIFE-003]:
 
 1. **Read** the target skill's SKILL.md
 2. **Verify current code state** — check the actual implementation to confirm the reflection's claims are still accurate. Reflections are point-in-time observations; subsequent sessions may have changed the code. If the implementation has evolved, adjust the proposed skill update to reflect current reality, or reclassify as NoAction if the item is now moot.
 3. **Identify** the specific requirement to modify (or determine a new requirement is needed)
-4. **Apply minimal revision** — the smallest edit that addresses the reflection (FORTE principle, Richards & Mooney 1995)
+4. **Apply minimal revision** [SKILL-LIFE-001] — the smallest edit that addresses the reflection (FORTE principle, Richards & Mooney 1995)
 4. **Verify consistency** — check that the modification does not contradict requirements in dependent or depended-on skills
-5. **Classify the change** as backward-compatible (safe) or breaking (requires discussion)
+5. **Classify the change** [SKILL-LIFE-003] as additive, clarifying, or breaking
 6. **If breaking**: flag for explicit discussion before applying. Do not apply unilaterally.
 7. **If new requirement**: assign the next available ID in the skill's prefix range
+8. **Ensure provenance** [SKILL-LIFE-002] — the reflection entry is the provenance record
 
 **Correct**:
 ```markdown
