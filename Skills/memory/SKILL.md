@@ -302,6 +302,27 @@ protocol ResourceManager {
 
 ---
 
+### [MEM-COPY-012] Protocol Property Dispatch for ~Copyable Return Types
+
+**Scope**: Protocols with properties returning `~Copyable` associated types.
+
+**Statement**: Protocol properties with `~Copyable` return types dispatch through `_read` (yielding a borrowed value), while protocol *functions* return owned values. This asymmetry affects any design where `~Copyable` values need to be extracted from generic protocol contexts.
+
+| Declaration | Dispatch | Ownership of Return |
+|-------------|----------|-------------------|
+| `var body: Body { get }` | `_read` coroutine | Borrowed (caller cannot store) |
+| `func body() -> Body` | Function entry | Owned (caller can store) |
+
+**Implication**: When you need to *store* a `~Copyable` value from a protocol-constrained generic context, a property `get` yields a borrow that cannot be moved into storage. A function call returns an owned value that can be stored. However, changing `var body` to `func body()` is a protocol-level API change — the preferred workaround is to store the *container* and compute the `~Copyable` value transiently (see [IMPL-036]).
+
+**Swift compiler source**: This behavior is implemented in `TypeCheckStorage.cpp` via the `_read` coroutine for property witnesses (SE-0390).
+
+**Provenance**: Reflection `2026-03-18-store-view-not-body-noncopyable-rendering.md`.
+
+**Cross-references**: [MEM-COPY-005], [MEM-COPY-006], [IMPL-036]
+
+---
+
 ### [MEM-COPY-011] Two-World Separation
 
 **Scope**: APIs with both owned (escapable) and borrowed (`~Escapable`) variants.

@@ -727,6 +727,98 @@ guard slot < unsafe base.pointee.slotCapacity else { throw .capacityExceeded }
 
 ---
 
+### [IMPL-035] Heap-Deferred Traversal: All-or-Nothing
+
+**Statement**: When converting a recursive tree walk to an iterative heap-managed work stack, ALL children at each level MUST be deferred as work items. Mixing immediate execution for some children (e.g., leaves) with deferred execution for others (e.g., composites) creates ordering violations.
+
+**Perfect** — all children deferred:
+```swift
+// _Tuple pushes ALL children as work items, then reversal restores order
+for child in children.reversed() {
+    stack.push(.render(Thunk(child)))
+}
+```
+
+**Incorrect** — mixed immediate/deferred:
+```swift
+for child in children {
+    if child.isLeaf {
+        child._render(context: &context)  // ❌ Immediate — breaks interleaving
+    } else {
+        stack.push(.render(Thunk(child))) // Deferred
+    }
+}
+```
+
+**Rationale**: Once computation moves to a heap-managed stack, partial deferral breaks the semantic ordering of push/pop pairs, attribute scoping, and sibling interleaving. This is the heap-vs-stack dichotomy: going iterative must be all-in.
+
+**Provenance**: Reflection `2026-03-18-iterative-render-machine-stack-overflow-fix.md` — `_Tuple` interleaving bug.
+
+**Cross-references**: [IMPL-INTENT], [IMPL-033]
+
+---
+
+### [IMPL-036] Store Container, Compute Content Transiently
+
+**Statement**: When a protocol has a `~Copyable` associated type and you need to defer computation (e.g., push to a work stack), store the *conforming type* (typically `Copyable`) and compute the `~Copyable` value during dispatch — not at enqueue time.
+
+**Perfect** — store the view, compute body on demand:
+```swift
+// Thunk stores VIEW (Copyable), computes BODY (potentially ~Copyable) at dispatch
+struct Thunk {
+    let dispatch: (inout Context) -> Void
+    init<V: Renderable>(_ view: V) {
+        dispatch = { context in
+            V.Body._render(view.body, context: &context)
+        }
+    }
+}
+```
+
+**Incorrect** — store the body directly:
+```swift
+struct Thunk<Body: ~Copyable> {
+    let body: Body  // ❌ Requires Body: Copyable for heap storage
+}
+```
+
+**Key insight**: The body is a computed property whose value is needed only transiently during dispatch. Storing the view and computing the body on demand preserves the `borrowing` flow. This is a general principle: when ownership blocks you, ask what the minimal storable unit is.
+
+**Provenance**: Reflection `2026-03-18-store-view-not-body-noncopyable-rendering.md`.
+
+**Cross-references**: [MEM-COPY-005], [MEM-COPY-012], [IMPL-INTENT]
+
+---
+
+### [IMPL-037] String Interpolation as Type Bridge
+
+**Statement**: When a type conforms to `ExpressibleByStringLiteral` and also has a `init(_:) throws`, Swift's overload resolution selects the literal conformance unconditionally — even inside `try` expressions. The non-throwing bridge for String variables is string interpolation: `"\(stringVar)"`.
+
+**Perfect** — interpolation coerces to literal-conforming type:
+```swift
+let component = path / "\(stringVariable)"  // Non-throwing via interpolation
+```
+
+**Incorrect** — trying to disambiguate with `try`:
+```swift
+let component = try path / Path.Component(stringVariable)
+// ❌ Compiler selects literal conformance, warns "no calls to throwing functions"
+```
+
+**Also incorrect** — wrapping in explicit throwing init:
+```swift
+let component = try Path.Component(stringVariable)
+// ❌ Same: literal conformance wins over throwing init(_ string:)
+```
+
+**Scope**: This applies to any type combining `ExpressibleByStringLiteral` (or `ExpressibleByStringInterpolation`) with a throwing `init(_ string:)`. The pattern resolves the tension without renaming or `@_disfavoredOverload`.
+
+**Provenance**: Reflection `2026-03-20-file-path-literal-vs-throwing-init-harmonization.md`.
+
+**Cross-references**: [IMPL-000], [IMPL-INTENT]
+
+---
+
 ## Error Strategy
 
 ### [IMPL-040] Typed Throws vs Preconditions
