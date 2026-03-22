@@ -62,6 +62,7 @@ This is the root meta-skill for the Swift Institute ecosystem.
 - **dutch-law** - [NL-WET-*] Dutch legislation lookup via wetten.overheid.nl
 - **research-meta-analysis** - [META-*] Corpus health: staleness, supersession, revalidation, pruning
 - **quick-commit-and-push-all** - [SAVE-*] Commit and push all sub-repos to remote
+- **swift-pull-request** - [SWIFT-PR-*] Submit PRs to swiftlang/swift: fork, branch, commit, test, CI, reviewers
 
 ### Legal Domain Skills (rule-law/Skills/)
 - **rule-law-core** - [RL-CORE-*] Legal ecosystem manifest, skill index, loading order
