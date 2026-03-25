@@ -7,11 +7,15 @@
 # in every Package.swift across the Swift Institute ecosystem.
 #
 # Settings are split into two categories:
-#   - ecosystem: Universal settings shared by ALL packages
-#   - package:   Package-specific experimental features (BuiltinModule, RawLayout, etc.)
+#   - ecosystem: Universal settings shared by ALL packages (managed by this script)
+#   - package:   Package-specific settings (preserved by this script, managed manually)
 #
-# On first run, converts single `let settings` arrays to the ecosystem/package split.
-# On subsequent runs, updates the ecosystem array while preserving package-specific settings.
+# The script ONLY replaces the ecosystem array. Package-specific settings in the
+# `let package: [SwiftSetting]` array are never touched. This prevents the script
+# from wiping manually-maintained settings like .define() with platform conditions.
+#
+# On first run (no ecosystem/package split), converts to the split format with
+# an empty package array. Manually add package-specific settings afterward.
 
 set -e
 
@@ -32,22 +36,6 @@ ECOSYSTEM_LINES=(
     '        .enableExperimentalFeature("SuppressedAssociatedTypes"),'
 )
 
-# ── Package-specific features ────────────────────────────────────────────────
-# Returns space-separated list of experimental features for a given package name.
-
-package_features() {
-    case "$1" in
-        swift-buffer-primitives)     echo "BuiltinModule RawLayout" ;;
-        swift-dictionary-primitives) echo "RawLayout" ;;
-        swift-list-primitives)       echo "RawLayout" ;;
-        swift-memory-primitives)     echo "RawLayout" ;;
-        swift-storage-primitives)    echo "RawLayout" ;;
-        swift-tree-primitives)       echo "RawLayout" ;;
-        swift-sequence-primitives)   echo "BuiltinModule" ;;
-        *)                           echo "" ;;
-    esac
-}
-
 # ── Repository roots to process ──────────────────────────────────────────────
 
 REPOS=(
@@ -56,13 +44,69 @@ REPOS=(
     "$DEVELOPER_DIR/swift-foundations"
 )
 
+# ── Helper: extract existing package settings from a file ────────────────────
+# Extracts everything between `let package: [SwiftSetting] = [` and its closing `]`
+# (inclusive of contents, exclusive of the brackets themselves).
+# Returns the lines, or empty string if not found or empty.
+
+extract_package_settings() {
+    local file="$1"
+    local start_line end_line depth
+
+    # Find `let package:` within the for-loop block
+    start_line=$(grep -n 'let package: \[SwiftSetting\] = \[' "$file" | tail -1 | cut -d: -f1)
+    if [ -z "$start_line" ]; then
+        echo ""
+        return
+    fi
+
+    # Check if it's `= []` on one line (empty)
+    local line_text
+    line_text=$(sed -n "${start_line}p" "$file")
+    if echo "$line_text" | grep -q '\[\]'; then
+        echo ""
+        return
+    fi
+
+    # Find the closing `]` by counting brackets
+    local total_lines
+    total_lines=$(wc -l < "$file")
+    depth=0
+    local scan_line=$start_line
+    local found_open=false
+
+    while [ "$scan_line" -le "$total_lines" ]; do
+        line_text=$(sed -n "${scan_line}p" "$file")
+        local opens closes
+        opens=$(echo "$line_text" | tr -cd '[' | wc -c | tr -d ' ')
+        closes=$(echo "$line_text" | tr -cd ']' | wc -c | tr -d ' ')
+        depth=$((depth + opens - closes))
+        if [ "$depth" -le 0 ] && [ "$scan_line" -gt "$start_line" ]; then
+            end_line=$scan_line
+            break
+        fi
+        scan_line=$((scan_line + 1))
+    done
+
+    if [ -z "$end_line" ]; then
+        echo ""
+        return
+    fi
+
+    # Extract lines between opening [ and closing ] (exclusive of bracket lines)
+    if [ $((end_line - start_line)) -gt 1 ]; then
+        sed -n "$((start_line + 1)),$((end_line - 1))p" "$file"
+    else
+        echo ""
+    fi
+}
+
 # ── Helper: write the replacement block to a file ────────────────────────────
 
 write_replacement() {
     local pkg_name="$1"
     local out_file="$2"
-    local features
-    features="$(package_features "$pkg_name")"
+    local existing_package_settings="$3"
 
     {
         echo 'for target in package.targets where ![.system, .binary, .plugin, .macro].contains(target.type) {'
@@ -72,13 +116,11 @@ write_replacement() {
         done
         echo '    ]'
         echo ''
-        if [ -z "$features" ]; then
+        if [ -z "$existing_package_settings" ]; then
             echo '    let package: [SwiftSetting] = []'
         else
             echo '    let package: [SwiftSetting] = ['
-            for feature in ${=features}; do
-                echo "        .enableExperimentalFeature(\"$feature\"),"
-            done
+            echo "$existing_package_settings"
             echo '    ]'
         fi
         echo ''
@@ -98,10 +140,14 @@ process_file() {
         return 0
     fi
 
+    # Extract existing package-specific settings before replacing
+    local existing_package_settings
+    existing_package_settings="$(extract_package_settings "$file")"
+
     # Generate replacement
     local repl_file
     repl_file="$(mktemp)"
-    write_replacement "$pkg_name" "$repl_file"
+    write_replacement "$pkg_name" "$repl_file" "$existing_package_settings"
 
     # Find the line range of the for-loop block
     local start_line
@@ -146,7 +192,12 @@ process_file() {
 
     mv "$out_file" "$file"
     rm -f "$repl_file"
-    echo "  Updated: $pkg_name"
+
+    if [ -n "$existing_package_settings" ]; then
+        echo "  Updated: $pkg_name (preserved package settings)"
+    else
+        echo "  Updated: $pkg_name"
+    fi
 }
 
 # ── Run ──────────────────────────────────────────────────────────────────────

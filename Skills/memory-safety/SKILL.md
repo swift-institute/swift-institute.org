@@ -200,7 +200,9 @@ final class Ring: ~Sendable { ... }
 // Transfer to poll thread uses explicit unsafe at the transfer site
 ```
 
-Category C types should be **DEFERRED** in audits, not annotated with `@unsafe`. Adding `@unsafe` would be a bandaid — the real fix is `~Sendable` (SE-0518, currently experimental in Swift 6.3).
+Category C types MUST adopt `~Sendable` instead of `@unchecked Sendable`. Adding `@unsafe` to a thread-confined type is a bandaid — the real fix is expressing confinement at the type level.
+
+**Enablement**: `~Sendable` is available via `.enableExperimentalFeature("TildeSendable")` in Swift 6.3.
 
 **Reference**: `swift-institute/Research/tilde-sendable-semantic-inventory.md`
 
