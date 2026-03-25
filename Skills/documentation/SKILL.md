@@ -1060,9 +1060,7 @@ A major version signals: "Re-read this document. The model changed and cross-ref
 
 ## Cross-References
 
-- **naming** skill [API-NAME-003] for specification-mirroring names
-- **code-organization** skill [API-IMPL-005] for one type per file (parallels one article per type)
-- **errors** skill [API-ERR-001] for typed throws documentation
+- **code-surface** skill for [API-NAME-003] specification-mirroring names, [API-IMPL-005] one type per file, [API-ERR-001] typed throws
 - **research-process** skill [RES-002] for research document location and structure
 - **experiment-process** skill [EXP-002] for experiment package location and structure
 - **readme** skill [README-*] for README conventions (separate skill)

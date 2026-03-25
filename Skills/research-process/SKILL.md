@@ -511,5 +511,4 @@ Use template: Pattern definition → Instances found table → Common elements �
 See also:
 - **experiment-process** skill for validation workflows
 - **blog-process** skill for publishing findings
-- **naming** skill for [API-NAME-*] conventions
-- **errors** skill for [API-ERR-*] conventions
+- **code-surface** skill for [API-NAME-*] and [API-ERR-*] conventions

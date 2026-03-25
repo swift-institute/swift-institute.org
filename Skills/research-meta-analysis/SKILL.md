@@ -538,4 +538,4 @@ See also:
 - **experiment-process** skill for [EXP-*] experiment lifecycle
 - **reflect-session** skill for [REFL-*] reflection capture
 - **reflections-processing** skill for [REFL-PROC-*] triage process
-- **skill-creation** skill for skill creation and integration
+- **skill-lifecycle** skill for skill creation and integration

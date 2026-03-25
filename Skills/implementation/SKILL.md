@@ -1264,6 +1264,53 @@ For detailed rules on semantic vs implementation dependencies, see `Documentatio
 
 ---
 
+### [IMPL-061] Compiler Fix Over Workaround Accumulation
+
+**Statement**: When a bug is traced to the compiler (or another external dependency whose source is available), investigating a source-level fix SHOULD be attempted before exhaustively exploring code-level workarounds. Compiler fixes are typically smaller and address the root cause; workarounds accumulate complexity proportional to the bug's blast radius across the ecosystem.
+
+**Decision procedure**:
+
+| Question | If Yes | If No |
+|----------|--------|-------|
+| Is the bug in the compiler/runtime? | Consider a compiler fix | Fix in application code |
+| Is the compiler source available? | Investigate the relevant pass | Workaround is the only option |
+| Does the bug affect >5 sites? | Compiler fix has high ROI | Localized workaround may suffice |
+| Is the workaround cascade growing? | Stop — fix the compiler | Single workaround is acceptable |
+
+**Workaround cascade signal**: When each workaround for a compiler bug introduces a new constraint that requires another workaround (e.g., enum wrapper → can't `_modify` payload → struct wrapper → triggers same crash), the workaround axis is wrong. The structural fix is at the compiler level, not the code level.
+
+**Cross-references**: [EXP-011], [EXP-018]
+
+---
+
+### [IMPL-062] Prefer `nonisolated(nonsending)` Over `isolation:` Parameters
+
+**Statement**: Async methods that need to inherit the caller's isolation MUST use `nonisolated(nonsending)` on the method declaration rather than an `isolation: isolated (any Actor)? = #isolation` parameter. The `isolation:` parameter pattern is deprecated in the Swift stdlib.
+
+**Correct**:
+```swift
+nonisolated(nonsending)
+public func map<U>(_ transform: (Value) throws -> U) async rethrows -> U {
+    try transform(await self())
+}
+```
+
+**Incorrect**:
+```swift
+public func map<U>(
+    isolation: isolated (any Actor)? = #isolation,  // ❌ Deprecated pattern
+    _ transform: (Value) throws -> U
+) async rethrows -> U { ... }
+```
+
+**Exception**: SE-0421 protocol conformances (e.g., `AsyncIteratorProtocol.next(isolation:)`) MUST retain the `isolation:` parameter to satisfy the protocol requirement.
+
+**Provenance**: Reflection `2026-03-22-nonsending-compiler-discovery-and-ecosystem-migration.md`.
+
+**Cross-references**: [MEM-SEND-001]
+
+---
+
 ## Post-Implementation Checklist
 
 Before presenting code as complete, verify EACH item:

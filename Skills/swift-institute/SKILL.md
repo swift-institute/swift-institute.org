@@ -83,9 +83,7 @@ For full rules, see `Documentation.docc/Semantic Dependencies.md`.
 ## Cross-References
 
 Child skills:
-- **naming** - Type and method naming rules
-- **errors** - Error handling rules
-- **code-organization** - File structure rules
+- **code-surface** - Naming, error handling, and file structure rules
 - **memory** - Ownership and copyability rules
 - **design** - API design, layering, semantic dependencies
 

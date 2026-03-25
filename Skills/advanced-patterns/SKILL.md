@@ -8,7 +8,6 @@ layer: implementation
 
 requires:
   - memory
-  - memory-safety
   - implementation
 
 applies_to:
@@ -137,7 +136,7 @@ public func process(_ data: [UInt8]) -> Result
 public func process(_ buffer: UnsafeBufferPointer<UInt8>) -> Result
 ```
 
-See also **memory-safety** skill [MEM-SAFE-010].
+See also **memory** skill [MEM-SAFE-010].
 
 **Cross-references**: [PATTERN-039], [MEM-SAFE-010]
 
@@ -159,7 +158,7 @@ func readUInt32(from pointer: UnsafeRawPointer) -> UInt32 {
 }
 ```
 
-See also **memory-safety** skill [MEM-SAFE-011].
+See also **memory** skill [MEM-SAFE-011].
 
 **Cross-references**: [PATTERN-038], [MEM-SAFE-011]
 
@@ -182,7 +181,7 @@ public struct Buffer {
 }
 ```
 
-See also **memory-safety** skill [MEM-SAFE-012].
+See also **memory** skill [MEM-SAFE-012].
 
 **Cross-references**: [PATTERN-038], [MEM-SAFE-012]
 
@@ -192,7 +191,7 @@ See also **memory-safety** skill [MEM-SAFE-012].
 
 **Statement**: Removing public unsafe overloads in favor of scoped accessors reduces API surface without reducing capability.
 
-See also **memory-safety** skill [MEM-SAFE-013].
+See also **memory** skill [MEM-SAFE-013].
 
 **Cross-references**: [PATTERN-038], [PATTERN-040], [MEM-SAFE-013]
 
@@ -223,7 +222,7 @@ public var unsafeCString: UnsafePointer<CChar> {
 
 Standard library precedent: `withUnsafeBufferPointer`, `withContiguousStorageIfAvailable`, `withCString`, `withUnsafeBytes`.
 
-See also **memory-safety** skill [MEM-SAFE-014].
+See also **memory** skill [MEM-SAFE-014].
 
 **Cross-references**: [PATTERN-038], [MEM-SAFE-014]
 
@@ -293,7 +292,7 @@ Audit questions:
 
 See also:
 - **memory** skill for [MEM-COPY-*], [MEM-LINEAR-*] canonical rules
-- **memory-safety** skill for [MEM-SAFE-010-014] unsafe operation rules
-- **design** skill for [PATTERN-049], [PATTERN-050] typealias patterns
+- **memory** skill for [MEM-SAFE-010-014] unsafe operation rules
+- **implementation** skill for [PATTERN-049], [PATTERN-050] typealias patterns
 - **experiment-process** skill for [EXP-004] minimal reproduction methodology
 - **anti-patterns** skill for PATTERN-009-016 (things to avoid)

@@ -44,6 +44,7 @@ This is the root meta-skill for the Swift Institute ecosystem.
 - **memory** - [MEM-COPY-*], [MEM-OWN-*], [MEM-LINEAR-*], [MEM-SAFE-*], [MEM-SEND-*], [MEM-REF-*], [MEM-LIFE-*] Ownership, copyability, strict safety, reference primitives (absorbs memory-safety)
 - **copyable-remediation** - [COPY-FIX-*, COPY-REM-*] ~Copyable constraint fixes
 - **existing-infrastructure** - [INFRA-*] Catalog of typed boundary overloads, Standard Library Integration modules, Tagged functors, Ratio scaling
+- **ecosystem-data-structures** - [DS-*] Complete catalog of data structures (Memory, Storage, Buffer, Collections) with selection guidance
 - **testing** - [TEST-001–018] Test organization, Swift Testing patterns
 - **testing-institute** - [INST-TEST-*] Nested package pattern for performance + snapshot testing
 - **documentation** - [DOC-001–053] Inline DocC comments, .docc catalogue conventions, code comment quality
@@ -51,6 +52,7 @@ This is the root meta-skill for the Swift Institute ecosystem.
 - **document-markup** - [DOC-MARKUP-*] Document creation using HTML, PDF, and Markdown rendering packages
 
 ### Process Layer
+- **audit** - [AUDIT-*] Systematic compliance audit of code against skill requirement IDs
 - **research-process** - [RES-*] Research workflows
 - **experiment-process** - [EXP-*] Experiment workflows
 - **blog-process** - [BLOG-*] Blog post workflows
@@ -69,14 +71,12 @@ This is the root meta-skill for the Swift Institute ecosystem.
 - **legal-encoding** - [LEG-ENC-*, JUD-ENC-*, COMP-ENC-*, PROD-ENC-*] Statute, judiciary, composition, and product encoding patterns
 - **legal-testing** - [LEG-TEST-*] Legal type testing: parametric Bool?, snapshot error descriptions, ternary logic
 
-### Superseded Skills (retained for backwards compatibility)
-- **naming** → absorbed into **code-surface**
-- **errors** → absorbed into **code-surface**
-- **code-organization** → absorbed into **code-surface**
+### Absorption History
+- **naming**, **errors**, **code-organization** → absorbed into **code-surface**
 - **memory-safety** → absorbed into **memory**
 - **primitives-conversions** → absorbed into **conversions**
-- **design** → absorbed into **implementation** (deleted)
-- **anti-patterns** → absorbed into **implementation** (deleted)
+- **design**, **anti-patterns** → absorbed into **implementation**
+- **skill-creation** → absorbed into **skill-lifecycle**
 
 ---
 

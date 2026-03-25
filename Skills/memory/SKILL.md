@@ -324,6 +324,24 @@ protocol Resource.Manager {
 
 ---
 
+### [MEM-COPY-013] Redundant Annotations on Compiler Optimization Boundaries
+
+**Scope**: Type annotations that provide compile-time safety already guaranteed by the usage context.
+
+**Statement**: When a type annotation (e.g., `~Escapable`) is semantically redundant because the usage context already provides the same guarantee (e.g., coroutine scope prevents escape), AND the annotation triggers a known compiler optimization bug, the annotation SHOULD be omitted until the compiler is fixed. Prefer structural safety (scoping, encapsulation) over annotation safety when the two conflict.
+
+**The test**: Remove the annotation. Does the usage context still prevent the violation? If the coroutine's `begin_apply`/`end_apply` scope already prevents escape, `~Escapable` is defense-in-depth that becomes a liability when it triggers optimizer bugs.
+
+**Canonical example**: `Property.View` omits `~Escapable` because the `_read`/`_modify` coroutine scope already prevents the yielded value from escaping. Adding `~Escapable` generates `mark_dependence` SIL instructions that CopyPropagation misclassifies as `PointerEscape`, causing double `end_lifetime` crashes in release builds.
+
+**When to re-add**: Only after the compiler's `mark_dependence` canonicalization is fixed (tracked in swiftlang/swift). The annotation is sound from a type-system perspective; the bug is in the optimizer.
+
+**Provenance**: Reflection `2026-03-22-copypropagation-nonescapable-root-cause-and-fix.md`.
+
+**Cross-references**: [MEM-COPY-012], [IMPL-061]
+
+---
+
 ### [MEM-COPY-011] Two-World Separation
 
 **Scope**: APIs with both owned (escapable) and borrowed (`~Escapable`) variants.
@@ -746,6 +764,27 @@ let returned = lease.release()  // Must call to get value back
 ### [MEM-LIFE-003] Lifetime.Disposable
 
 **Statement**: Conform to `Lifetime.Disposable` for types requiring explicit cleanup. Implementations MUST be idempotent.
+
+---
+
+### [MEM-LIFE-004] Experimental Lifetime Annotation Version Skew
+
+**Scope**: `@_lifetime` annotations across compiler versions.
+
+**Statement**: The `@_lifetime` experimental annotation has incompatible semantics between Swift compiler versions. Code that uses `@_lifetime` MUST be aware of the following version-specific constraints:
+
+| Compiler | Constraint |
+|----------|-----------|
+| 6.2.x | Requires `@_lifetime(self: ...)` on mutating methods where `self` is `~Escapable` |
+| 6.4-dev | Rejects `@_lifetime` when the return type is `Escapable`, regardless of `self`'s escapability |
+
+These constraints are **contradictory** for `~Escapable self` methods returning `Escapable` types (e.g., `Void`, `Optional`, `UnsafePointer`). No source-level annotation satisfies both compilers simultaneously.
+
+**Guidance**: When removing `@_lifetime` to satisfy 6.4-dev, verify whether `self` is `~Escapable` first. Removals are safe when `self` is `Escapable`; removals from `~Escapable self` methods will break 6.2.x.
+
+**Provenance**: Reflection `2026-03-22-swift-64-dev-compatibility-and-dual-compiler-discovery.md`.
+
+**Cross-references**: [MEM-LIFE-001], [MEM-COPY-013]
 
 ---
 

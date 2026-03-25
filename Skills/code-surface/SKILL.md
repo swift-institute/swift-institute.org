@@ -338,6 +338,49 @@ This avoids constraint poisoning. Conditional conformances MUST still be in the 
 
 ---
 
+### [API-IMPL-009] Hoisted Protocol with Nested Typealias
+
+**Statement**: When a protocol needs to appear as `Outer.Inner.Protocol` on a generic type, the canonical pattern is:
+
+1. **Hoist** the protocol to module scope (e.g., `_InnerProtocol` or hoisted name)
+2. **Nest** a `typealias Protocol = _InnerProtocol` inside the generic type's namespace
+3. **Conformance in declaring module** uses the hoisted name directly
+4. **Consumers** use the typealias path (`Outer.Inner.Protocol`)
+
+```swift
+// CORRECT — Declaring module
+public protocol _LocatedErrorProtocol: Swift.Error { ... }
+
+extension Parser.Error {
+    public struct Located<E: Swift.Error>: _LocatedErrorProtocol {
+        public typealias Protocol = _LocatedErrorProtocol  // Consumers use this path
+        ...
+    }
+}
+
+// Consumer module
+extension MyError: Parser.Error.Located.Protocol { ... }  // ✓ Uses typealias
+```
+
+```swift
+// INCORRECT — Self-referential conformance
+extension Parser.Error.Located: Parser.Error.Located.Protocol { ... }
+// ❌ Cycle: resolving Located.Protocol requires resolving Located's conformances
+```
+
+**Three requirements**:
+1. Types nested inside `.Error` namespaces MUST use `Swift.Error` (see [PLAT-ARCH-011])
+2. Declaring-module conformance MUST use the hoisted name (avoids self-referential cycle)
+3. Consumer modules CAN use the typealias path for conformance, constraints, and existentials
+
+**When generic parameters block nesting**: If a nested type needs access to the outer type's generic parameter across a nesting boundary, use a `_Value` typealias on the outer type to capture the generic parameter before the inner type's scope shadows it.
+
+**Provenance**: Reflection `2026-03-20-pass4-compound-renames-and-generic-nesting.md`.
+
+**Cross-references**: [API-NAME-001], [PLAT-ARCH-011]
+
+---
+
 ## State Modeling
 
 ### [API-IMPL-003] Enum Over Boolean
@@ -375,6 +418,7 @@ Before presenting code as complete, verify EACH item:
 - [ ] File names match the nested type path with dots [API-IMPL-006]
 - [ ] Extension files use `+` suffix [API-IMPL-007]
 - [ ] Type bodies contain only stored properties and canonical init — all methods in extensions [API-IMPL-008]
+- [ ] Protocol typealiases on generic types use hoisted protocol for declaring-module conformance [API-IMPL-009]
 
 If ANY item fails, fix before presenting.
 

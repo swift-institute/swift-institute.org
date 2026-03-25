@@ -253,5 +253,5 @@ See also:
 - **research-process** skill for [RES-*] research workflows
 - **experiment-process** skill for [EXP-*] experiment workflows
 - **blog-process** skill for [BLOG-*] blog workflows
-- **skill-creation** skill for [SKILL-CREATE-*] adding new skills
+- **skill-lifecycle** skill for [SKILL-CREATE-*] adding new skills
 - `Research/session-reflection-meta-process.md` for Tier 3 theoretical grounding

@@ -370,6 +370,37 @@ Direct `import Darwin`/`Glibc`/`Musl`/`WinSDK` remains a violation in ALL non-pl
 
 ---
 
+### [PLAT-ARCH-008b] Conditional Public API Surface in L3
+
+**Statement**: L3 unified types (`swift-kernel`) MAY use `#if os(...)` on public enum cases when the wrapped type is defined in a platform-specific standard (e.g., `swift-iso-9945`) and cannot exist on all platforms. This is the sole acceptable form of conditional public API surface in L3.
+
+**Conditions** (all must hold):
+
+1. **Irreducible platform dependency**: The associated type is defined in a platform-specific standard layer (L2) with no Windows (or other absent platform) equivalent. A stub type would be semantically dishonest.
+2. **No consumer impact**: No consumer exhaustively switches on the enum. Existing consumers use `default:` or match specific cases.
+3. **L3 internal only**: The conditional lives in the L3 unified package itself, not in consumer code. Consumers still write `import Kernel` with no conditionals.
+4. **Sole instance per type**: At most one conditional case per enum. Multiple conditional cases suggest the enum's abstraction level is wrong.
+
+**Accepted instance**:
+
+| Enum | Case | Guard | Wrapped Type | Source |
+|------|------|-------|-------------|--------|
+| `Kernel.Failure` | `.signal(Kernel.Signal.Error)` | `#if !os(Windows)` | `ISO_9945.Kernel.Signal.Error` | POSIX signals have no Windows analogue |
+
+**Why not unconditional?**: `Kernel.Signal.Error` is defined in `swift-iso-9945` (L2 POSIX standard). Windows has no dependency on `swift-iso-9945`. Creating a stub `Signal.Error` in `swift-kernel-primitives` (L1) would add a signal error type on a platform with no signals — violating the principle that L1 types represent genuine domain concepts.
+
+**Why not absorb into `.platform`?**: The `.signal` case carries semantic meaning distinct from `.platform` — it represents signal-specific operations (`sigaction`, `kill`, `raise`), not generic unmapped errors. Absorbing it would lose domain specificity on POSIX platforms.
+
+**Prior art**: Apple's `swift-system` uses the same pattern — `#if os(...)` on ~20 of 224 `Errno` properties where the underlying POSIX concept is genuinely absent on a platform.
+
+**Revisit if**: Swift gains `@nonExhaustive` semantics for non-resilient libraries (analogous to Rust's `#[non_exhaustive]`), which would allow unconditional cases without forcing consumer `#if` guards on exhaustive switches.
+
+**Provenance**: Research document `swift-kernel/Research/conditional-compilation-public-enum-cases.md` (2026-03-24).
+
+**Cross-references**: [PLAT-ARCH-008], [PLAT-ARCH-007], [API-ERR-001]
+
+---
+
 ### [PLAT-ARCH-009] L3 Platform Package Responsibilities
 
 **Statement**: Each L3 platform package (`swift-darwin`, `swift-linux`, `swift-windows`) MUST serve exactly two purposes: (1) re-export its platform primitives for the `swift-kernel` unification, and (2) provide L3-level platform-specific functionality.
@@ -407,6 +438,37 @@ The L3 unified package `swift-kernel` then:
 All paths are relative to `/Users/coen/Developer/`.
 
 **Cross-references**: [PLAT-ARCH-001]
+
+---
+
+### [PLAT-ARCH-011] `Swift.Error` Qualification in `.Error` Namespaces
+
+**Statement**: Types nested inside a namespace called `Error` (e.g., `Parser.Error.Located`) MUST use fully-qualified `Swift.Error` — not bare `Error` — in conformance declarations, inheritance clauses, and constraint positions. Bare `Error` resolves to the enclosing namespace, creating circular references during type resolution.
+
+**Correct**:
+```swift
+extension Parser.Error {
+    public struct Located<E: Swift.Error>: Swift.Error {  // ✓ Fully qualified
+        public let error: E
+        public let location: Text.Location
+    }
+}
+```
+
+**Incorrect**:
+```swift
+extension Parser.Error {
+    public struct Located<E: Error>: Error {  // ❌ Resolves to Parser.Error, not Swift.Error
+        ...
+    }
+}
+```
+
+**Self-referential conformance trap**: When using protocol typealiases inside generic types, the conformance declaration in the declaring module MUST use the hoisted protocol name directly. `extension Located: Located.Protocol` creates a cycle — the compiler must resolve `Located.Protocol` while computing `Located`'s conformances. Consumer modules CAN use the typealias path.
+
+**Provenance**: Reflection `2026-03-20-pass4-compound-renames-and-generic-nesting.md`.
+
+**Cross-references**: [API-NAME-001], [API-IMPL-009]
 
 ---
 
@@ -651,7 +713,7 @@ All packages MUST support Darwin, Linux, Windows, POSIX, and Swift Embedded.
 
 **Statement**: `#StrictMemorySafety` warnings MUST be treated as design feedback, not noise. Each warning marks a site requiring eventual `unsafe` annotation.
 
-See **memory-safety** skill [MEM-SAFE-003] for warning classification (Bucket A vs Bucket B).
+See **memory** skill [MEM-SAFE-003] for warning classification (Bucket A vs Bucket B).
 
 **Cross-references**: [PATTERN-005], [MEM-SAFE-003]
 
@@ -663,7 +725,7 @@ See **memory-safety** skill [MEM-SAFE-003] for warning classification (Bucket A 
 
 Key pattern: `unsafe (self.raw = value)` for assignments to unsafe storage.
 
-See **memory-safety** skill [MEM-SAFE-002] for full details.
+See **memory** skill [MEM-SAFE-002] for full details.
 
 **Cross-references**: [PATTERN-005], [MEM-SAFE-002]
 
@@ -739,6 +801,6 @@ Import visibility MUST be consistent across a module's files. Use `public import
 
 See also:
 - **swift-institute** skill for five-layer architecture [ARCH-LAYER-*]
-- **naming** skill for namespace structure [API-NAME-001], specification-mirroring [API-NAME-003]
-- **design** skill for API layering rules [API-LAYER-*]
-- **memory-safety** skill for [MEM-SAFE-002], [MEM-SAFE-003]
+- **code-surface** skill for namespace structure [API-NAME-001], specification-mirroring [API-NAME-003]
+- **implementation** skill for API layering rules [API-LAYER-*]
+- **memory** skill for [MEM-SAFE-002], [MEM-SAFE-003]

@@ -10,7 +10,7 @@ layer: implementation
 
 requires:
   - swift-institute
-  - naming
+  - code-surface
 
 applies_to:
   - swift-html
@@ -717,7 +717,7 @@ When creating new document types or extending these packages, follow [API-NAME-0
 
 ## Cross-References
 
-- **naming** skill for type and method naming conventions ([API-NAME-*])
+- **code-surface** skill for type and method naming conventions ([API-NAME-*])
 - **implementation** skill for expression style and call-site-first design ([IMPL-*])
 - **swift-institute** skill for five-layer architecture ([ARCH-LAYER-*])
 - **testing** skill for snapshot testing rendered output ([TEST-*])

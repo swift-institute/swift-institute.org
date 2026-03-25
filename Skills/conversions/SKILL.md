@@ -12,7 +12,7 @@ absorbs:
 
 requires:
   - swift-institute
-  - naming
+  - code-surface
 
 applies_to:
   - swift

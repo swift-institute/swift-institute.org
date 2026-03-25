@@ -102,6 +102,30 @@ Sequence: (1) Identify uncertainty, (2) create minimal experiment, (3) run — s
 
 ---
 
+### [EXP-018] Experiment Consolidation
+
+**Statement**: When an investigation produces 5 or more experiments exploring related aspects of the same bug, feature, or design question, they SHOULD be consolidated into thematically coherent groups before further investigation. Each consolidated experiment groups variants by the specific hypothesis they test, with a shared `EXPERIMENT.md` documenting the relationships between variants.
+
+**Consolidation procedure**:
+
+| Step | Action |
+|------|--------|
+| 1. Categorize | Group experiments by the distinct hypothesis each tests |
+| 2. Create | One consolidated package per category, containing the relevant variants |
+| 3. Archive | Add `SUPERSEDED.md` to originals pointing to the consolidated package (do not delete) |
+| 4. Update | Fix cross-references in all research documents that referenced the originals |
+| 5. Index | Update `_index.md` |
+
+**Why consolidate**: Scattered experiments obscure the investigation's structure. Consolidation makes the evidence base visible as a whole — which hypotheses have been tested, which remain open, and how findings relate to each other. This visibility often reveals the investigation's actual structure (e.g., "three distinct bugs, not one") and accelerates root-cause identification.
+
+**When NOT to consolidate**: Independent experiments that happen to involve the same package but test unrelated hypotheses SHOULD remain separate.
+
+**Standalone vs context-sensitive reproducers**: If a consolidated experiment includes a standalone reproducer (one that crashes without the full dependency graph), elevate it to its own package. Context-sensitive experiments that only fail within the full dependency graph should be clearly documented as such — their value is in narrowing the search space, not in standalone bug reporting.
+
+**Cross-references**: [EXP-004], [EXP-004a], [EXP-011]
+
+---
+
 ## Shared Infrastructure
 
 ### [EXP-002] Package Location Convention

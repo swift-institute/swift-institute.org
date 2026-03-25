@@ -1232,8 +1232,7 @@ struct OrderedSetModelTests {
 ## Cross-References
 
 See also:
-- **naming** skill for [API-NAME-001] Nest.Name pattern
-- **code-organization** skill for [API-IMPL-005] one type per file
+- **code-surface** skill for [API-NAME-001] Nest.Name pattern, [API-IMPL-005] one type per file
 - **conversions** skill for [CONV-007], [CONV-008] literal conformance usage
 - **anti-patterns** skill for [PATTERN-017] rawValue access rules
 - `Documentation.docc/Testing Requirements.md` for detailed testing documentation

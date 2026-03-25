@@ -35,7 +35,7 @@ Triage accumulated session reflections into knowledge improvements. Each invocat
 
 **Relationship to other skills**:
 - Reads entries created by **reflect-session** skill
-- SkillUpdate outcomes modify Skills per **skill-creation** process
+- SkillUpdate outcomes modify Skills per **skill-lifecycle** process
 - ResearchTopic outcomes follow **research-process** workflow
 - PackageInsight outcomes follow package routing from the consolidation process
 
@@ -74,13 +74,47 @@ Triage accumulated session reflections into knowledge improvements. Each invocat
 6. **Commit** with structured message ([REFL-PROC-012])
 7. **Report** progress and continue to next entry
 
-**Statement**: Entries MUST be processed oldest-first (chronological order). This preserves logical development of ideas — later reflections may build on earlier ones.
+**Statement**: Entries MUST be processed oldest-first (chronological order). This preserves logical development of ideas — later reflections may build on earlier ones. However, the topic-clustering pre-pass ([REFL-PROC-002a]) MUST run first to identify supersession before per-entry processing begins.
 
 **Statement**: Entries MUST NOT be deleted after processing. They are permanent records. Only the `status` field changes.
 
 **Rationale**: Wenger (1998) argues that original practice artifacts contain situated knowledge that compiled documents cannot fully represent. Preserving reflections alongside processed skills maintains the full knowledge chain.
 
-**Cross-references**: [REFL-005], [REFL-PROC-003], [RES-008] (document lifecycle)
+**Cross-references**: [REFL-005], [REFL-PROC-003], [REFL-PROC-002a], [RES-008] (document lifecycle)
+
+---
+
+### [REFL-PROC-002a] Newer Takes Priority — Topic-Clustering Pre-Pass
+
+**Statement**: Before processing entries individually, the processor MUST scan all pending entries, group them by topic, and compare older reflections against newer reflections on the same topic. When a newer reflection supersedes, refines, or contradicts an older reflection's findings or action items, the newer reflection's conclusions take priority.
+
+**Pre-pass procedure**:
+
+| Step | Action |
+|------|--------|
+| 1. Scan | Read all pending entries and identify topic clusters (same bug, same feature, same package concern) |
+| 2. Compare | Within each cluster, compare older and newer findings. Identify where newer conclusions supersede older ones |
+| 3. Mark superseded items | Flag action items from older entries that are superseded by newer findings — these become NoAction with rationale |
+| 4. Merge duplicates | When multiple entries request the same research topic or package insight, merge into a single outcome |
+| 5. Process | Then process entries oldest-first per [REFL-PROC-002], with supersession decisions already made |
+
+**Supersession signals**:
+
+| Signal | Example | Resolution |
+|--------|---------|------------|
+| Older proposes workaround, newer finds root cause fix | "Split file" → "Compiler fix found" | Older item → NoAction (superseded) |
+| Older says "exhausted all options", newer finds a new path | "Workarounds exhausted" → "Fixed at compiler level" | Older conclusion superseded; newer fix is canonical |
+| Older requests "file bug", newer already filed it | "File compiler bug" → "Filed on #86652, wrote fix" | Older item → NoAction (already done) |
+| Both request same research topic | Two entries request "6.4-dev catalog" | Merge into single research topic with dual provenance |
+| Older and newer have independent, non-overlapping findings | Different action items, no contradiction | Process both normally |
+
+**Why newer takes priority**: Reflections are point-in-time observations. Later sessions have strictly more information — they may have tested the earlier session's hypotheses, found root causes for symptoms the earlier session worked around, or discovered that earlier conclusions were incomplete. When findings conflict, the later session's conclusions are better-informed.
+
+**What older entries still contribute**: Even when superseded on their primary conclusion, older entries often contain valid independent action items (e.g., process improvements, infrastructure documentation) that are not affected by the supersession. Only the specific conflicting items become NoAction — the rest are processed normally.
+
+**Rationale**: Without this pre-pass, processing oldest-first can produce work products (workaround guidance, research topics) that are immediately invalidated by newer entries processed minutes later. The pre-pass prevents wasted effort and ensures the final skill/doc state reflects the most current understanding.
+
+**Cross-references**: [REFL-PROC-002], [REFL-PROC-004]
 
 ---
 
@@ -119,6 +153,7 @@ Triage accumulated session reflections into knowledge improvements. Each invocat
 | Check | Condition | Action if failed |
 |-------|-----------|-----------------|
 | Staleness | Reflection's claims match current code state | Verify implementation before integrating — code may have evolved since the reflection was captured. Reclassify or NoAction with rationale. |
+| Supersession | A newer pending reflection on the same topic reaches a different conclusion | NoAction with rationale referencing the newer entry. Identified during the [REFL-PROC-002a] pre-pass. |
 | Duplication | Insight already captured in target | NoAction with rationale |
 | Consistency | Proposed change contradicts existing requirements | Escalate to ResearchTopic |
 | Scope | Change affects requirements outside the named target | Expand scope or escalate |
@@ -478,7 +513,7 @@ The next invocation MUST resume from the oldest pending entry.
 
 See also:
 - **reflect-session** skill for entry capture [REFL-*]
-- **skill-creation** skill for [SKILL-CREATE-*] when SkillUpdate adds new requirements
+- **skill-lifecycle** skill for [SKILL-CREATE-*] when SkillUpdate adds new requirements
 - **research-process** skill for [RES-*] when ResearchTopic is created
 - **experiment-process** skill for [EXP-*] when ExperimentTopic is created
 - **blog-process** skill for [BLOG-*] when BlogIdea is created

@@ -737,6 +737,8 @@ Ten integration modules currently exist:
 | `Int.init(_ Cardinal) throws(Cardinal.Error)` | Throwing conversion (overflow check) |
 | `Tagged<Tag, Cardinal>.init(_ int: Int) throws(Cardinal.Error)` | Int value-generic to typed Count bridge (e.g., `try! Index<Element>.Count(capacity)`) |
 
+**Common mistake**: `Int(bitPattern: count.cardinal)` chains through `.rawValue` before converting. Use `Int(bitPattern: count)` directly — `Tagged` types conform to `Cardinal.Protocol`, so the `Int.init(bitPattern: Cardinal)` overload applies without unwrapping.
+
 ---
 
 ### [INFRA-003] Ordinal Integration — Positions and Subscripts
@@ -1089,5 +1091,5 @@ base.initialization.linearize { range, offset in
 See also:
 - **implementation** skill — [IMPL-INTENT], [IMPL-000], [IMPL-001], [IMPL-002], [IMPL-003], [IMPL-010], [IMPL-020–025], [IMPL-030–033], [IMPL-050–053], [PATTERN-017–019]
 - **conversions** skill — [IDX-*], [CONV-001], [CONV-003] — rawValue access location, functor operations
-- **naming** skill — [API-NAME-002] — compound identifiers (not an infrastructure concern)
+- **code-surface** skill — [API-NAME-002] — compound identifiers (not an infrastructure concern)
 - **Research**: [typed-infrastructure-catalog.md](../../Research/typed-infrastructure-catalog.md) — Tier 3 systematic audit backing this skill

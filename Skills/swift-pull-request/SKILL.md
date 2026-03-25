@@ -13,7 +13,7 @@ applies_to:
   - swiftlang-swift
   - compiler-contribution
 
-last_reviewed: 2026-03-22
+last_reviewed: 2026-03-24
 ---
 
 # Swift Pull Request Process
@@ -102,7 +102,7 @@ Link to issue if applicable.
 | Tests only | `[test]` |
 | Embedded Swift | `[Embedded]`, `Embedded:` |
 
-**Issue links**: Include `Resolves https://github.com/swiftlang/swift/issues/NNNNN` in the body or PR.
+**Issue links**: Include `Resolves https://github.com/swiftlang/swift/issues/NNNNN` in the body or PR. Before using `Resolves`, read the issue and confirm it describes the same bug you are fixing. If your fix addresses a different bug (even in the same area), file a new issue first.
 
 **Rationale**: From CONTRIBUTING.md: "Include a [tag] at the start in square brackets" and "make the title concise to be easily read within a commit log."
 
@@ -128,6 +128,12 @@ Link to issue if applicable.
 ```
 
 **SIL test files**: No header required (test files in `test/` do not carry the header).
+
+**Issue references in code**: Use GitHub URLs, not `rdar://` (which is Apple-internal). Follow existing conventions in the file being modified. Examples:
+```cpp
+// https://github.com/swiftlang/swift/issues/12345
+// FIXME: Support X (https://github.com/swiftlang/swift/issues/12345)
+```
 
 **Rationale**: Required by CONTRIBUTING.md. No CLA or DCO is needed — contributions are implicitly licensed under the project license.
 
@@ -172,6 +178,7 @@ sil [ossa] @test_function_name : $@convention(thin) (...) -> ... {
 
 **Key flags**:
 - `-enable-experimental-feature Lifetimes` — required for `~Escapable` types
+- `-disable-availability-checking` — required when tests use features gated on newer deployment targets (value generics, etc.). Without this, `llvm-lit` fails because it targets an older macOS version.
 - `-sil-print-types` — shows types in SIL output (useful for FileCheck)
 - `// REQUIRES: swift_in_compiler` — skip when running outside compiler build
 - `// REQUIRES: swift_feature_X` — skip when feature flag unavailable
@@ -197,11 +204,15 @@ llvm-lit -sv test/SILOptimizer/lifetime_dependence/
 
 ### [SWIFT-PR-006] PR Body
 
-**Statement**: The PR body MUST contain a description of the change and its rationale. It SHOULD link related issues. It MUST NOT contain the default HTML comment template (replace it).
+**Statement**: The PR body MUST contain a description of the change and its rationale. It SHOULD link related issues. It MUST NOT contain the default HTML comment template (replace it). It MUST disclose AI assistance if any part of the change was AI-assisted.
+
+**AI disclosure**: Include a line in the PR body stating that the changes were AI-assisted. Example: `> This PR was prepared with AI assistance.`
 
 **Structure for bug fixes**:
 ```markdown
 {Description of the bug and what the fix does.}
+
+> This PR was prepared with AI assistance.
 
 ### Root cause
 {Explain why the bug occurs.}
@@ -221,6 +232,8 @@ Resolves https://github.com/swiftlang/swift/issues/NNNNN
 ```markdown
 {Description of the change and motivation.}
 
+> This PR was prepared with AI assistance.
+
 {Technical details if non-obvious.}
 
 ### Test plan
@@ -229,7 +242,7 @@ Resolves https://github.com/swiftlang/swift/issues/NNNNN
 {Link to related discussion/pitch if applicable.}
 ```
 
-**Rationale**: The org-level template says "replace this comment with a description of your changes and rationale."
+**Rationale**: The org-level template says "replace this comment with a description of your changes and rationale." AI disclosure is expected per reviewer feedback (see [PR #88025 review](https://github.com/swiftlang/swift/pull/88025#pullrequestreview-3997094626)).
 
 ---
 
@@ -339,19 +352,24 @@ gh api repos/swiftlang/swift/contents/.github/CODEOWNERS --jq '.content' | base6
 - [ ] Add remote: `git remote add coenttb https://github.com/coenttb/swift.git`
 
 **Per-PR workflow**:
+- [ ] Verify the bug reproduces on current `main` (build from source or use existing build). If fixed upstream, no PR needed.
 - [ ] Create branch: `git checkout -b descriptive-name`
 - [ ] Make changes
 - [ ] Add test at the nearest abstraction level ([SWIFT-PR-005])
-- [ ] Run test locally: `sil-opt` + FileCheck, or `llvm-lit`
+- [ ] Run test via `llvm-lit` before pushing (catches availability, REQUIRES, FileCheck issues)
 - [ ] Run existing related tests to verify no regressions
 - [ ] Add Apache header to new source files ([SWIFT-PR-004])
+- [ ] Verify referenced issue describes your bug — not a different bug in the same area ([SWIFT-PR-003])
 - [ ] Stage specific files (not `.swift-version` or unrelated changes)
 - [ ] Commit with `[Component] Description` format ([SWIFT-PR-003])
 - [ ] Push to fork: `git push -u coenttb branch-name`
+- [ ] Include AI disclosure in PR body if AI-assisted ([SWIFT-PR-006])
 - [ ] Create PR via `gh pr create --repo swiftlang/swift` ([SWIFT-PR-007])
 - [ ] Verify CODEOWNERS auto-assigned reviewer(s) ([SWIFT-PR-009])
 - [ ] Wait for reviewer to trigger CI ([SWIFT-PR-008])
 - [ ] Address review feedback, push follow-up commits (do not force-push)
+
+**If asked to split a PR**: Close the current PR with a comment explaining the split. Open new focused PRs. Do NOT force-push to remove commits — force-push is forbidden per FAQ.md.
 
 ---
 

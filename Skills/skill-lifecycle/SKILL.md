@@ -47,7 +47,7 @@ Full lifecycle management for Swift Institute skills. Covers planning, authoring
 |-------|-------------|----------|
 | `meta` | System manifest, skill loading order | `swift-institute-core` |
 | `architecture` | Foundational conventions, layer rules | `swift-institute`, `primitives` |
-| `implementation` | Code rules, API patterns | `naming`, `errors`, `memory`, `design` |
+| `implementation` | Code rules, API patterns | `code-surface`, `implementation`, `memory` |
 | `process` | Workflows, methodologies | `research-process`, `experiment-process`, `skill-lifecycle` |
 
 **Rationale**: Layer classification determines where the skill fits in the loading order and when it applies.
@@ -79,7 +79,7 @@ Full lifecycle management for Swift Institute skills. Covers planning, authoring
 **Rules**:
 - Dependencies form a DAG — no cycles allowed
 - Only require skills that exist
-- Require the most specific applicable skill (e.g., `naming` not `swift-institute` if naming rules are used)
+- Require the most specific applicable skill (e.g., `code-surface` not `swift-institute` if naming rules are used)
 
 **Verify no cycles**:
 ```
