@@ -128,51 +128,81 @@ Every declaration plays one of three roles:
 **Statement**: Stored properties of unsafe pointer types on `@safe` types MUST be `private` or `internal`. Public properties returning unsafe pointer types MUST be annotated `@unsafe` to signal that they are deliberate escape hatches.
 
 ```swift
-// INCORRECT - public pointer on @safe type contradicts safety claim
-@safe public struct View {
-    public let pointer: UnsafePointer<Char>  // Leaks unsafety to callers
+// INCORRECT - public pointer on @safe Escapable type, pointer can dangle
+@safe public struct Buffer {
+    public let storage: UnsafeMutablePointer<UInt8>  // Leaks unsafety
 }
 
 // CORRECT - pointer is private, Span is the public interface
-@safe public struct View {
-    private let pointer: UnsafePointer<Char>
-    public var span: Span<Char> { ... }
+@safe public struct Buffer {
+    private let storage: UnsafeMutablePointer<UInt8>
+    public var span: Span<UInt8> { ... }
 
-    @unsafe public borrowing func withUnsafePointer<R>(...) -> R { ... }
+    @unsafe public func withUnsafePointer<R>(...) -> R { ... }
 }
 ```
 
-**Cross-references**: [MEM-SAFE-012], [MEM-SAFE-014], [MEM-SAFE-020]
+**`~Escapable` exception**: On `~Escapable` types, public pointer properties are **structurally safe** — the view cannot outlive the source, so the pointer cannot dangle. The type system enforces the lifetime boundary that closures (`withUnsafePointer`) enforce by convention. `@unsafe` is still recommended for documentation clarity, but the severity is LOW, not HIGH.
+
+```swift
+// ACCEPTABLE - ~Escapable prevents the pointer from outliving the source
+@safe public struct View: ~Copyable, ~Escapable {
+    public let pointer: UnsafePointer<Char>  // Cannot dangle by construction
+    public var span: Span<Char> { ... }      // Still preferred for callers
+}
+```
+
+| Containing type | Pointer exposure | Severity |
+|----------------|-----------------|----------|
+| `Escapable` | Public pointer property | HIGH — pointer can dangle |
+| `~Escapable` | Public pointer property | LOW — structurally safe |
+| Coroutine-scoped (not `~Escapable`) | Public pointer property | MEDIUM — safe by convention, not type system |
+
+**Cross-references**: [MEM-SAFE-012], [MEM-SAFE-014], [MEM-SAFE-020], [MEM-COPY-013]
 
 ---
 
-### [MEM-SAFE-024] `@unchecked Sendable` Requires `@unsafe`
+### [MEM-SAFE-024] `@unchecked Sendable` Semantic Categories
 
 **Scope**: All `@unchecked Sendable` conformances.
 
-**Statement**: `@unchecked Sendable` conformances MUST be annotated with `@unsafe` on the conformance declaration. SE-0458 classifies `@unchecked Sendable` as an unsafe conformance because it removes the compiler's data-race prevention without proof.
+**Statement**: `@unchecked Sendable` conformances MUST be classified into one of three semantic categories. The correct annotation depends on the category.
 
+| Category | Semantics | Annotation | Safety invariant |
+|----------|-----------|------------|-----------------|
+| **A: Synchronized** | Internal mutex, atomic, or lock | `@unsafe @unchecked Sendable` | Document synchronization mechanism |
+| **B: Ownership transfer** | `~Copyable` prevents sharing; Sendable enables move | `@unsafe @unchecked Sendable` | Document `~Copyable` ownership guarantee |
+| **C: Thread-confined** | Single-thread access; `@unchecked Sendable` used to cross one boundary | **Should be `~Sendable`** (SE-0518) | DEFER until `~Sendable` stabilizes |
+
+**Category A** — synchronized:
 ```swift
-// INCORRECT - bare @unchecked, invisible to safety audit
-extension Memory.Arena: @unchecked Sendable {}
-
-// CORRECT - explicitly unsafe, requires unsafe at generic use sites
-extension Memory.Arena: @unsafe @unchecked Sendable {}
+/// ## Safety Invariant
+/// Internal `Mutex<State>` serializes all access.
+extension Kernel.Thread.Synchronization: @unsafe @unchecked Sendable {}
 ```
 
-A `@safe` type with `@unchecked Sendable` SHOULD document the safety invariant:
-
+**Category B** — ownership transfer:
 ```swift
-/// ## Safety Invariant (for @unchecked Sendable)
-///
-/// `~Copyable` unique ownership ensures only one thread can access
-/// at a time. Transfer via `consuming` parameter requires the caller
-/// to relinquish access.
-@safe
-public struct Arena: ~Copyable { ... }
-
+/// ## Safety Invariant
+/// `~Copyable` unique ownership ensures only one thread can access at a time.
+/// Transfer via `consuming` parameter relinquishes the sender's access.
+@safe public struct Arena: ~Copyable { ... }
 extension Arena: @unsafe @unchecked Sendable {}
 ```
+
+**Category C** — thread-confined (DO NOT add `@unsafe`):
+```swift
+// CURRENT (semantic lie — type is not safe to send arbitrarily)
+final class Ring: @unchecked Sendable { ... }
+
+// FUTURE (SE-0518) — express the truth at the type level
+final class Ring: ~Sendable { ... }
+// Transfer to poll thread uses explicit unsafe at the transfer site
+```
+
+Category C types should be **DEFERRED** in audits, not annotated with `@unsafe`. Adding `@unsafe` would be a bandaid — the real fix is `~Sendable` (SE-0518, currently experimental in Swift 6.3).
+
+**Reference**: `swift-institute/Research/tilde-sendable-semantic-inventory.md`
 
 **Cross-references**: [MEM-SEND-001], [MEM-SEND-002], [MEM-SAFE-020]
 

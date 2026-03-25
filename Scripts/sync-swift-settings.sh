@@ -40,6 +40,7 @@ package_features() {
         swift-buffer-primitives)     echo "BuiltinModule RawLayout" ;;
         swift-dictionary-primitives) echo "RawLayout" ;;
         swift-list-primitives)       echo "RawLayout" ;;
+        swift-memory-primitives)     echo "RawLayout" ;;
         swift-storage-primitives)    echo "RawLayout" ;;
         swift-tree-primitives)       echo "RawLayout" ;;
         swift-sequence-primitives)   echo "BuiltinModule" ;;
