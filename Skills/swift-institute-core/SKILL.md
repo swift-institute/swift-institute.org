@@ -65,6 +65,7 @@ This is the root meta-skill for the Swift Institute ecosystem.
 - **research-meta-analysis** - [META-*] Corpus health: staleness, supersession, revalidation, pruning
 - **quick-commit-and-push-all** - [SAVE-*] Commit and push all sub-repos to remote
 - **swift-pull-request** - [SWIFT-PR-*] Submit PRs to swiftlang/swift: fork, branch, commit, test, CI, reviewers
+- **handoff** - [HANDOFF-*] Structured agent-to-agent handoff: sequential (HANDOFF.md) and branching (HANDOFF-{topic}.md)
 
 ### Legal Domain Skills (rule-law/Skills/)
 - **rule-law-core** - [RL-CORE-*] Legal ecosystem manifest, skill index, loading order
