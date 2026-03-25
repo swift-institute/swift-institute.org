@@ -39,7 +39,7 @@ loaded when the code warrants it:
 
 | Condition detected | Also load |
 |--------------------|-----------|
-| `~Copyable`, `consuming`, `borrowing`, `unsafe` | **memory** |
+| `~Copyable`, `consuming`, `borrowing`, `unsafe` | **memory-safety** |
 | `#if os(...)`, platform conditionals | **platform** |
 | Test files present and in scope | **testing** |
 | L1 package | **primitives** (Foundation-free, tier rules) |
@@ -199,7 +199,7 @@ Additional skills loaded by context:
 
 | Condition | Also load |
 |-----------|-----------|
-| `~Copyable`, `consuming`, `borrowing`, `unsafe` | **memory** |
+| `~Copyable`, `consuming`, `borrowing`, `unsafe` | **memory-safety** |
 | `#if os(...)`, platform conditionals | **platform** |
 | Test files present and in scope | **testing** |
 | L1 package | **primitives** (Foundation-free, tier rules) |
@@ -308,9 +308,9 @@ If output is non-empty and the section is >60 days old, the section is stale.
 
 | Target skill | Files audited |
 |-------------|---------------|
-| Any non-testing skill (`/implementation`, `/code-surface`, `/memory`, etc.) | Source files only (under `Sources/`) |
+| Any non-testing skill (`/implementation`, `/code-surface`, `/memory-safety`, etc.) | Source files only (under `Sources/`) |
 | `/testing` | Test files only (under `Tests/`) |
-| `/audit` (general, no "regarding") | Source files for implementation/code-surface/memory; test files for testing |
+| `/audit` (general, no "regarding") | Source files for implementation/code-surface/memory-safety; test files for testing |
 
 **Rationale**: Test code conventions differ from source code conventions. An implementation audit finding in a test helper is noise.
 
@@ -421,7 +421,7 @@ Legacy subsections are removed one-by-one as fresh audits supersede them. When a
 | **research-meta-analysis** | Meta-analysis flags stale audit sections ([AUDIT-010]) and checks index entries ([AUDIT-009]). |
 | **implementation** | Common audit target. Load via `/audit regarding /implementation`. |
 | **code-surface** | Common audit target. Load via `/audit regarding /code-surface`. |
-| **memory** | Audit target for ~Copyable/ownership code. |
+| **memory-safety** | Audit target for ~Copyable/ownership code. |
 | **modularization** | Audit target for package structure. |
 | **testing** | Audit target for test code. Audits test files only ([AUDIT-012]). |
 

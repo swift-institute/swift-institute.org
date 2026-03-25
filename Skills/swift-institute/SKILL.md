@@ -84,7 +84,7 @@ For full rules, see `Documentation.docc/Semantic Dependencies.md`.
 
 Child skills:
 - **code-surface** - Naming, error handling, and file structure rules
-- **memory** - Ownership and copyability rules
+- **memory-safety** - Ownership, safety isolation, and copyability rules
 - **design** - API design, layering, semantic dependencies
 
 Repository-specific:

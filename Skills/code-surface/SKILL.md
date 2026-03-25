@@ -428,4 +428,4 @@ If ANY item fails, fix before presenting.
 
 See also:
 - **implementation** skill for [IMPL-*] expression style, typed arithmetic, Property.View patterns
-- **memory** skill for [MEM-COPY-006] ~Copyable type organization exceptions
+- **memory-safety** skill for [MEM-COPY-006] ~Copyable type organization exceptions

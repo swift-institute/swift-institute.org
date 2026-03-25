@@ -1331,7 +1331,7 @@ If ANY item fails, fix before presenting.
 See also:
 - **conversions** skill for [IDX-*], [CONV-*] type definitions and conversion APIs
 - **code-surface** skill for [API-NAME-*], [API-ERR-*], [API-IMPL-*] naming, errors, file structure
-- **memory** skill for [MEM-*] ownership patterns
+- **memory-safety** skill for [MEM-*] ownership patterns
 - **advanced-patterns** skill for [PATTERN-026] centralization, memory ownership, unsafe operation patterns
 - **testing** skill for [TEST-018] literal conformances in tests
 - **existing-infrastructure** skill for [INFRA-*] catalog of typed operations, integration modules, and principled absences

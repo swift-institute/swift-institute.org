@@ -399,7 +399,7 @@ General-purpose?                    → Memory.Allocator
 ## Cross-References
 
 - **existing-infrastructure** skill for typed operators, boundary overloads, and Standard Library Integration modules
-- **memory** skill for ~Copyable ownership, Sendable, and lifecycle rules
+- **memory-safety** skill for ~Copyable ownership, Sendable, and lifecycle rules
 - **conversions** skill for Index<T>, Offset, Count arithmetic
 - **memory-arithmetic** skill for Memory.Address typed arithmetic
 - Research: `swift-institute/Research/ecosystem-data-structures-inventory.md` (full inventory with provenance)

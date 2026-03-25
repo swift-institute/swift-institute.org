@@ -713,7 +713,7 @@ All packages MUST support Darwin, Linux, Windows, POSIX, and Swift Embedded.
 
 **Statement**: `#StrictMemorySafety` warnings MUST be treated as design feedback, not noise. Each warning marks a site requiring eventual `unsafe` annotation.
 
-See **memory** skill [MEM-SAFE-003] for warning classification (Bucket A vs Bucket B).
+See **memory-safety** skill [MEM-SAFE-003] for warning classification (Bucket A vs Bucket B).
 
 **Cross-references**: [PATTERN-005], [MEM-SAFE-003]
 
@@ -725,7 +725,7 @@ See **memory** skill [MEM-SAFE-003] for warning classification (Bucket A vs Buck
 
 Key pattern: `unsafe (self.raw = value)` for assignments to unsafe storage.
 
-See **memory** skill [MEM-SAFE-002] for full details.
+See **memory-safety** skill [MEM-SAFE-002] for full details.
 
 **Cross-references**: [PATTERN-005], [MEM-SAFE-002]
 
@@ -803,4 +803,4 @@ See also:
 - **swift-institute** skill for five-layer architecture [ARCH-LAYER-*]
 - **code-surface** skill for namespace structure [API-NAME-001], specification-mirroring [API-NAME-003]
 - **implementation** skill for API layering rules [API-LAYER-*]
-- **memory** skill for [MEM-SAFE-002], [MEM-SAFE-003]
+- **memory-safety** skill for [MEM-SAFE-002], [MEM-SAFE-003]

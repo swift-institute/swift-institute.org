@@ -30,7 +30,6 @@ ECOSYSTEM_LINES=(
     '        .enableUpcomingFeature("NonisolatedNonsendingByDefault"),'
     '        .enableExperimentalFeature("Lifetimes"),'
     '        .enableExperimentalFeature("SuppressedAssociatedTypes"),'
-    '        .enableExperimentalFeature("SuppressedAssociatedTypesWithDefaults"),'
 )
 
 # ── Package-specific features ────────────────────────────────────────────────

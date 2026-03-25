@@ -7,7 +7,7 @@ description: |
 layer: implementation
 
 requires:
-  - memory
+  - memory-safety
   - implementation
 
 applies_to:
@@ -28,7 +28,7 @@ last_reviewed: 2026-03-20
 
 Memory ownership patterns, unsafe operation API design, and systematic refactoring patterns.
 
-**Note**: PATTERN-016 "Move-Only Types as Proof Assistants" from the source documents is an alias for [MEM-LINEAR-003] in the **memory** skill. It shares an ID number with PATTERN-016 "Conscious Technical Debt" in the **anti-patterns** skill. The canonical reference for move-only proof assistants is [MEM-LINEAR-003].
+**Note**: PATTERN-016 "Move-Only Types as Proof Assistants" from the source documents is an alias for [MEM-LINEAR-003] in the **memory-safety** skill. It shares an ID number with PATTERN-016 "Conscious Technical Debt" in the **anti-patterns** skill. The canonical reference for move-only proof assistants is [MEM-LINEAR-003].
 
 ---
 
@@ -43,7 +43,7 @@ Memory ownership patterns, unsafe operation API design, and systematic refactori
 | **Exactly-once** | `~Copyable` + `consuming func` + `deinit` with precondition |
 | **At-most-once** | `~Copyable` + `consuming func` + silent `deinit` |
 
-See **memory** skill [MEM-LINEAR-001] and [MEM-LINEAR-002] for full details.
+See **memory-safety** skill [MEM-LINEAR-001] and [MEM-LINEAR-002] for full details.
 
 **Cross-references**: [MEM-LINEAR-001], [MEM-LINEAR-002], [PATTERN-007]
 
@@ -53,7 +53,7 @@ See **memory** skill [MEM-LINEAR-001] and [MEM-LINEAR-002] for full details.
 
 **Statement**: When `~Copyable` types must be stored in collections (which require `Copyable` values), wrap the `~Copyable` content in a class. The class provides reference semantics (copyable), while the content remains move-only.
 
-See **memory** skill [MEM-COPY-003] for full details.
+See **memory-safety** skill [MEM-COPY-003] for full details.
 
 **Cross-references**: [PATTERN-014], [MEM-COPY-003]
 
@@ -136,7 +136,7 @@ public func process(_ data: [UInt8]) -> Result
 public func process(_ buffer: UnsafeBufferPointer<UInt8>) -> Result
 ```
 
-See also **memory** skill [MEM-SAFE-010].
+See also **memory-safety** skill [MEM-SAFE-010].
 
 **Cross-references**: [PATTERN-039], [MEM-SAFE-010]
 
@@ -158,7 +158,7 @@ func readUInt32(from pointer: UnsafeRawPointer) -> UInt32 {
 }
 ```
 
-See also **memory** skill [MEM-SAFE-011].
+See also **memory-safety** skill [MEM-SAFE-011].
 
 **Cross-references**: [PATTERN-038], [MEM-SAFE-011]
 
@@ -181,7 +181,7 @@ public struct Buffer {
 }
 ```
 
-See also **memory** skill [MEM-SAFE-012].
+See also **memory-safety** skill [MEM-SAFE-012].
 
 **Cross-references**: [PATTERN-038], [MEM-SAFE-012]
 
@@ -191,7 +191,7 @@ See also **memory** skill [MEM-SAFE-012].
 
 **Statement**: Removing public unsafe overloads in favor of scoped accessors reduces API surface without reducing capability.
 
-See also **memory** skill [MEM-SAFE-013].
+See also **memory-safety** skill [MEM-SAFE-013].
 
 **Cross-references**: [PATTERN-038], [PATTERN-040], [MEM-SAFE-013]
 
@@ -222,7 +222,7 @@ public var unsafeCString: UnsafePointer<CChar> {
 
 Standard library precedent: `withUnsafeBufferPointer`, `withContiguousStorageIfAvailable`, `withCString`, `withUnsafeBytes`.
 
-See also **memory** skill [MEM-SAFE-014].
+See also **memory-safety** skill [MEM-SAFE-014].
 
 **Cross-references**: [PATTERN-038], [MEM-SAFE-014]
 
@@ -291,8 +291,8 @@ Audit questions:
 ## Cross-References
 
 See also:
-- **memory** skill for [MEM-COPY-*], [MEM-LINEAR-*] canonical rules
-- **memory** skill for [MEM-SAFE-010-014] unsafe operation rules
+- **memory-safety** skill for [MEM-COPY-*], [MEM-LINEAR-*] canonical rules
+- **memory-safety** skill for [MEM-SAFE-010-014] unsafe operation rules
 - **implementation** skill for [PATTERN-049], [PATTERN-050] typealias patterns
 - **experiment-process** skill for [EXP-004] minimal reproduction methodology
 - **anti-patterns** skill for PATTERN-009-016 (things to avoid)

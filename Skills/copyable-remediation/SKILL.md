@@ -7,7 +7,7 @@ description: |
 layer: process
 
 requires:
-  - memory
+  - memory-safety
 
 applies_to:
   - swift
@@ -25,7 +25,7 @@ Process workflow for auditing and fixing ~Copyable/Copyable constraint issues.
 
 **Entry point**: Package fails with `type 'X' does not conform to protocol 'Copyable'`, or proactive audit.
 
-**Prerequisites**: Read **memory** skill [MEM-COPY-004] through [MEM-COPY-006].
+**Prerequisites**: Read **memory-safety** skill [MEM-COPY-004] through [MEM-COPY-006].
 
 **Canonical references**:
 - `swift-stack-primitives` — Single-file conformances, deinit workaround
@@ -612,5 +612,5 @@ The `where Element: ~Copyable` appears redundant since `Heap` only exists within
 ## Cross-References
 
 See also:
-- **memory** skill for core ~Copyable rules [MEM-COPY-*]
+- **memory-safety** skill for core ~Copyable rules [MEM-COPY-*]
 - **anti-patterns** skill for [PATTERN-016] conscious technical debt documentation
