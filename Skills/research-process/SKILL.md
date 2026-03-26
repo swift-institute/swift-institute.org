@@ -351,6 +351,12 @@ For trade-offs: Context → Question ("How to balance A vs B?") → Concerns wit
 
 **Statement**: Tier 2+ MUST include Prior Art Survey: Swift Evolution proposals/forums, related languages (Rust RFCs, Haskell GHC, OCaml), academic literature (arXiv, ACM DL, POPL/ICFP/OOPSLA).
 
+**Statement**: When a prior art survey identifies a pattern that is universally adopted across surveyed systems but absent from the ecosystem, the survey MUST include a "contextualization step" before classifying the absence as a gap: concretely describe what the proposed concept would look like in the ecosystem's type system, and evaluate what it would cost (type erasure, loss of typed throws, constraint violations, etc.). Universal adoption does not imply universal necessity — the absence may be a deliberate design decision.
+
+**Rationale**: Comparative analysis excels at identifying what exists elsewhere but can mistake universal adoption for universal necessity. Without the contextualization step, prior art consensus biases toward "gap" rather than "deliberate design." The corrective is to always concretize the proposed concept in the ecosystem's own terms before classifying.
+
+**Provenance**: Reflection `2026-03-25-io-prior-art-literature-study.md`.
+
 **Cross-references**: [RES-005], [RES-022]
 
 ---
