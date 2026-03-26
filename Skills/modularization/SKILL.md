@@ -505,9 +505,21 @@ Properties:
 | Umbrella | `{Domain} Primitives` | `{Domain}_Primitives` |
 | Test support | `{Domain} Primitives Test Support` | `{Domain}_Primitives_Test_Support` |
 
-**Rationale**: Consistent naming enables predictable discovery. Module names use spaces in Package.swift and underscores in import statements per primitives convention.
+**Layer adaptation**: The table above uses L1 (Primitives) naming. Higher layers drop the layer-identifying word:
 
-**Cross-references**: [API-NAME-001], [PRIM-NAME-001]
+| Layer | Core | Variant | Umbrella |
+|-------|------|---------|----------|
+| L1 Primitives | `{Domain} Primitives Core` | `{Domain} {Variant} Primitives` | `{Domain} Primitives` |
+| L2 Standards | `{Domain} Core` | `{Domain} {Variant}` | `{Domain}` |
+| L3 Foundations | `{Domain} Core` | `{Domain} {Variant}` | `{Domain}` |
+
+**Example**: L1 `IO Primitives Core` → L3 `IO Core`. L1 `IO Blocking Primitives` → L3 `IO Blocking`.
+
+**Rationale**: Consistent naming enables predictable discovery. Module names use spaces in Package.swift and underscores in import statements per primitives convention. The "Primitives" suffix is layer-identifying and inappropriate at higher layers where packages compose rather than provide atomic building blocks.
+
+**Provenance**: Reflection `2026-03-24-swift-io-audit-consolidation.md`.
+
+**Cross-references**: [API-NAME-001], [PRIM-NAME-001], [ARCH-LAYER-001]
 
 ---
 

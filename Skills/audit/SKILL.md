@@ -413,6 +413,28 @@ Legacy subsections are removed one-by-one as fresh audits supersede them. When a
 
 ---
 
+### [AUDIT-016] Wrong-Scope File Discovery
+
+**Statement**: When consolidating prior audit files ([AUDIT-015]), the search MUST also check parent and ecosystem-level scope directories for misplaced files. Old-style audit files are often stored at a higher scope than their content warrants (e.g., package-specific audits in `swift-institute/Research/` instead of `{package}/Research/`).
+
+**Extended search procedure**:
+
+| Step | Search Location | Pattern |
+|------|-----------------|---------|
+| 1 | Target scope's `Research/` | `*-audit*.md` (per [AUDIT-015]) |
+| 2 | Parent scope's `Research/` | `*{package-name}*audit*.md` |
+| 3 | `swift-institute/Research/` | `*{package-name}*audit*.md`, `*{package-name}*deep*.md` |
+
+Files found at wrong scope levels are consolidated into the target scope's `Research/audit.md` and deleted from the wrong location, following the same extraction procedure as [AUDIT-015].
+
+**Rationale**: Before the audit skill existed, audit files were placed at whichever scope the session happened to use. An automated staleness check per [AUDIT-010] that only examines the correct scope would miss these misplaced files entirely.
+
+**Provenance**: Reflection `2026-03-24-swift-io-audit-consolidation.md`.
+
+**Cross-references**: [AUDIT-015], [AUDIT-010], [AUDIT-002]
+
+---
+
 ## Relationship to Other Skills
 
 | Skill | Relationship |
