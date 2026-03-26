@@ -11,6 +11,8 @@ requires: []
 applies_to:
   - agent-workflow
   - session-management
+
+last_reviewed: 2026-03-26
 ---
 
 # Handoff
