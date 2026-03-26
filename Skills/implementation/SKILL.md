@@ -1311,6 +1311,46 @@ public func map<U>(
 
 ---
 
+### [IMPL-063] Ownership Subsumes Synchronization
+
+**Statement**: When a type is `~Copyable` with `mutating` methods, the compiler guarantees exclusive access at the call site. Adding actors, atomics, or locks to protect stored state within such a type introduces synchronization mechanism for a concurrency problem that does not exist. Stored state on a `~Copyable` type with `mutating` access MUST use plain stored properties, not synchronization primitives.
+
+**Decision procedure**:
+
+| Question | If Yes | If No |
+|----------|--------|-------|
+| Is the type `~Copyable`? | Continue | Synchronization may be needed |
+| Are the relevant methods `mutating` or `consuming`? | Ownership guarantees exclusive access | `borrowing` methods allow shared access — synchronization may be needed |
+| Is the state accessed from multiple isolation domains? | Not possible — `~Copyable` + `mutating` prevents aliasing | — |
+
+**Correct**:
+```swift
+struct Channel: ~Copyable {
+    var closeState: HalfClose.State  // Plain stored property — ownership is the synchronization
+
+    mutating func close(_ half: HalfClose) { closeState.close(half) }
+}
+```
+
+**Incorrect**:
+```swift
+struct Channel: ~Copyable {
+    let lifecycle = Lifecycle()  // ❌ Actor for state that ownership already protects
+
+    mutating func close(_ half: HalfClose) async { await lifecycle.close(half) }
+}
+```
+
+**Detection**: During code review, any `~Copyable` type that contains an actor, `Atomic`, `Mutex`, or `OSAllocatedUnfairLock` for internal state is a candidate for simplification. The synchronization primitive can be replaced with a plain stored property if all access paths are `mutating` or `consuming`.
+
+**Rationale**: Actors introduce async hops, atomics introduce memory barriers, and locks introduce contention — all to solve a problem that the ownership system already prevents. Removing unnecessary synchronization eliminates per-call overhead (e.g., 3x write throughput improvement when replacing an actor with a stored property in swift-io's Channel).
+
+**Provenance**: Reflection `2026-03-26-channel-lifecycle-actor-removal-ownership-as-synchronization.md`.
+
+**Cross-references**: [MEM-COPY-001], [IMPL-INTENT]
+
+---
+
 ## Post-Implementation Checklist
 
 Before presenting code as complete, verify EACH item:
