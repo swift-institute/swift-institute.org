@@ -531,6 +531,30 @@ that become harder to triage over time.
 
 ---
 
+### [META-021] Audit Section Staleness
+
+**Statement**: During corpus sweeps, audit sections (`Research/audit.md`) across all scopes MUST be checked for staleness per [AUDIT-010]: a section is stale when its date is >60 days old AND source files in scope have been modified since the audit date.
+
+**Detection**:
+
+| Step | Action |
+|------|--------|
+| 1. Locate | Find all `Research/audit.md` files across ecosystem packages and the institute-level scope |
+| 2. Parse | Extract each section's audit date and target skill |
+| 3. Check age | Flag sections >60 days old |
+| 4. Check changes | For flagged sections, check `git log --since="{date}" -- Sources/` in the relevant package |
+| 5. Report | Sections that are both old AND have source changes are stale |
+
+**Integration with [META-019] full corpus sweep**: Audit staleness checks run as phase 10a (after skill health checks, before final report).
+
+**Rationale**: [AUDIT-010] defines when audit sections become unreliable, but the meta-analysis corpus sweep did not previously include audit files in its scope. Audit sections can silently go stale as code evolves between audits.
+
+**Provenance**: Reflection `2026-03-24-generalized-audit-skill-design.md`.
+
+**Cross-references**: [AUDIT-010], [AUDIT-009], [META-019], [META-020]
+
+---
+
 ## Cross-References
 
 See also:
