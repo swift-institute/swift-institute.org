@@ -52,6 +52,7 @@ CANONICAL_LINES=(
     '/*'
     '!/Sources/'
     '!/Tests/'
+    '!/Benchmarks/'
     '!/Experiments/'
     '!/Research/'
     '!/Skills/'
@@ -83,6 +84,7 @@ CANONICAL_LINES=(
     '# Swift Package Manager'
     '.build/'
     '.swiftpm/'
+    '.benchmarks/'
     ''
     '# ========== END CANONICAL =========='
 )
