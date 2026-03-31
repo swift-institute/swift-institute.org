@@ -598,16 +598,52 @@ extension Reference.Indirect: @unchecked Sendable {}
 
 ---
 
-### [MEM-COPY-011] Two-World Separation
+### [MEM-COPY-011] Two-World Separation for Owned and Borrowed Types
 
-**Statement**: When owned and borrowed variants have different semantic properties, they MUST be separate types with separate protocol conformances.
+**Statement**: When a type has both owned (escapable) and borrowed (`~Escapable`) variants with fundamentally different properties, they MUST be represented as separate types with separate protocol conformances — not unified through abstraction.
 
-| World | Prioritizes | Sacrifices |
-|-------|-------------|------------|
-| Owned | Combinator reuse | Compile-time safety |
-| Borrowed | Zero-copy | Separate protocol |
+**The Constraint Triangle** (Swift 6.x) — three desirable properties cannot all be satisfied:
+1. Reuse existing protocol infrastructure
+2. Keep borrowed type `~Escapable` (compile-time lifetime safety)
+3. Keep zero-copy parsing
 
-**Cross-references**: [MEM-COPY-010], [MEM-LINEAR-001]
+| World | Prioritizes | Sacrifices | Use Case |
+|-------|-------------|------------|----------|
+| **Owned** | (1) + combinator reuse | (2) compile-time safety | Cross-task transfer, recursive structures |
+| **Borrowed** | (2) + (3) zero-copy | (1) separate protocol | Maximum performance, scoped parsing |
+
+**Correct** — two separate protocols:
+```swift
+public protocol Parser<Input, Output, Failure> {
+    associatedtype Input  // Must be Escapable (language limitation)
+    func parse(_ input: inout Input) throws(Failure) -> Output
+}
+
+extension Binary.Bytes {
+    public protocol Parser<Output, Failure> {
+        mutating func parse(_ input: inout Input.View) throws(Failure) -> Output
+    }
+}
+
+// Bridge for cross-world reuse
+struct Bridge<P: Parsing.Parser>: Binary.Bytes.Parser { ... }
+```
+
+**Incorrect** — forcing unification:
+```swift
+public protocol Parser<Input, Output, Failure> {
+    associatedtype Input: ~Escapable  // ❌ Cannot do this in Swift 6.x
+}
+```
+
+| Property | Owned | Borrowed |
+|----------|-------|----------|
+| Storage | Indefinite | Scoped to borrow lifetime |
+| Task transfer | Safe | Cannot cross task boundaries |
+| Recursive structures | Yes | No |
+| Lifetime safety | Runtime contract | Compile-time enforcement |
+
+**Cross-references**: [MEM-COPY-010], [MEM-LINEAR-001], [IMPL-065]
 
 ---
 
@@ -633,6 +669,73 @@ extension Reference.Indirect: @unchecked Sendable {}
 **Canonical example**: `Property.View` omits `~Escapable` because the `_read`/`_modify` coroutine scope already prevents escape. Adding it triggers CopyPropagation crashes.
 
 **Cross-references**: [MEM-COPY-012], [IMPL-061]
+
+---
+
+### [MEM-OWN-010] Always-Consume Transfer
+
+**Statement**: When every code path through a `Mutex.withLock` closure consumes a `~Copyable` value, the value MUST be passed as a `consuming` closure parameter via `withLock(consuming:body:)`. The Optional wrapper mechanism (`.take()!`) is confined to the extension's implementation per [IMPL-070].
+
+**Call site** (reads as intent):
+```swift
+_state.withLock(consuming: element) { state, element in
+    state.buffer.push(consume element, to: .back)
+}
+```
+
+**When to use**: The value is always consumed — buffered, delivered, or dropped. No code path retains it.
+
+**Cross-references**: [IMPL-INTENT], [IMPL-067], [IMPL-070], [Research: noncopyable-ownership-transfer-patterns.md]
+
+---
+
+### [MEM-OWN-011] Maybe-Consume Transfer
+
+**Statement**: When a state machine decides per-path whether to consume a `~Copyable` value, the state machine method MUST take `inout Element?`. It uses `.take()!` on consume paths and leaves the Optional populated on non-consume paths. The caller passes `&slot` through standard `withLock`.
+
+**Call site** (reads as intent):
+```swift
+let action = storage.withLock { state in
+    state.send(&slot)  // state decides whether to take
+}
+```
+
+**State machine** (mechanism confined here):
+```swift
+mutating func send(_ element: inout Element?) -> Send.Action {
+    guard !_closed else { return .shut }          // leave element
+    if hasReceiver { return .give(element.take()!) }  // take element
+    buffer.push(element.take()!, to: .back); return .keep  // take element
+}
+```
+
+**When to use**: Some paths consume (deliver, buffer), others don't (suspend, reject). A state machine determines the outcome.
+
+**Cross-references**: [IMPL-INTENT], [IMPL-067], [IMPL-070], [Research: noncopyable-ownership-transfer-patterns.md]
+
+---
+
+### [MEM-OWN-012] Action Enum Dispatch
+
+**Statement**: When a `Mutex.withLock` closure performs a state transition that requires post-lock side effects, the closure MUST return a `~Copyable` action enum. Side effects (continuation resume, element delivery) happen outside the lock via `switch consume action`. Continuations MUST be resumed post-lock to prevent reentrancy and deadlock.
+
+```swift
+// Inside lock: pure state transition
+let action: _Take = _state.withLock { state in
+    if let element = state.buffer.pop(from: .front) { return .element(element) }
+    if state.isFinished { return .finished }
+    return .suspend
+}
+
+// Outside lock: side effects
+switch consume action {
+case .element(let element): return element
+case .finished: return nil
+case .suspend: break
+}
+```
+
+**Cross-references**: [IMPL-INTENT], [IMPL-070], [Research: noncopyable-ownership-transfer-patterns.md]
 
 ---
 
@@ -753,5 +856,5 @@ If ANY item fails, fix before presenting.
 
 See also:
 - **implementation** skill for [IMPL-*] expression style, Property.View patterns
-- **copyable-remediation** skill for auditing and fixing ~Copyable constraint issues
-- **advanced-patterns** skill for memory ownership in collections, unsafe API design
+- **implementation** skill for [COPY-FIX-*] ~Copyable constraint patterns (absorbed from copyable-remediation)
+- **implementation** skill for [PATTERN-026–028] centralization and refactoring patterns (absorbed from advanced-patterns)
