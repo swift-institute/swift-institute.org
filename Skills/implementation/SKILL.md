@@ -2169,6 +2169,38 @@ extension Property.View where Tag == Peek, Base: Queue & ~Copyable {
 
 ---
 
+### [IMPL-080] Consuming Ternary for ~Copyable Selection
+
+**Statement**: When selecting one of two `~Copyable` values based on a condition (e.g., `max`, `min`, ternary return), use `consuming` parameters with a ternary-style select-and-drop pattern. Do not over-analyze ownership for simple conditional returns.
+
+**Correct**:
+```swift
+static func max(_ a: consuming Self, _ b: consuming Self) -> Self {
+    a < b ? b : a  // Consumes the selected value, drops the other
+}
+```
+
+**Incorrect** — over-engineering:
+```swift
+// ❌ Unnecessarily complex: borrow for comparison, then re-consume
+static func max(_ a: consuming Self, _ b: consuming Self) -> Self {
+    let aWins: Bool
+    do {
+        let aBorrowed = ... // Complex borrow staging
+        aWins = aBorrowed >= b
+    }
+    return aWins ? a : b
+}
+```
+
+**Why this works**: Swift's ownership model handles the ternary naturally — the selected branch is consumed as the return value, the unselected branch is dropped. No staging, no temporary borrow extraction, no design review needed.
+
+**Cross-references**: [IMPL-064], [IMPL-078], [MEM-OWN-001]
+
+**Provenance**: 2026-03-31-se0499-ecosystem-audit-completion.md
+
+---
+
 ## Post-Implementation Checklist
 
 Before presenting code as complete, verify EACH item:

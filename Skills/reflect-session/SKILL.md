@@ -234,9 +234,13 @@ Int past the edge entirely.
 We added a clamping initializer but then changed to typed parameters instead.
 ```
 
+**"Future work" verification**: When classifying an action item as "future work" or "deferred," verify the classification is not masking a straightforward mechanical fix. Ask: "Does the type already support the capability?" If yes, the fix is likely mechanical, not a design question. Over-analysis of obvious steps can serve as procrastination disguised as caution.
+
 **Rationale**: Shallow reflections (Pappas 2010) generate documentation but not learning. Deep reflections generate the insights that improve skills.
 
 **Cross-references**: [REFL-002], [REFL-004]
+
+**Provenance**: 2026-03-31-se0499-ecosystem-audit-completion.md
 
 ---
 
