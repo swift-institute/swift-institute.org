@@ -983,6 +983,30 @@ These constraints are **contradictory** for `~Escapable self` methods returning 
 
 ---
 
+### [MEM-LIFE-005] Nested Coroutine ~Escapable Scope Limitation
+
+**Statement**: A `~Escapable` value produced inside an inner `_read` coroutine MUST NOT be yielded from an outer `_read` coroutine. The inner value's lifetime is tied to the inner scope, which ends before the outer yield can deliver the value to the caller.
+
+```swift
+// FAILS — inner ~Escapable cannot escape to outer scope
+var outer: Ownership.Borrow<Element> {
+    _read {
+        var inner_view = unsafe Property<Peek, Buffer>.View(&self.buffer)
+        yield inner_view.first  // ❌ Borrow<Element> lifetime tied to inner_view's scope
+    }
+}
+```
+
+**This applies to any nested coroutine composition**: not just `_read` + `_read`, but any pattern where an outer coroutine attempts to yield a lifetime-dependent value from an inner scope. The limitation is fundamental to Swift's coroutine scoping model — the inner scope's stack frame is deallocated before the outer yield suspends.
+
+**Workarounds**: Return Copyable projections (extract scalar values) or use closure-based access (`func peek<R>(_ body: (borrowing Element) -> R) -> R?`).
+
+**Cross-references**: [IMPL-079], [IMPL-065], [MEM-COPY-013], [MEM-LIFE-001]
+
+**Provenance**: 2026-03-31-noncopyable-peek-escapable-scope-nesting-limit.md
+
+---
+
 ## Post-Implementation Checklist
 
 Before presenting code as complete, verify EACH item:

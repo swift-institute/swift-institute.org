@@ -2140,6 +2140,35 @@ extension Deque where Element: ~Copyable {
 
 ---
 
+### [IMPL-079] Property.View Is the Terminal ~Escapable Layer
+
+**Statement**: Property.View methods MUST return Copyable values or use closures for borrowed access. A Property.View method MUST NOT return another `~Escapable` value.
+
+**Why**: `_read` coroutine scoping prevents `~Escapable` values from crossing View boundaries. A `~Escapable` value produced inside an inner `_read` (e.g., `Buffer.Ring.Peek.View.front`) has its lifetime tied to that inner scope. An outer `_read` (e.g., `Queue.Front.View.peek`) cannot yield the inner value because the inner scope ends before the outer yield executes. The compiler correctly rejects this.
+
+**Correct** — return Copyable or use closure:
+```swift
+extension Property.View where Tag == Peek, Base: Queue & ~Copyable {
+    func first<R>(_ body: (borrowing Base.Element) -> R) -> R? { ... }  // Closure
+    var isEmpty: Bool { ... }  // Copyable return
+}
+```
+
+**Incorrect** — return ~Escapable from View:
+```swift
+extension Property.View where Tag == Peek, Base: Queue & ~Copyable {
+    var first: Ownership.Borrow<Base.Element>? { ... }  // ❌ ~Escapable cannot escape inner _read
+}
+```
+
+**Scope**: This applies to any nested coroutine composition, not just Property.View. Any pattern where an outer `_read` attempts to yield a `~Escapable` value produced by an inner `_read` will fail.
+
+**Cross-references**: [IMPL-021], [IMPL-065], [MEM-LIFE-005], [MEM-COPY-013]
+
+**Provenance**: 2026-03-31-noncopyable-peek-escapable-scope-nesting-limit.md
+
+---
+
 ## Post-Implementation Checklist
 
 Before presenting code as complete, verify EACH item:
