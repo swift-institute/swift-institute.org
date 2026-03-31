@@ -464,14 +464,17 @@ For `~Copyable` containers: keep container Copyable, use direct methods, or wait
 | 3 | Protocol conformance in separate files | Move conformances to same file |
 | 4 | Sequence/Collection protocol requirements | No workaround; use `forEach` with borrowing closures |
 | 5 | Module emission phase (compound constraints + separate file + Lifetimes flag) | Consolidate to single file |
+| 6 | Non-escaping closure capture consumption | Stage through Copyable reference before closure boundary |
+
+**Category 6 detail**: Non-escaping closures cannot consume a `~Copyable` capture without reinitializing it — even when the capture is consumed exactly once on all paths. The compiler demands reinitialization regardless of the callee's guarantee of total consumption. This affects any `withLock { state in state.method(consuming element) }` pattern where `element: ~Copyable` is captured. The ecosystem solution: pass the element as a closure parameter via `withLock(consuming:body:)` ([MEM-OWN-010]) or stage through `Ownership.Slot` (a Copyable reference wrapper) before the closure boundary.
 
 **Cross-module propagation**: RESOLVED in Swift 6.2.4.
 
-**Workaround hierarchy**: (1) explicit `where Element: ~Copyable`, (2) same-file conformances, (3) single-file consolidation.
+**Workaround hierarchy**: (1) explicit `where Element: ~Copyable`, (2) same-file conformances, (3) single-file consolidation, (6) `Ownership.Slot` or `withLock(consuming:body:)`.
 
 **Tracking**: Category 5 — Swift issue #86669
 
-**Cross-references**: [MEM-COPY-004], [MEM-COPY-005]
+**Cross-references**: [MEM-COPY-004], [MEM-COPY-005], [MEM-OWN-010], [IMPL-070]
 
 ---
 
