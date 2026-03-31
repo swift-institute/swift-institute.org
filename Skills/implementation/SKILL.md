@@ -2099,6 +2099,47 @@ struct Channel<Element: ~Copyable>: @unchecked Sendable {
 
 ---
 
+### [IMPL-078] Widen, Don't Duplicate
+
+**Statement**: When adding `~Copyable` support to an existing `Copyable` API, the first approach MUST be to widen the existing constraint from `Copyable` to `~Copyable`. Add a parallel extension only where the semantics genuinely diverge between Copyable and ~Copyable elements.
+
+**Perfect** — one extension serves both:
+```swift
+// Before: extension Deque where Element: Copyable
+// After: widened to ~Copyable
+extension Deque where Element: ~Copyable {
+    consuming func push(_ element: consuming Element) { ... }
+    func peek<R>(_ body: (borrowing Element) -> R) -> R? { ... }
+}
+
+// Copyable-only convenience (different semantics: value-returning)
+extension Deque where Element: Copyable {
+    var peek: Element? { ... }
+}
+```
+
+**Imperfect** — duplicated extensions:
+```swift
+extension Deque where Element: Copyable {
+    func push(_ element: Element) { ... }          // ❌ Duplicate
+    var peek: Element? { ... }
+}
+extension Deque where Element: ~Copyable {
+    consuming func push(_ element: consuming Element) { ... }  // Same logic
+    func peek<R>(_ body: (borrowing Element) -> R) -> R? { ... }
+}
+```
+
+**Decision procedure**: For each method in the `Copyable` extension, ask: "Can this method work with `consuming`/`borrowing` parameter conventions?" If yes, widen. If no (e.g., value-returning accessors that require copying), keep a Copyable-only convenience alongside the widened base.
+
+**Rationale**: Widening produces fewer lines, a single source of truth, no overload resolution ambiguity, and no dual maintenance. The two-tier overload pattern ([IMPL-025]) applies when the Copyable tier needs *different preparation logic* (e.g., CoW uniqueness checks) — not when the logic is identical.
+
+**Cross-references**: [IMPL-025], [IMPL-064], [MEM-COPY-006]
+
+**Provenance**: 2026-03-31-bridge-noncopyable-ownership-completion.md
+
+---
+
 ## Post-Implementation Checklist
 
 Before presenting code as complete, verify EACH item:

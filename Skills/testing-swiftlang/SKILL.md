@@ -382,11 +382,36 @@ func `handle is fulfilled`() {
 
 **Statement**: ~Copyable values MUST NOT be stored in `Array` or other `Copyable`-constrained collections for bulk assertion. Use sequential assertions or a loop with `borrowing` access.
 
+**Statement**: ~Copyable `Optional` values MUST NOT use `== nil` in `#expect` — binary comparison requires Copyable operands. Use `if let` / guard pattern matching instead.
+
+**Correct**:
+```swift
+@Test
+func `front is nil after drain`() {
+    var deque = Deque<NoCopy>()
+    let isEmpty = deque.front.peek { _ in false } == nil
+    #expect(isEmpty)
+    // Or:
+    if let _ = deque.front.peek({ $0.value }) {
+        Issue.record("Expected nil")
+    }
+}
+```
+
+**Incorrect**:
+```swift
+@Test
+func `front is nil after drain`() {
+    var deque = Deque<NoCopy>()
+    #expect(deque.front.take == nil)  // ❌ Binary comparison copies ~Copyable Optional
+}
+```
+
 **Rationale**: `#expect`, `Array`, and other generic stdlib infrastructure assume `Copyable`. This is the current state of generics adoption, not a bug. As stdlib adopts `~Copyable` generics, this friction will decrease.
 
 **Cross-references**: [SWIFT-TEST-009], [SWIFT-TEST-010], [MEM-COPY-004]
 
-**Provenance**: 2026-03-26-io-api-remediation-sync-submission.md
+**Provenance**: 2026-03-26-io-api-remediation-sync-submission.md, 2026-03-31-bridge-noncopyable-ownership-completion.md
 
 ---
 
