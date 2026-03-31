@@ -159,7 +159,11 @@ into genuine analysis. Ask "what pattern does this instance belong to?"}
 - [ ] **[skill]** **[doc]** naming: Update naming  // ❌ Multiple tags
 ```
 
+**Pre-edit checkpoint**: When a session directly modifies a skill (not via `/reflections_processing`), the skill-lifecycle skill MUST be loaded first. The checklist catches integration gaps (index entries, update classification, consistency checks) that content-focused sessions routinely miss. If the session only creates `[skill]` action items for later processing, this checkpoint is not needed — `/reflections_processing` handles it.
+
 **Rationale**: Specific targets enable deterministic routing. Vague items decay into inaction (Derby & Larsen 2006).
+
+**Provenance**: 2026-03-31-issue-investigation-literature-study.md
 
 **Cross-references**: [REFL-002], [REFL-PROC-001]
 
