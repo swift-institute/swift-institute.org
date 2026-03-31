@@ -1973,6 +1973,40 @@ func split() -> (Reader, Writer) { ... }
 
 ---
 
+### [IMPL-074] Shared-Vocabulary Test for Cross-Layer Type References
+
+**Statement**: When a higher-layer public API signature references a lower-layer type, the reference MUST pass all three conditions. If any condition fails, the type should be wrapped or re-parameterized at the higher layer.
+
+| Condition | Test |
+|-----------|------|
+| **Stable concept** | The type denotes a concept not specific to the lower layer's mechanics |
+| **No hidden boundary reasoning** | Callers need not reason about the lower layer's internals to use the API |
+| **Wrapping adds no value** | A wrapper type would add indirection without changing semantics |
+
+**Correct** — passes all three:
+```swift
+// IO.Blocking.Threads.Options in IO.Lane public API
+// ✓ Stable concept (thread configuration)
+// ✓ No hidden boundary (caller configures threads, not blocking internals)
+// ✓ Wrapping adds no value (IO.Lane.Threads.Options would be pure indirection)
+```
+
+**Incorrect** — fails condition 2:
+```swift
+// IO.Pending<IO.Blocking.Lane> in IO public API
+// ✓ Stable concept
+// ✗ Forces callers to reason about IO.Blocking.Lane (hidden boundary)
+// → Fix: re-parameterize as IO.Pending<IO.Lane>
+```
+
+**Rationale**: Cross-layer type references in public APIs create coupling. The three-condition test distinguishes shared vocabulary (acceptable) from leaked implementation (unacceptable). This is a corollary of [API-LAYER-001].
+
+**Cross-references**: [API-LAYER-001], [IMPL-060]
+
+**Provenance**: 2026-03-30-io-lane-boundary-collaborative-review.md
+
+---
+
 ## Post-Implementation Checklist
 
 Before presenting code as complete, verify EACH item:

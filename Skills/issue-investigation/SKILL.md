@@ -28,8 +28,31 @@ wasted effort by front-loading cheap checks before expensive analysis.
 **Provenance**: Distilled from five compiler bug investigations (2026-02 through 2026-03):
 CopyPropagation Bug 2 (#88022), @_rawLayout LLVM verifier crash, SILGen trivial field
 load ownership (#85743), mark_dependence simplification, and multiple release-mode crash
-diagnoses. The ordering of steps reflects empirical cost: checking the dev toolchain (30s)
+diagnoses. Strengthened by literature study and comparative analysis across Rust, LLVM,
+GCC, and GHC ecosystems (Research: `issue-investigation-best-practices.md`).
+
+The ordering of steps reflects empirical cost: checking the dev toolchain (30s)
 has prevented hours of unnecessary compiler source analysis in multiple sessions.
+
+---
+
+## Step 0: Classify the Issue
+
+### [ISSUE-010] Bug Classification
+
+**Statement**: Before investigation, classify the issue into one of five categories. The category determines the investigation strategy and the kind of evidence needed.
+
+| Category | Description | Evidence Needed |
+|----------|-------------|-----------------|
+| **ICE/Crash** | Compiler itself crashes (signal, assertion, verifier) | Stack trace, reproducer, SIL dump |
+| **Miscompile** | Compiles but produces wrong output | Expected vs actual output, optimization level |
+| **Rejects-valid** | Correct code rejected with error | Code sample, expected behavior, diagnostic ID |
+| **Accepts-invalid** | Incorrect code accepted without error | Code sample, spec reference |
+| **Diagnostic** | Confusing or incorrect error message | Diagnostic text, `-debug-diagnostic-names` output |
+
+**Crash/ICE** and **Miscompile** follow the full pipeline below (Steps 1-6). **Rejects-valid**, **Accepts-invalid**, and **Diagnostic** skip SIL analysis (Step 3) and focus on type checker (`-debug-constraints`) or diagnostic investigation (`-debug-diagnostic-names`).
+
+**Rationale**: Adopted from GCC, LLVM, Rust, and GHC -- all four ecosystems use this taxonomy. Explicit classification prevents applying crash-investigation techniques to diagnostic issues and vice versa.
 
 ---
 
@@ -126,6 +149,9 @@ swiftc -O -Xllvm -sil-print-around=CopyPropagation reproducer.swift 2>&1 | head 
 # Print SIL for a specific function:
 swiftc -O -Xllvm '-sil-print-function=MANGLED_NAME' reproducer.swift 2>&1
 
+# Print functions whose mangled name contains a substring:
+swiftc -O -Xllvm '-sil-print-functions=MyType' reproducer.swift 2>&1
+
 # Verify ownership after every pass (finds the first failing pass):
 swiftc -Xfrontend -sil-verify-all reproducer.swift 2>&1
 ```
@@ -138,6 +164,37 @@ swiftc -Xfrontend -sil-verify-all reproducer.swift 2>&1
 
 ---
 
+### [ISSUE-011] Pass Bisection
+
+**Statement**: For optimization bugs (crash or miscompile at `-O` but not `-Onone`), use pass count bisection to identify the exact failing pass. For multi-transformation passes, use sub-pass bisection.
+
+```bash
+# Step 1: Binary search for the bad pass number
+swiftc -O -Xllvm -sil-opt-pass-count=100 reproducer.swift    # works?
+swiftc -O -Xllvm -sil-opt-pass-count=1000 reproducer.swift   # crashes?
+# Binary search between 100 and 1000...
+
+# Step 2: Once found, print SIL before/after the bad pass
+swiftc -O -Xllvm -sil-opt-pass-count=550 -Xllvm -sil-print-last reproducer.swift 2>sil.txt
+
+# Step 3: For multi-transformation passes (SILCombine, SimplifyCFG):
+swiftc -O -Xllvm '-sil-opt-pass-count=550.25' reproducer.swift
+
+# Step 4: Disable a suspect pass entirely:
+swiftc -O -Xllvm '-sil-disable-pass=sil-combine' reproducer.swift
+```
+
+**For large projects**: Read pass counts from a file with `-Xllvm -sil-pass-count-config-file=<file>`.
+
+**Automated bisection**: The `llvm/utils/bisect` utility automates the binary search:
+```bash
+llvm-project/llvm/utils/bisect --start=0 --end=10000 ./invoke_swift_passing_N.sh "%(count)s"
+```
+
+**Rationale**: Pass bisection is the primary technique used by the Swift compiler team (documented in `DebuggingTheCompiler.md`). Sub-pass notation (`<n>.<m>`) was contributed by meg-gupta for multi-transformation passes. Issue swiftlang/swift#66312 demonstrates the gold standard: bisection to sub-pass 13669.10 got a same-day fix from the SIL optimizer owner.
+
+---
+
 ### [ISSUE-006] Hypothesis Discipline
 
 **Statement**: Form hypotheses from evidence, not from prior investigations. Each hypothesis MUST be testable by a specific code change or compiler flag.
@@ -147,6 +204,24 @@ swiftc -Xfrontend -sil-verify-all reproducer.swift 2>&1
 **Correct pattern**: "The SIL shows `load [take]` on `$*Optional<Bool>` which is trivial. Hypothesis: the enum destructuring generates `load [take]` unconditionally for all tuple elements, including trivial ones. Test: remove the trivial field from the enum."
 
 **Rationale**: The 2026-03-31 investigation initially hypothesized SILCloner forwarding ownership, then generic specialization, then multi-pass interaction — each more complex than the actual root cause (SILGen using `createLoad(...Take)` instead of `TypeLowering::emitLoad()`). The SIL evidence was available from the first dump.
+
+---
+
+### [ISSUE-012] Compiler Source Reading
+
+**Statement**: For optimizer bugs, reading the compiler source SHOULD be attempted early — particularly when the SIL dump reveals the failing pass and instruction. Look for TODO/FIXME comments, known-limitation guards, and bailout conditions near the crash site.
+
+**When to read source**:
+1. The SIL dump clearly identifies the crashing pass and the specific operation
+2. Multiple experiments have failed to reproduce in isolation (the bug is in how the optimizer handles a pattern)
+3. The bug has been narrowed to a specific pass but the root cause is unclear
+
+**What to look for**:
+- `TODO` / `FIXME` comments acknowledging known limitations (the Bug 2 TODO at `OSSACanonicalizeOwned.cpp:40-46` provided more signal than 7 experiments)
+- Bailout conditions for specific IR patterns (e.g., `PointerEscape` classification in `OperandOwnership.cpp`)
+- Assertions that guard the failing code path
+
+**Rationale**: The 2026-03-22 investigation resolved Bug 2 by reading compiler source — a TODO comment confirmed the hypothesis before any fix was written. The 2026-03-22 rawlayout investigation fixed the compiler in 21 lines after reading `GenStruct.cpp`. In both cases, source reading was more efficient than continued empirical exploration.
 
 ---
 

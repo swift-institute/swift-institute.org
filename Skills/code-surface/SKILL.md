@@ -433,6 +433,35 @@ internal struct ReadResult { ... }  // ❌ Compound name now visible
 
 ---
 
+### [API-IMPL-011] Wrapper Completeness
+
+**Statement**: A wrapper type that owns construction, invariants, and error domain MUST also own the primary operation. A wrapper that encapsulates 90% of an interface is worse than one that encapsulates 100% or 0%, because the escape hatch for the missing 10% dominates the user's experience and makes the wrapper appear useless.
+
+**Correct**:
+```swift
+// IO.Lane wraps IO.Blocking.Lane
+// Owns: factories, error domain, Handle, DI conformance
+// Also owns: run() — the primary operation
+// → Complete wrapper, _backing never exposed to consumers
+```
+
+**Incorrect**:
+```swift
+// IO.Lane wraps IO.Blocking.Lane
+// Owns: factories, error domain, Handle, DI conformance
+// Missing: run() — the primary operation
+// → Every consumer calls lane._backing.run { }
+// ❌ Wrapper looks fake; the 10% escape dominates
+```
+
+**Rationale**: Incomplete wrappers create worse impressions than no wrapper at all. If a type owns construction and invariants but forces consumers to reach through to the backing type for the primary operation, the wrapper's encapsulation is perceived as useless — even though it provides genuine value for construction and error handling.
+
+**Cross-references**: [API-LAYER-001], [IMPL-074]
+
+**Provenance**: 2026-03-30-io-lane-boundary-collaborative-review.md
+
+---
+
 ## Post-Implementation Checklist
 
 Before presenting code as complete, verify EACH item:
