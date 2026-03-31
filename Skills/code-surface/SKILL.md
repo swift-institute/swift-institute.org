@@ -405,6 +405,34 @@ var isConnecting: Bool    // Requires multiple booleans
 
 ---
 
+### [API-IMPL-010] Visibility Change Triggers Naming Audit
+
+**Statement**: Widening a type's or member's access level (e.g., `private` → `internal`, `internal` → `public`) MUST trigger a naming audit against [API-NAME-001] and [API-NAME-002]. Names that were acceptable at narrower visibility may violate conventions when exposed to a wider audience.
+
+**Correct**:
+```swift
+// Was private — compound name hidden from scrutiny
+// private struct ReadResult { ... }
+
+// Widening to internal: audit catches compound name
+// Fix: namespace enum + nested Result
+enum Read { struct Result { ... } }
+```
+
+**Incorrect**:
+```swift
+// Was private, now widened to internal
+internal struct ReadResult { ... }  // ❌ Compound name now visible
+```
+
+**Rationale**: Private names accumulate naming debt invisible to convention enforcement. Widening access exposes this debt. The audit is a one-time cost at the boundary change that prevents convention violations from reaching wider scopes.
+
+**Cross-references**: [API-NAME-001], [API-NAME-002]
+
+**Provenance**: 2026-03-29-channel-split-full-duplex-io.md
+
+---
+
 ## Post-Implementation Checklist
 
 Before presenting code as complete, verify EACH item:
@@ -419,6 +447,7 @@ Before presenting code as complete, verify EACH item:
 - [ ] Extension files use `+` suffix [API-IMPL-007]
 - [ ] Type bodies contain only stored properties and canonical init — all methods in extensions [API-IMPL-008]
 - [ ] Protocol typealiases on generic types use hoisted protocol for declaring-module conformance [API-IMPL-009]
+- [ ] Access level widening has been audited for naming convention compliance [API-IMPL-010]
 
 If ANY item fails, fix before presenting.
 

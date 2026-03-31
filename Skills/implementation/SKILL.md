@@ -1902,6 +1902,42 @@ var value: Value {
 
 ---
 
+### [IMPL-072] ~Copyable Multi-Value Return
+
+**Statement**: When a function must return multiple `~Copyable` values, it MUST use a `~Copyable` bundle struct with Optional members and one-shot consuming extraction methods. Swift does not yet support tuples containing `~Copyable` elements.
+
+**Correct**:
+```swift
+struct Split: ~Copyable {
+    private var _reader: Reader?
+    private var _writer: Writer?
+
+    consuming func reader() -> Reader { _reader.take()! }
+    consuming func writer() -> Writer { _writer.take()! }
+}
+
+// Call site
+let split = channel.split()
+let reader = split.reader()
+let writer = split.writer()
+```
+
+**Incorrect**:
+```swift
+// ❌ Tuples cannot contain ~Copyable elements
+func split() -> (Reader, Writer) { ... }
+```
+
+**When to use**: Any function returning two or more `~Copyable` values. For a single `~Copyable` return, direct return works. When the ecosystem's `Pair` type gains `~Copyable` parameter support, prefer `Pair` over ad-hoc bundle structs.
+
+**Rationale**: This is a language limitation, not a design choice. The Optional-with-take() pattern is the current workaround because types with `deinit` prevent partial consumption of stored properties. When Swift adds `~Copyable` tuple support, bundle structs can be replaced with direct tuple returns.
+
+**Cross-references**: [IMPL-064], [MEM-COPY-001], [MEM-OWN-001]
+
+**Provenance**: 2026-03-29-channel-split-full-duplex-io.md
+
+---
+
 ## Post-Implementation Checklist
 
 Before presenting code as complete, verify EACH item:
