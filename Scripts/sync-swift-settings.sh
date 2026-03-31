@@ -34,6 +34,7 @@ ECOSYSTEM_LINES=(
     '        .enableUpcomingFeature("NonisolatedNonsendingByDefault"),'
     '        .enableExperimentalFeature("Lifetimes"),'
     '        .enableExperimentalFeature("SuppressedAssociatedTypes"),'
+    '        .enableExperimentalFeature("TildeSendable"),'
 )
 
 # ── Repository roots to process ──────────────────────────────────────────────
