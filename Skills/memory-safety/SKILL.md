@@ -401,6 +401,36 @@ enum File {
 
 ---
 
+### [MEM-COPY-014] Native Ownership for Resource Types
+
+**Statement**: Types representing resources with lifecycle (file descriptors, handles, allocations) MUST be natively `~Copyable` — ownership is intrinsic to the type, not bolted on via a wrapper. Wrapper patterns (e.g., `Owned<Tag>`) are for cross-module adaptation of types you do not control.
+
+**Correct**:
+```swift
+// Ownership is native to the type
+struct Descriptor: ~Copyable {
+    private let fd: CInt
+    deinit { close(fd) }
+}
+```
+
+**Incorrect**:
+```swift
+// ❌ Ownership bolted on via wrapper
+typealias Descriptor = Owned<DescriptorTag>
+// The wrapper duplicates what the type should express natively
+```
+
+**When to use wrappers**: Only when adapting a type from another module that you cannot modify (e.g., wrapping a C library's handle type). For types you control, make them natively `~Copyable`.
+
+**Rationale**: Analogous to `String` being an owned type (not a wrapper around `UnsafeBufferPointer`). When a type represents a resource with lifecycle, ownership should be expressed at the type level, not through an adapter.
+
+**Cross-references**: [MEM-COPY-001], [IMPL-064]
+
+**Provenance**: 2026-03-30-io-lane-boundary-completion-typed-throws.md
+
+---
+
 ### [MEM-COPY-002] Noncopyable in Error Types
 
 **Statement**: `Swift.Error` requires `Copyable`. Move-only values MUST NOT be embedded in `Error` types. Use non-throwing outcome types instead.

@@ -280,15 +280,174 @@ site:github.com/swiftlang/swift/issues FEATURE1 FEATURE2 crash
 
 ---
 
+## Step 7: Context-Sensitive Reproduction
+
+### [ISSUE-013] Variable Isolation for Context-Sensitive Bugs
+
+**Statement**: When a bug reproduces in the full build but not in a standalone experiment, systematically vary one integration dimension at a time to build a constraint model.
+
+**Variables to test independently**:
+
+| Variable | Test |
+|----------|------|
+| Access level | `public` vs `internal` (different codegen paths) |
+| Field count | 1-field vs 2+ fields |
+| Dependencies | Zero deps vs full dependency graph |
+| Generic vs concrete | Generic type parameters vs concrete types |
+| Optimization mode | `-Onone` vs `-O` vs `-Osize` |
+| Compilation mode | Single-file vs WMO |
+| Module isolation | Same-module vs cross-module |
+
+**Build a constraint model**:
+```
+Required: public + 2+ fields + @_rawLayout + deinit + release = crash
+Removing any one dimension: passes
+```
+
+**Rationale**: The 2026-03-22 investigation discovered the access-level trigger (`public` crashes, `internal` works) through systematic variable isolation. Without testing `public` access, the combined @_rawLayout approach appeared to work — a false positive.
+
+---
+
+### [ISSUE-014] File-Level Elimination
+
+**Statement**: For WMO or cross-module bugs that don't reduce to a single file, use file-level elimination: empty all source files in the target, add back one at a time, rebuild after each. This identifies the trigger file in minutes.
+
+```bash
+# Save originals, empty all files
+for f in Sources/MyTarget/*.swift; do cp "$f" "$f.bak"; echo "" > "$f"; done
+
+# Add files back one at a time, rebuild between each
+cp Sources/MyTarget/Buffer.swift.bak Sources/MyTarget/Buffer.swift
+swift build -c release  # Crash? → Buffer.swift is involved.
+```
+
+**Rationale**: Proved decisive for the LLVM verifier crash investigation (2026-03-20). File-level elimination took minutes and gave definitive answers, while code-level modification consumed hours without progress.
+
+---
+
+### [ISSUE-015] Superrepo Validation
+
+**Statement**: For ecosystems with layered superrepos, sub-repo release builds are necessary but NOT sufficient. The full superrepo build MUST be used for release-mode validation because deeper cross-module inlining exposes bugs invisible in isolation.
+
+**Evidence**: Bug 2 affected 5 functions in sub-repo builds but 60+ functions across 9 repos in the superrepo. CMO bugs are latent in existing passes, only exposed when cross-module inlined code creates new patterns.
+
+---
+
+## Reduction Tooling
+
+### [ISSUE-016] Available Reduction Tools
+
+**Statement**: Use the appropriate reduction tool for the abstraction level of the bug.
+
+**Source-level reduction**:
+- **C-Reduce** (external, works on Swift via language-agnostic passes): Write an interestingness test shell script, run `creduce interestingness_test.sh reproducer.swift`. The C-specific passes fail silently; agnostic passes still achieve significant reduction.
+- **Manual reduction** per [EXP-004]: Remove imports, types, functions, generics one at a time. Verify behavior persists after each step.
+
+**SIL-level reduction**:
+- **`bug_reducer.py`** (`swiftlang/swift/utils/bug_reducer/`): Reduces pass count and function set to minimal triggering configuration. Alpha quality; function-level only.
+- **`sil-func-extractor`**: Extract specific SIL functions for targeted analysis.
+
+**Pass-level reduction**:
+- **`-sil-opt-pass-count=<n>`** with binary search per [ISSUE-011].
+- **`-sil-disable-pass=<tag>`** to confirm a specific pass is involved.
+
+**Interestingness test pattern** (from C-Reduce/llvm-reduce):
+```bash
+#!/bin/bash
+# interestingness_test.sh — exit 0 if bug reproduces, 1 if not
+swiftc -O "$1" 2>&1 | grep -q "Found ownership error"
+```
+
+**Rationale**: Swift has a significant tooling gap in test case reduction compared to C/C++ (C-Reduce, llvm-reduce) and Rust (treereduce, icemelter, cargo-bisect-rustc). Documenting available tools and the interestingness test pattern makes the best of what exists.
+
+---
+
+## Issue Filing
+
+### [ISSUE-017] Issue Report Format
+
+**Statement**: When filing a swiftlang/swift issue, the report MUST include at minimum: classification ([ISSUE-010]), environment, reproducer, and observed behavior. Reports with pass bisection results get same-day fixes.
+
+**Template**:
+```markdown
+**Classification**: [ICE/Miscompile/Rejects-valid/Accepts-invalid/Diagnostic]
+**Environment**: Swift X.Y, macOS/Linux, -O/-Onone/-Osize, WMO/single-file
+**Reproducer**: [standalone .swift file, buildable with bare swiftc]
+
+[code block]
+
+**Command**: swiftc -O reproducer.swift
+**Observed**: [crash output / wrong behavior / wrong diagnostic]
+**Expected**: [what should happen]
+
+**Investigation** (if done):
+- Pass bisection: crashes at pass #N (PASS_NAME), passes at N-1
+- Before/after SIL: [diff or description]
+- Ingredient list: [what's required to trigger]
+```
+
+**What gets quick attention** (empirical, from merged PRs):
+1. Standalone single-file reproducer buildable with bare `swiftc`
+2. Pass bisection to specific pass or sub-pass number
+3. Before/after SIL diff
+4. Clear explanation of the invariant violation
+
+**What gets deprioritized**:
+- Issues requiring SwiftPM project or external dependencies to reproduce
+- Issues without version/platform information
+- Issues where the reporter hasn't attempted reduction
+
+**Rationale**: Academic research (Bettenburg et al. 2008) confirms: steps to reproduce (89% importance), stack traces, and test cases are the top-3 elements correlated with fast resolution. swiftlang/swift#66312 demonstrates the gold standard — bisection to sub-pass 13669.10 got a same-day fix.
+
+---
+
+## Extended Debugging Toolkit
+
+### [ISSUE-018] Diagnostic Investigation Tools
+
+**Statement**: For non-crash issues (rejects-valid, diagnostic quality), use the appropriate diagnostic tool.
+
+| Tool | Flag | Purpose |
+|------|------|---------|
+| Diagnostic names | `-Xfrontend -debug-diagnostic-names` | Appends `[diagnostic_id]` to every error — search compiler source for this ID |
+| Type checker trace | `-Xfrontend -debug-constraints` | Full constraint solver log (verbose; essential for type inference bugs) |
+| Assert on error | `-Xllvm -swift-diagnostics-assert-on-error=1` | Stack trace at the exact point the error is emitted |
+| AST dump | `swiftc -dump-ast file.swift` | Type-checked AST (identifies type inference results) |
+| Parse-only dump | `swiftc -dump-parse file.swift` | Parse tree without type checking (isolates parsing issues) |
+| Type-check only | `swiftc -typecheck file.swift` | Fastest way to check for type errors (no codegen) |
+
+---
+
+### [ISSUE-019] SIL Pipeline Stages
+
+**Statement**: When investigating, dump SIL at the appropriate pipeline stage to isolate whether the bug is in SILGen, mandatory passes, or optimization passes.
+
+| Stage | Command | What it shows |
+|-------|---------|---------------|
+| Raw SIL | `swiftc -emit-silgen file.swift` | SIL immediately after SILGen (before any optimization) |
+| Canonical SIL | `swiftc -emit-sil -Onone file.swift` | After mandatory passes |
+| Optimized SIL | `swiftc -emit-sil -O file.swift` | After full optimization pipeline |
+| LLVM IR (pre-opt) | `swiftc -emit-irgen -O file.swift` | After IRGen, before LLVM optimization |
+| LLVM IR (post-opt) | `swiftc -emit-ir -O file.swift` | After LLVM optimization |
+
+Use `-save-sil`, `-save-irgen`, `-save-ir` to save alongside normal compilation output.
+
+If the bug is in raw SIL (`-emit-silgen`), the problem is in SILGen. If raw SIL is correct but canonical SIL is broken, a mandatory pass is at fault. If canonical SIL is correct but optimized SIL is broken, an optimization pass is at fault. Use [ISSUE-011] pass bisection to narrow further.
+
+---
+
 ## Quick Reference
 
 ```
+0. Classify: ICE / Miscompile / Rejects-valid / Accepts-invalid / Diagnostic
 1. TOOLCHAINS=swift xcrun swiftc -O repro.swift    # Fixed? → Stop.
 2. Reduce to single swiftc-reproducible file        # Clean build each step.
 3. Verify each ingredient independently              # Remove one, rebuild clean.
-4. Dump SIL: -Xllvm -sil-print-around=PassName      # Read the error.
-5. Search github.com/swiftlang/swift/issues          # Duplicate?
-6. File issue or apply workaround                     # Document everything.
+4. Bisect: -Xllvm -sil-opt-pass-count=<n>           # Find the bad pass.
+5. Dump SIL: -Xllvm -sil-print-last (with count)    # Read the before/after diff.
+6. Read compiler source if pass is identified        # Look for TODOs, bailouts.
+7. Search github.com/swiftlang/swift/issues          # Duplicate?
+8. File issue or apply workaround                     # Document everything.
 ```
 
 ---

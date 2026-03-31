@@ -2007,6 +2007,45 @@ func split() -> (Reader, Writer) { ... }
 
 ---
 
+### [IMPL-075] `do throws(E)` for Typed Catch Blocks
+
+**Statement**: Inside non-throwing contexts where a typed error must be caught, use `do throws(E) { ... } catch { ... }` to preserve the concrete error type in the catch block. The `catch let e as E` + `fatalError("Unexpected error type")` pattern is an anti-pattern that introduces unnecessary runtime traps.
+
+**Correct**:
+```swift
+func handleResult() {
+    do throws(IO.Lane.Error) {
+        try lane.run { work() }
+    } catch {
+        // `error` is IO.Lane.Error — concrete type preserved
+        logger.log(error)
+    }
+}
+```
+
+**Incorrect**:
+```swift
+func handleResult() {
+    do {
+        try lane.run { work() }
+    } catch let e as IO.Lane.Error {
+        logger.log(e)
+    } catch {
+        fatalError("Unexpected error type: \(error)")  // ❌ Runtime trap
+    }
+}
+```
+
+**Key distinction**: `catch let error` with an explicit `let` binding erases the concrete type to `any Error`. The implicit `error` binding in a `do throws(E)` catch block preserves the concrete type `E`.
+
+**Rationale**: `do throws(E)` completes the typed-throws story. It eliminates an entire class of `fatalError("Unexpected error type")` runtime traps by giving the compiler the information to narrow the catch block's error type statically.
+
+**Cross-references**: [IMPL-040], [API-ERR-001]
+
+**Provenance**: 2026-03-30-io-lane-boundary-completion-typed-throws.md
+
+---
+
 ## Post-Implementation Checklist
 
 Before presenting code as complete, verify EACH item:
