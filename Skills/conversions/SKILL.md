@@ -935,7 +935,7 @@ If ANY item fails, fix before presenting.
 ## Cross-References
 
 See also:
-- **anti-patterns** skill for [PATTERN-017] rawValue access location, [PATTERN-018] no escaping to Int, [PATTERN-019] no blanket Tagged init, [PATTERN-021] prefer typed arithmetic over `__unchecked`
+- **implementation** skill for [PATTERN-017] rawValue access location, [PATTERN-018] no escaping to Int, [PATTERN-019] no blanket Tagged init, [PATTERN-021] prefer typed arithmetic over `__unchecked`
 - **memory-arithmetic** skill for typed `Memory.Address` arithmetic
 - **pointer-arithmetic** skill for `Pointer<T>` subscripts with `Index<T>`
 - **testing** skill for [TEST-018] literal conformances

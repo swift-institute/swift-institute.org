@@ -1,9 +1,10 @@
 ---
 name: reflect-session
 description: |
-  Structured post-session reflection capture.
+  Structured post-session reflection capture and artifact cleanup.
   Apply at the end of any non-trivial work session, or when significant
-  learning occurs mid-session. Creates a reflection entry in Research/Reflections/.
+  learning occurs mid-session. Creates a reflection entry in Research/Reflections/
+  and triages session artifacts (handoff files, audit findings).
 
 layer: process
 
@@ -20,12 +21,12 @@ migrated_from:
   - Documentation.docc/_Reflections Consolidation.md
   - Research/session-reflection-meta-process.md
 migration_date: 2026-02-12
-last_reviewed: 2026-03-20
+last_reviewed: 2026-03-31
 ---
 
 # Reflect Session
 
-Structured capture of post-session learning. Each invocation produces one reflection entry file in `Research/Reflections/`, following a template grounded in Gibbs' reflective cycle (1988) and bounded by the retrospective literature (Derby & Larsen 2006).
+Structured capture of post-session learning and cleanup of session artifacts. Each invocation produces one reflection entry file in `Research/Reflections/`, following a template grounded in Gibbs' reflective cycle (1988) and bounded by the retrospective literature (Derby & Larsen 2006). After writing the entry, the skill triages ephemeral session artifacts (handoff files, audit findings) using the session's live context — the cheapest moment to evaluate completion.
 
 **Theoretical basis**: Boud, Keogh & Walker (1985) demonstrate that structured reflection yields deeper learning than freeform journaling. Gibbs' six-stage cycle (1988), adapted here to four sections, provides the prompting structure. The 3-item cap on action items comes from retrospective practice (Derby & Larsen 2006) to prevent action-item decay.
 
@@ -34,6 +35,7 @@ Structured capture of post-session learning. Each invocation produces one reflec
 - Action items tagged `[research]` follow **research-process** skill
 - Action items tagged `[experiment]` follow **experiment-process** skill
 - Action items tagged `[blog]` follow **blog-process** skill
+- Artifact cleanup triages **handoff** files and updates **audit** finding statuses
 
 ---
 
@@ -246,6 +248,97 @@ We added a clamping initializer but then changed to typed parameters instead.
 
 ---
 
+## Session Artifact Cleanup
+
+### [REFL-008] Cleanup Scope
+
+**Statement**: After writing the reflection entry and updating the index, `/reflect_session` MUST review session artifacts for cleanup. This step uses the session's live context — what was built, what was resolved, what remains open — to perform cleanup that would require re-investigation in a future session.
+
+**Boundary with reflections-processing**: This cleanup targets ephemeral session artifacts (handoff files, audit finding statuses). It does NOT route reflection action items to skills/docs/research — that is exclusively the domain of `/reflections_processing` ([REFL-PROC-*]).
+
+| Artifact Type | Cleanup Action | Why Session Context Matters |
+|---------------|---------------|---------------------------|
+| Handoff files | Triage, status-update, delete when complete | Only this session knows which described work finished |
+| Audit findings | Update statuses for findings addressed in-session | Only this session knows which fixes correspond to which findings |
+
+**Rationale**: Session context is perishable. The agent that did the work is the cheapest and most accurate evaluator of artifact completion. Deferring cleanup to a future session forces re-investigation from cold state — expensive, error-prone, and often never done (witness: stale HANDOFF files accumulating across sessions).
+
+**Cross-references**: [REFL-009], [REFL-010], [HANDOFF-001], [AUDIT-005]
+
+---
+
+### [REFL-009] Handoff Cleanup
+
+**Statement**: At session end, `/reflect_session` MUST scan for handoff files at the working directory root and triage each one.
+
+**Procedure**:
+
+1. **Scan** for `HANDOFF.md` and `HANDOFF-*.md` at the working directory root
+2. **For each file**, read it and triage every actionable item (Next Steps for sequential, Scope/Issue for branching) against current state:
+
+| Check | Method |
+|-------|--------|
+| File exists? | Verify paths listed in Changed Files / Relevant Files |
+| Code compiles? | Session knowledge (did we build successfully?) |
+| Work completed? | Compare Next Steps against git log, current code state |
+| Investigation concluded? | Check Findings Destination for results (branching) |
+
+3. **Status-update the file** — annotate each Next Step or investigation item with its current status:
+
+```markdown
+## Next Steps
+1. ~~Implement typed throws for IO.Error~~ ✓ completed
+2. ~~Add tests for new error types~~ ✓ completed
+3. Migrate downstream consumers — NOT STARTED
+```
+
+4. **Decide disposition**:
+
+| Triage Result | Action |
+|--------------|--------|
+| All items completed | Delete the file |
+| Some items remain | Leave the updated file (status annotations help the next session) |
+| Status unclear for any item | Leave the file, note the ambiguity in annotations |
+
+5. **Report** in the reflection entry under "What Happened": which handoff files were triaged, what was deleted, what remains and why
+
+**Statement**: Handoff files where all work is complete MUST be deleted. Git preserves history. Stale handoff files actively mislead future agents into resuming completed work.
+
+**Statement**: Status-updating before deletion is mandatory even for this-session handoffs. The triage step serves as a verification gate — it catches cases where the agent *thinks* work is complete but a Next Step was actually missed.
+
+**Rationale**: Handoff files are ephemeral task state ([HANDOFF cross-references] explicitly contrast them with durable reflections). Without session-end triage, handoff files accumulate indefinitely — each one a context trap for future agents that must re-investigate whether the work described is still relevant.
+
+**Cross-references**: [REFL-008], [HANDOFF-001], [HANDOFF-009], [HANDOFF-010]
+
+---
+
+### [REFL-010] Audit Finding Cleanup
+
+**Statement**: If `/audit` was invoked during this session and findings were subsequently addressed, `/reflect_session` MUST update those findings' statuses in `Research/audit.md`.
+
+**Procedure**:
+
+1. **Identify** audit sections written or modified during this session
+2. **For each finding** in those sections, assess using session context:
+
+| Session Outcome | Status Update |
+|----------------|---------------|
+| Fix implemented and verified | `RESOLVED {today's date}` |
+| Investigated, determined not a violation | `FALSE_POSITIVE — {reason}` |
+| Acknowledged, intentionally deferred | `DEFERRED — {reason}` |
+| Not yet addressed | Leave as `OPEN` |
+
+3. **Update** the section's Summary line to reflect the new counts
+4. **Do NOT re-run the audit** — only update statuses based on session knowledge
+
+**Statement**: This cleanup MUST NOT expand audit scope or add new findings. It is strictly a status-update pass on findings the session already knows about.
+
+**Rationale**: Audit findings fixed in the same session that discovered them should not remain OPEN. Leaving them OPEN creates noise for future audits and misrepresents current state. The session agent knows exactly which fixes correspond to which findings — this mapping is lost when context ends.
+
+**Cross-references**: [REFL-008], [AUDIT-004], [AUDIT-005]
+
+---
+
 ## Cross-References
 
 See also:
@@ -254,4 +347,6 @@ See also:
 - **experiment-process** skill for [EXP-*] experiment workflows
 - **blog-process** skill for [BLOG-*] blog workflows
 - **skill-lifecycle** skill for [SKILL-CREATE-*] adding new skills
+- **handoff** skill for [HANDOFF-*] session handoff documents
+- **audit** skill for [AUDIT-*] compliance audit output
 - `Research/session-reflection-meta-process.md` for Tier 3 theoretical grounding

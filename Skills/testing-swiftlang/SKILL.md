@@ -357,6 +357,39 @@ func toArray<Element: Hashable>(
 
 ---
 
+### [SWIFT-TEST-014] ~Copyable Values in #expect
+
+**Statement**: `#expect` macro expansion copies its operands during evaluation. ~Copyable values MUST be projected to a Copyable value before passing to `#expect`.
+
+**Correct**:
+```swift
+@Test
+func `handle is fulfilled`() {
+    let handle = IO.Blocking.Lane.Handle<Int>(...)
+    let fulfilled = handle.isFulfilled  // Extract Copyable projection
+    #expect(fulfilled)
+}
+```
+
+**Incorrect**:
+```swift
+@Test
+func `handle is fulfilled`() {
+    let handle = IO.Blocking.Lane.Handle<Int>(...)
+    #expect(handle.isFulfilled)  // ❌ Macro tries to copy ~Copyable handle
+}
+```
+
+**Statement**: ~Copyable values MUST NOT be stored in `Array` or other `Copyable`-constrained collections for bulk assertion. Use sequential assertions or a loop with `borrowing` access.
+
+**Rationale**: `#expect`, `Array`, and other generic stdlib infrastructure assume `Copyable`. This is the current state of generics adoption, not a bug. As stdlib adopts `~Copyable` generics, this friction will decrease.
+
+**Cross-references**: [SWIFT-TEST-009], [SWIFT-TEST-010], [MEM-COPY-004]
+
+**Provenance**: 2026-03-26-io-api-remediation-sync-submission.md
+
+---
+
 ## Async Testing Patterns
 
 ### [SWIFT-TEST-011] Async Expect Bindings

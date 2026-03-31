@@ -51,6 +51,30 @@ git remote -v
 
 ---
 
+## Pre-Investigation: Verify Against Latest Toolchain
+
+### [SWIFT-PR-011] Check Latest Swift Before Deep-Diving
+
+**Statement**: Before investigating a compiler bug, the reproducer MUST be tested against the latest available Swift development toolchain. If the bug does not reproduce, no PR or issue is needed — the fix is already upstream.
+
+**Procedure**:
+```bash
+# List installed toolchains:
+ls /Library/Developer/Toolchains/
+
+# Test with the dev toolchain:
+TOOLCHAINS=swift xcrun swiftc -O reproducer.swift -o /tmp/test 2>&1
+
+# Or via SwiftPM:
+TOOLCHAINS=swift swift build -c release
+```
+
+**Rationale**: Compiler bugs on released Xcode toolchains may already be fixed on `main`. Deep-diving into compiler source, creating experiments, or preparing a PR for a bug that's already fixed wastes significant effort. This check takes 30 seconds and can save hours.
+
+**Provenance**: Session 2026-03-31 — spent hours investigating a CopyPropagation crash (`swiftlang/swift#85743`) that was already fixed in Swift 6.4-dev by commit `e93ea1db266`.
+
+---
+
 ## Branch and Commit
 
 ### [SWIFT-PR-002] Branch Creation
@@ -352,7 +376,8 @@ gh api repos/swiftlang/swift/contents/.github/CODEOWNERS --jq '.content' | base6
 - [ ] Add remote: `git remote add coenttb https://github.com/coenttb/swift.git`
 
 **Per-PR workflow**:
-- [ ] Verify the bug reproduces on current `main` (build from source or use existing build). If fixed upstream, no PR needed.
+- [ ] **FIRST**: Test reproducer against latest Swift dev toolchain (`TOOLCHAINS=swift xcrun swiftc -O ...`). If it passes, the bug is already fixed — stop here. ([SWIFT-PR-011])
+- [ ] Verify the bug reproduces on the Xcode release toolchain you're targeting.
 - [ ] Create branch: `git checkout -b descriptive-name`
 - [ ] Make changes
 - [ ] Add test at the nearest abstraction level ([SWIFT-PR-005])

@@ -40,9 +40,7 @@ This is the root meta-skill for the Swift Institute ecosystem.
 - **memory-arithmetic** - [MEM-ARITH-*] Memory.Address typed arithmetic (in swift-memory-primitives)
 - **platform** - [PLAT-ARCH-*], [PATTERN-001–008] Platform code layering (L1–L3), compilation mechanics, Swift 6, C shims
 - **modularization** - [MOD-*] Intra-package target decomposition, constraint isolation
-- **advanced-patterns** - [PATTERN-014–048] Memory ownership, unsafe ops, refactoring
-- **memory-safety** - [MEM-COPY-*], [MEM-OWN-*], [MEM-LINEAR-*], [MEM-SAFE-*], [MEM-SEND-*], [MEM-REF-*], [MEM-LIFE-*] Ownership, copyability, strict safety, reference primitives
-- **copyable-remediation** - [COPY-FIX-*, COPY-REM-*] ~Copyable constraint fixes
+- **memory-safety** - [MEM-COPY-*], [MEM-OWN-*], [MEM-LINEAR-*], [MEM-SAFE-*], [MEM-SEND-*], [MEM-REF-*], [MEM-LIFE-*] Ownership, copyability, strict safety, reference primitives (absorbs advanced-patterns)
 - **existing-infrastructure** - [INFRA-*] Catalog of typed boundary overloads, Standard Library Integration modules, Tagged functors, Ratio scaling
 - **ecosystem-data-structures** - [DS-*] Complete catalog of data structures (Memory, Storage, Buffer, Collections) with selection guidance
 - **testing** - [TEST-*] Umbrella: routing, test support infrastructure, file naming, suite categories
@@ -92,19 +90,17 @@ Skills are loaded based on their `requires:` DAG. The order is:
 4. `platform` (requires: swift-institute)
 5. `memory-safety` (requires: swift-institute)
 6. `modularization` (requires: swift-institute, code-surface)
-7. `copyable-remediation` (requires: memory-safety)
-8. `conversions` (requires: swift-institute)
-9. `implementation` (requires: swift-institute, code-surface, conversions)
-10. `existing-infrastructure` (requires: swift-institute, implementation, conversions)
-11. `advanced-patterns` (requires: memory-safety, implementation)
-12. `testing` (requires: swift-institute, code-surface)
-13. `testing-swiftlang` (requires: testing)
-14. `testing-institute` (requires: swift-institute-core, testing, platform)
-15. `benchmark` (requires: testing)
-16. `documentation` (requires: swift-institute, code-surface)
-17. `readme` (requires: swift-institute)
-18. Process skills (requires: swift-institute)
-19. `research-meta-analysis` (requires: research-process, experiment-process, reflect-session)
+7. `conversions` (requires: swift-institute)
+8. `implementation` (requires: swift-institute, code-surface, conversions)
+9. `existing-infrastructure` (requires: swift-institute, implementation, conversions)
+10. `testing` (requires: swift-institute, code-surface)
+11. `testing-swiftlang` (requires: testing)
+12. `testing-institute` (requires: swift-institute-core, testing, platform)
+13. `benchmark` (requires: testing)
+14. `documentation` (requires: swift-institute, code-surface)
+16. `readme` (requires: swift-institute)
+17. Process skills (requires: swift-institute)
+18. `research-meta-analysis` (requires: research-process, experiment-process, reflect-session)
 
 ---
 

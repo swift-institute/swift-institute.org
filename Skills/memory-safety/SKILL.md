@@ -753,6 +753,49 @@ case .suspend: break
 
 ---
 
+### [MEM-OWN-013] Consuming Does Not Suppress Deinit
+
+**Statement**: A `consuming func` that extracts a value from a `~Copyable` type does NOT prevent `deinit` from running on the remaining stored properties. When a `consuming func` must signal to `deinit` that a value has already been extracted, the type MUST use a tracking flag (typically `Atomic<Bool>`) checked in `deinit`.
+
+**Correct**:
+```swift
+struct Handle<Value: ~Copyable>: ~Copyable {
+    private let _box: Reference.Box<Value>
+    private let _taken = Atomic<Bool>(false)
+
+    consuming func value() async throws(E) -> Value {
+        _taken.store(true, ordering: .releasing)
+        return _box.take()
+    }
+
+    deinit {
+        guard !_taken.load(ordering: .acquiring) else { return }
+        // Cleanup only if value was NOT already extracted
+        _box.dispose()
+    }
+}
+```
+
+**Incorrect**:
+```swift
+struct Handle<Value: ~Copyable>: ~Copyable {
+    private let _box: Reference.Box<Value>
+
+    consuming func value() async throws(E) -> Value {
+        return _box.take()
+        // ❌ Assumes deinit won't run — it WILL run on _box
+    }
+}
+```
+
+**Rationale**: In Swift, a `consuming func` that does not `discard self` still runs `deinit` on all remaining stored properties. The mental model "consuming takes ownership, so deinit doesn't run" is incorrect. This is analogous to Rust's pre-drop-flag-removal era where a `moved` flag tracked partial moves.
+
+**Cross-references**: [MEM-LINEAR-001], [MEM-LINEAR-002], [MEM-COPY-001]
+
+**Provenance**: 2026-03-26-io-api-remediation-sync-submission.md
+
+---
+
 ## Reference Primitives
 
 ### [MEM-REF-001] Reference Primitive Selection

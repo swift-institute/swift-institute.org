@@ -478,4 +478,4 @@ Template: Purpose, hypothesis, baseline measurement â†’ current implementation â
 See also:
 - **research-process** skill for design analysis workflows
 - **blog-process** skill for publishing findings
-- **copyable-remediation** skill for ~Copyable constraint debugging (often triggers experiments)
+- **implementation** skill for [COPY-FIX-*] ~Copyable constraint patterns (often triggers experiments)
