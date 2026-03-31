@@ -64,6 +64,8 @@ Workflows for conducting implementation experiments. Three source documents defi
 
 Reduction steps: (1) Start with failing code, (2) remove unused imports, (3) remove uninvolved types, (4) inline function calls, (5) remove unexercised properties/methods, (6) simplify type hierarchies, (7) remove generic parameters if possible. Verify behavior persists after each step.
 
+**Build verification**: Each reduction step MUST use a verified clean build. `rm -rf .build` can silently fail (locked files, nested structures). After deletion, confirm the directory is actually gone (`! test -d .build`) before building. Alternatively, build with `swiftc` directly (no build cache). Stale caches have caused false reductions in multiple investigations — a "crashing" reduction may actually be running cached SIL from a previous variant.
+
 ```swift
 // CORRECT — Minimal reproduction
 struct Resource: ~Copyable {
