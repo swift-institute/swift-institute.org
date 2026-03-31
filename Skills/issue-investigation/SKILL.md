@@ -56,6 +56,32 @@ has prevented hours of unnecessary compiler source analysis in multiple sessions
 
 ---
 
+## Step 0.5: Check Recent SE Proposals
+
+### [ISSUE-020] SE-Proposal Constraint Check
+
+**Statement**: When an issue appears on a newer compiler version (e.g., 6.4-dev) that worked on the previous version, check whether recent Swift Evolution proposals changed protocol constraints before pursuing a compiler-regression investigation.
+
+**Key signals**:
+- Multiple different workarounds all fail with the same class of error (e.g., "requires Copyable")
+- Standalone reproducer compiles clean — the issue only appears in production with specific generic constraints
+- The error diagnostic names a constraint that wasn't explicitly written in the code
+
+**Check procedure**:
+1. Identify which protocol constraint the error message references
+2. Search Swift Evolution proposals for changes to that protocol's implicit requirements
+3. Test whether adding the explicit inverse constraint (e.g., `& ~Copyable`) resolves the issue
+
+**Example**: SE-0499 removed implicit `Copyable` from `Comparable`/`Equatable`/`Hashable`. Extensions using `where T: Comparable` gained implicit `T: Copyable` via backwards compatibility. Adding `& ~Copyable` to the extension constraint resolves the issue — it's a semantic change, not a compiler bug.
+
+**Rationale**: The issue-investigation skill's reproducer step ([ISSUE-002]) assumes bugs are in the compiler. When the real cause is a language evolution change removing an implicit guarantee, no standalone reproducer can trigger it. This check prevents multi-hour investigation of "compiler regressions" that are actually correct enforcement of new semantics.
+
+**Cross-references**: [ISSUE-010], [ISSUE-001]
+
+**Provenance**: 2026-03-31-se0499-contextual-lookup-misdiagnosis.md
+
+---
+
 ## Step 1: Verify Against Latest Toolchain
 
 ### [ISSUE-001] Check Dev Toolchain First
