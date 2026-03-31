@@ -74,6 +74,8 @@ TOOLCHAINS=swift swift build -c release
 
 **If it fails on dev**: Proceed to Step 2.
 
+**"Blocked by unrelated crash" is not evidence of distinctness**: If a dev-toolchain build fails due to an unrelated crash (e.g., DeinitDevirtualizer ICE blocks the superrepo build), that does NOT prove the issue under investigation is distinct from a known fix. Use a standalone reproducer ([ISSUE-002]) to bypass the blocker and test the specific trigger pattern on the dev toolchain. Concluding "distinct" from inability to test is an absence-of-evidence fallacy.
+
 **Rationale**: This is the single highest-ROI check. In the 2026-03-31 session, hours were spent investigating a CopyPropagation crash that was already fixed in Swift 6.4-dev (swiftlang/swift#85743). A 30-second toolchain check would have prevented the entire deep-dive.
 
 ---
@@ -155,6 +157,8 @@ swiftc -O -Xllvm '-sil-print-functions=MyType' reproducer.swift 2>&1
 # Verify ownership after every pass (finds the first failing pass):
 swiftc -Xfrontend -sil-verify-all reproducer.swift 2>&1
 ```
+
+**`-sil-verify-all` as pipeline-stage disambiguator**: When a crash is attributed to an optimization pass (e.g., CopyPropagation) but the suspected root cause is earlier (e.g., SILGen), `-sil-verify-all` is the definitive diagnostic. It verifies ownership after every pipeline stage. If verification fails before the attributed pass runs, the root cause is upstream — the optimization pass was just the messenger. This resolved a multi-session misattribution where a CopyPropagation crash was actually a SILGen `load [take]` on a trivial type (#85743).
 
 **Read the error message carefully**. The compiler often prints:
 - The exact SIL value and instruction that violate ownership
