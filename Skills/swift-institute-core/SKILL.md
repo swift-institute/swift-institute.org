@@ -15,7 +15,7 @@ applies_to:
   - swift-primitives
   - swift-standards
   - swift-foundations
-last_reviewed: 2026-03-20
+last_reviewed: 2026-03-27
 ---
 
 # Swift Institute Core
@@ -45,8 +45,10 @@ This is the root meta-skill for the Swift Institute ecosystem.
 - **copyable-remediation** - [COPY-FIX-*, COPY-REM-*] ~Copyable constraint fixes
 - **existing-infrastructure** - [INFRA-*] Catalog of typed boundary overloads, Standard Library Integration modules, Tagged functors, Ratio scaling
 - **ecosystem-data-structures** - [DS-*] Complete catalog of data structures (Memory, Storage, Buffer, Collections) with selection guidance
-- **testing** - [TEST-001–018] Test organization, Swift Testing patterns
-- **testing-institute** - [INST-TEST-*] Nested package pattern for performance + snapshot testing
+- **testing** - [TEST-*] Umbrella: routing, test support infrastructure, file naming, suite categories
+- **testing-swiftlang** - [SWIFT-TEST-*] Swift Testing framework: suites, naming, ~Copyable, async, model testing
+- **testing-institute** - [INST-TEST-*] Nested package pattern for snapshot testing and swift-testing isolation
+- **benchmark** - [BENCH-*] Performance testing: .timed(), .build cleanup, comparison benchmarks
 - **documentation** - [DOC-001–053] Inline DocC comments, .docc catalogue conventions, code comment quality
 - **readme** - [README-001–022] README structure, badges, maturity tiers, monorepo patterns
 - **document-markup** - [DOC-MARKUP-*] Document creation using HTML, PDF, and Markdown rendering packages
@@ -96,10 +98,13 @@ Skills are loaded based on their `requires:` DAG. The order is:
 10. `existing-infrastructure` (requires: swift-institute, implementation, conversions)
 11. `advanced-patterns` (requires: memory-safety, implementation)
 12. `testing` (requires: swift-institute, code-surface)
-13. `documentation` (requires: swift-institute, code-surface)
-14. `readme` (requires: swift-institute)
-15. Process skills (requires: swift-institute)
-16. `research-meta-analysis` (requires: research-process, experiment-process, reflect-session)
+13. `testing-swiftlang` (requires: testing)
+14. `testing-institute` (requires: swift-institute-core, testing, platform)
+15. `benchmark` (requires: testing)
+16. `documentation` (requires: swift-institute, code-surface)
+17. `readme` (requires: swift-institute)
+18. Process skills (requires: swift-institute)
+19. `research-meta-analysis` (requires: research-process, experiment-process, reflect-session)
 
 ---
 

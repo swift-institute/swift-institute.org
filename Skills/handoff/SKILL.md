@@ -71,7 +71,7 @@ git status -s            # untracked and staged files
 
 **Step 5 — Report**:
 - Tell the user the file path
-- Suggest: "To resume in a new session, tell the agent to read HANDOFF.md"
+- Output a copy-pastable instruction block per [HANDOFF-011]
 
 ---
 
@@ -144,7 +144,7 @@ git status -s            # files with uncommitted changes → Do Not Touch
 
 **Step 4 — Report**:
 - Tell the user the file path
-- Suggest: "Point the new session to HANDOFF-{topic-kebab}.md"
+- Output a copy-pastable instruction block per [HANDOFF-011]
 
 ---
 
@@ -255,6 +255,34 @@ The investigation MUST NOT modify these to avoid merge conflicts.}
 4. Begin from Next Steps (sequential) or investigate the Issue (branching)
 
 **Rationale**: Verification prevents acting on stale context. Confirmation gives the user a chance to correct.
+
+---
+
+### [HANDOFF-011] Copy-Pastable Resumption Prompt
+
+**Statement**: Every handoff report MUST include an inline, copy-pastable instruction block that the user can paste directly into a new chat to resume work.
+
+**Format**: Output a fenced code block (triple backticks) containing a self-contained prompt. The prompt MUST:
+
+1. Tell the new agent to read the handoff file (with its absolute path)
+2. Include a one-line summary of the goal
+3. Direct the new agent to verify state and then continue from Next Steps (sequential) or investigate the Issue (branching)
+
+**Sequential example**:
+````
+```
+Read /Users/coen/Developer/HANDOFF.md — it contains the full handoff context for continuing {brief task description}. Verify the current state (files exist, code compiles, git state matches), then proceed from the Next Steps section.
+```
+````
+
+**Branching example**:
+````
+```
+Read /Users/coen/Developer/HANDOFF-{topic-kebab}.md — it contains a focused investigation brief on {issue description}. Read the full document, then investigate the Issue. Write findings where the Findings Destination section directs. Do not modify files listed under "Do Not Touch."
+```
+````
+
+**Rationale**: Eliminates friction in the handoff — the user copies one block instead of manually composing instructions for the new agent.
 
 ---
 

@@ -1,9 +1,8 @@
 ---
 name: testing-institute
 description: |
-  Nested package pattern for performance and snapshot testing using
-  swift-foundations/swift-testing.
-  ALWAYS apply when adding performance tests, snapshot tests, or any
+  Nested package pattern for snapshot testing and swift-testing dependency isolation.
+  ALWAYS apply when adding snapshot tests, #Tests macro scaffolding, or any
   tests requiring swift-testing features to ANY ecosystem package.
 
 layer: process
@@ -19,7 +18,7 @@ applies_to:
   - swift-primitives
   - swift-standards
   - swift-foundations
-last_reviewed: 2026-03-20
+last_reviewed: 2026-03-27
 ---
 
 # Institute Testing via Nested Packages
@@ -29,7 +28,7 @@ The Swift Institute ecosystem has two testing layers:
 | Layer | Framework | Features | Where |
 |-------|-----------|----------|-------|
 | Unit + Edge Case | Apple Testing (toolchain) | `@Test`, `@Suite`, `#expect` | Main `Package.swift` test targets |
-| Performance + Snapshot | swift-foundations/swift-testing | `.timed()`, `#snapshot`, `#Tests` macro | Nested `Tests/` package |
+| Snapshot + #Tests | swift-foundations/swift-testing | `#snapshot`, `#Tests` macro | Nested `Tests/` package |
 
 The nested package pattern keeps the swift-testing dependency isolated from the parent `Package.swift`. This is mandatory for all ecosystem packages — even those that are not transitive dependencies of swift-testing — to maintain a uniform structure and prevent swift-testing from polluting the main dependency graph.
 
@@ -192,41 +191,6 @@ The parent package is always `..`.
 
 ---
 
-## Performance Tests
-
-### [INST-TEST-006] Performance Test Structure
-
-**Statement**: Performance test suites MUST use `.serialized` (or `#Tests` which applies it automatically) to prevent interference between measurements.
-
-```swift
-@Suite(.serialized)
-struct `{Type} - Performance` {
-
-    @Test(.timed(threshold: .milliseconds(50)))
-    func `descriptive name`() {
-        let data = ...
-        _ = data.operation()
-    }
-}
-```
-
----
-
-### [INST-TEST-007] Performance Trait Usage
-
-**Statement**: Performance tests MUST use the `.timed()` trait.
-
-| Syntax | Purpose |
-|--------|---------|
-| `.timed()` | Measure with defaults (10 iterations, median) |
-| `.timed(threshold: .milliseconds(N))` | Fail if median exceeds budget |
-| `.timed(iterations: N, warmup: M)` | Exclude warmup from measurement |
-| `.timed(iterations: N, threshold: .milliseconds(T), metric: .median)` | Full control |
-
-**Rationale**: Structured measurement with statistical analysis, thresholds, and trend detection.
-
----
-
 ## Snapshot Tests
 
 ### [INST-TEST-008] Snapshot Test Structure
@@ -287,31 +251,6 @@ extension MyType {
 
 ---
 
-## Building and Running
-
-### [INST-TEST-010] Build and Test Commands
-
-**Statement**: Unit tests run from the parent package root. Performance and snapshot tests run from `Tests/`.
-
-```bash
-# Unit tests (Apple Testing)
-cd swift-{package}
-swift test
-
-# Performance + snapshot tests (swift-testing)
-cd swift-{package}/Tests
-swift package resolve    # First run only
-swift test
-
-# Filter by target:
-swift test --filter Performance
-swift test --filter Snapshot
-```
-
-**Rationale**: The nested package has its own `.build/` directory and dependency graph.
-
----
-
 ## Build Artifacts
 
 ### [INST-TEST-011] .gitignore
@@ -342,7 +281,9 @@ swift test --filter Snapshot
 
 ## Cross-References
 
-- **testing** skill — [TEST-*] for unit test organization with Apple Testing
+- **testing** skill — [TEST-*] for umbrella routing and test support infrastructure
+- **testing-swiftlang** skill — [SWIFT-TEST-*] for Swift Testing framework patterns
+- **benchmark** skill — [BENCH-*] for performance testing (.timed(), .build cleanup, comparison benchmarks)
 - **platform** skill — [PLAT-ARCH-*] for Package.swift configuration
 - Research: `swift-institute/Research/nested-testing-package-flattening.md`
 - Research: `swift-institute/Research/nested-testing-package-structure.md`

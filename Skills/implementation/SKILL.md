@@ -1,9 +1,10 @@
 ---
 name: implementation
 description: |
-  Intent-over-mechanism as foundational axiom. Expression-first style,
-  call-site-first design, typed arithmetic, boundary overloads,
-  property accessors. Absorbs anti-patterns and design patterns.
+  Intent-over-mechanism and compiler-enforced strictness as dual foundational
+  axioms. Expression-first style, call-site-first design, typed arithmetic,
+  boundary overloads, property accessors, ownership-first type design,
+  isolation hierarchy. Absorbs anti-patterns and design patterns.
   ALWAYS apply when writing or reviewing implementation code.
 
 layer: implementation
@@ -19,12 +20,12 @@ applies_to:
   - primitives
   - standards
   - foundations
-last_reviewed: 2026-03-20
+last_reviewed: 2026-03-31
 ---
 
 # Implementation
 
-Every line of implementation code reads as intent.
+Every line of implementation code reads as intent — and is verified by the compiler.
 
 ---
 
@@ -155,6 +156,34 @@ For the complete catalog of principled absences, see [INFRA-200].
 **The test**: Does the operation preserve the mathematical properties of the types involved? If adding it would make a partial operation look total, mix dimensions, or violate affine space rules — the absence is a feature. Rethink the expression.
 
 **Cross-references**: [CONV-010], [MEM-ARITH-001]
+
+---
+
+### [IMPL-COMPILE] Compiler as Primary Correctness Mechanism
+
+**Statement**: Code MUST be written so that the Swift compiler enforces as many correctness properties as possible at compile time. Every invariant expressible in the type system — ownership, lifetime, isolation, capacity bounds, error types — MUST be expressed there, not verified at runtime. Runtime checks (guards, preconditions, assertions) are justified only for invariants the type system cannot yet express.
+
+This is the dual of [IMPL-INTENT]: intent-over-mechanism governs *how code reads*; compiler-as-enforcer governs *what the compiler proves*. Together they produce code that reads as intent and is verified by construction.
+
+**Corollaries** — each converts a class of runtime bugs into compile-time errors:
+
+| Invariant | Mechanism | Rule |
+|-----------|-----------|------|
+| Resource has exactly-once lifecycle | `~Copyable` | [IMPL-064] |
+| View must not outlive its source | `~Escapable` | [IMPL-065] |
+| Value crosses isolation boundary | `sending` | [IMPL-066] |
+| Parameter ownership semantics | `consuming` / `borrowing` / `inout` | [IMPL-067] |
+| Type does not need thread sharing | Non-`Sendable` by default | [IMPL-068] |
+| Concurrency mechanism selection | Isolation hierarchy | [IMPL-069] |
+| Error domain | Typed throws | [API-ERR-001] |
+| Capacity bound | `Bounded<N>` | [IMPL-050] |
+| Unsafe operation boundary | `@safe` / `@unsafe` | [MEM-SAFE-020] |
+
+**The question at every declaration**: *"Is there a compile-time constraint I could add that would make a class of runtime bugs impossible?"*
+
+If yes and the constraint is in stable Swift — add it. If the constraint requires an experimental feature enabled across the ecosystem (e.g., `Lifetimes`, `NonisolatedNonsendingByDefault`) — add it. If it would require a compiler change — see [IMPL-061].
+
+**Cross-references**: [IMPL-INTENT], [IMPL-061], [MEM-COPY-001], [MEM-SAFE-020], [Research: modern-concurrency-conventions.md]
 
 ---
 
@@ -574,7 +603,7 @@ It does NOT apply when:
 
 **Validated by**: Experiment `swift-bit-vector-primitives/Experiments/property-view-protocol-constraint/` — 6 variants CONFIRMED (~Copyable, Copyable, value-generic, `some Protocol` generic function).
 
-**Cross-references**: [IMPL-020], [IMPL-021], [IMPL-022], [Research: property-view-protocol-delegation.md]
+**Cross-references**: [IMPL-020], [IMPL-021], [IMPL-022], [Research: swift-primitives/Research/property-view-protocol-delegation.md]
 
 ---
 
@@ -592,7 +621,7 @@ For the full problem/solution code examples and pattern, see [INFRA-110].
 
 **Static method signature pattern**: Statics take the type's decomposed state as explicit parameters (e.g., `state: inout State` and `storage: Storage`). Methods that replace `self` as a whole (e.g., growth, copy-on-write) remain as instance methods.
 
-**Validated by**: Experiment `static-property-view-pattern` — all six variants CONFIRMED (consuming ~Copyable through view, Copyable overloads, growth through _modify, callAsFunction, overload coexistence, full end-to-end).
+**Validated by**: Experiment `swift-buffer-primitives/Experiments/static-property-view-pattern/` — all six variants CONFIRMED (consuming ~Copyable through view, Copyable overloads, growth through _modify, callAsFunction, overload coexistence, full end-to-end).
 
 **Cross-references**: [IMPL-020], [IMPL-024], [IMPL-025], [API-NAME-002]
 
@@ -704,7 +733,7 @@ For iteration examples at each level of this hierarchy, see [INFRA-107] and [INF
 
 ---
 
-## Compiler Constraints on Expression Structure
+## Structural Patterns
 
 ### [IMPL-034] unsafe Keyword Placement
 
@@ -1248,7 +1277,9 @@ struct SourceLocation {
 | Accept limitation | Some compositions aren't possible without unsafe opt-in |
 | `@unchecked Sendable` at use site | Makes unsafety visible but scattered |
 
-**Cross-references**: [PATTERN-021]
+Before reaching for any of these, verify that `Sendable` is actually required — see [IMPL-068].
+
+**Cross-references**: [PATTERN-021], [IMPL-068]
 
 ---
 
@@ -1261,6 +1292,12 @@ For detailed rules on semantic vs implementation dependencies, see `Documentatio
 | [SEM-DEP-006] | Distinguish essential vs incidental relationships; only essential creates SDG edges |
 | [SEM-DEP-008] | Join-point packages resolve conflicts where two domains have mutual relevance |
 | [SEM-DEP-009] | Package dependencies MUST be essential; orthogonal integrations require separate packages |
+
+---
+
+## Compiler-Enforced Strictness
+
+The following rules implement [IMPL-COMPILE]. Each converts a category of runtime failure into a compile-time error by leveraging Swift's type system, ownership model, and concurrency checking.
 
 ---
 
@@ -1307,7 +1344,7 @@ public func map<U>(
 
 **Provenance**: Reflection `2026-03-22-nonsending-compiler-discovery-and-ecosystem-migration.md`.
 
-**Cross-references**: [MEM-SEND-001]
+**Cross-references**: [IMPL-COMPILE], [MEM-SEND-001]
 
 ---
 
@@ -1347,7 +1384,158 @@ struct Channel: ~Copyable {
 
 **Provenance**: Reflection `2026-03-26-channel-lifecycle-actor-removal-ownership-as-synchronization.md`.
 
-**Cross-references**: [MEM-COPY-001], [IMPL-INTENT]
+**Cross-references**: [MEM-COPY-001], [IMPL-INTENT], [IMPL-COMPILE]
+
+---
+
+### [IMPL-064] ~Copyable as Default Posture
+
+**Statement**: New types MUST default to `~Copyable` unless implicit `Copyable` conformance is required. The question is not "should this type be ~Copyable?" but "does this type need to be Copyable?" Copyable is the exception requiring justification, not the default.
+
+**When Copyable is justified**:
+
+| Reason | Example |
+|--------|---------|
+| Stored in stdlib `Array`, `Dictionary`, `Set` | Element types for standard collections |
+| Value-semantic copy-on-write container | `String`, `Array`-like types |
+| Lightweight value passed by copy everywhere | Phantom-typed indices, tags, identifiers |
+| Protocol requirement demands it | `Hashable`, `Codable` (transitively require Copyable) |
+
+**When ~Copyable is required**:
+
+| Reason | Example |
+|--------|---------|
+| Resource with exactly-once lifecycle | File descriptors, channels, connections |
+| Exclusive-access container | Inline buffers, storage types |
+| Unique ownership token | Permits, reservations, capabilities |
+| Type where duplication is a semantic error | IO handles, transaction contexts |
+
+**Detection**: During review, any type that manages a resource, holds exclusive state, or represents a one-time operation is a `~Copyable` candidate. If copying it would be semantically wrong, it must be ~Copyable.
+
+**Cross-references**: [IMPL-COMPILE], [MEM-COPY-001], [IMPL-063]
+
+---
+
+### [IMPL-065] ~Escapable for Scoped Access
+
+**Statement**: Types that represent borrowed access, scoped views, or lifetime-dependent references SHOULD use `~Escapable` when the `Lifetimes` experimental feature is enabled. `~Escapable` ties the type's lifetime to its source, making use-after-scope a compile-time error.
+
+**Candidates for ~Escapable**:
+
+| Pattern | Example |
+|---------|---------|
+| Pointer-based view into a container | `Property<Tag, Base>.View` |
+| Scoped access handle | `Span`, `Path.View` |
+| Borrowed iterator | Coroutine-yielded iterators |
+
+**When ~Escapable does NOT apply**:
+
+| Pattern | Why |
+|---------|-----|
+| Types stored in closures without `@_lifetime(immortal)` | Lifetime-dependent values cannot be captured in closures |
+| Types whose lifetime must depend on a closure parameter | `@_lifetime` cannot depend on Escapable values |
+| Types stored in collections | No stdlib collection support for ~Escapable elements |
+
+**Cross-references**: [IMPL-COMPILE], [IMPL-021], [Research: nonescapable-readiness-assessment.md]
+
+---
+
+### [IMPL-066] `sending` at Isolation Boundaries
+
+**Statement**: Parameters and return values that cross an isolation boundary MUST be annotated with `sending`. The compiler then verifies that the caller relinquishes access after the transfer, preventing data races without requiring `Sendable`.
+
+**Decision procedure**:
+
+| Boundary crossing | Annotation |
+|-------------------|------------|
+| Value enters an actor from outside | `sending` on parameter |
+| Value exits an actor to the caller | `sending` on return |
+| Value enters `Mutex.withLock` closure | `sending` on closure parameter |
+| Channel send / fulfill / broadcast | `sending` on the payload |
+
+**Correct**:
+```swift
+func receive(_ value: sending Element) { ... }
+func produce() -> sending Element { ... }
+```
+
+**Incorrect**:
+```swift
+func receive(_ value: Element) { ... }  // ❌ Boundary crossing not annotated
+```
+
+**Rationale**: Even when the element is `Sendable`, `sending` documents the ownership transfer intent and enables future relaxation of `Sendable` constraints.
+
+**Cross-references**: [IMPL-COMPILE], [IMPL-062], [Research: sending-expansion-audit.md]
+
+---
+
+### [IMPL-067] Explicit Ownership Annotations
+
+**Statement**: Parameters with non-obvious ownership semantics MUST use explicit ownership annotations. The annotation declares the caller's obligation and enables the compiler to enforce it.
+
+| Annotation | Caller obligation | Compiler enforcement |
+|------------|-------------------|---------------------|
+| `consuming` | Caller gives up the value | Use-after-consume is a compile error |
+| `borrowing` | Caller retains ownership, callee gets read access | Callee cannot store or mutate |
+| `inout` | Caller grants exclusive mutable access | Exclusivity enforcement at call site |
+
+**When required**:
+- `~Copyable` parameters — the compiler requires explicit ownership
+- Transfer operations (`send`, `fulfill`, `enqueue`) — `consuming` documents the handoff
+- View-producing methods — `borrowing` documents the source is not consumed
+
+**When optional**:
+- Simple `Copyable` value parameters where Swift's implicit copy is correct
+- Closures where the annotation adds noise without changing semantics
+
+**Correct**:
+```swift
+mutating func insert(_ element: consuming Element, at position: Index) { ... }
+func withSpan<R>(_ body: (borrowing Span<Element>) throws -> R) rethrows -> R { ... }
+```
+
+**Cross-references**: [IMPL-COMPILE], [MEM-OWN-001], [IMPL-063]
+
+---
+
+### [IMPL-068] Sendable Minimalism
+
+**Statement**: Types MUST NOT conform to `Sendable` unless they genuinely cross isolation boundaries. Sendable is a capability grant — it tells the compiler "this value may be shared across threads." Granting it unnecessarily forces thread-safety requirements on the type and all its stored properties.
+
+**Decision procedure**:
+
+| Question | If Yes | If No |
+|----------|--------|-------|
+| Does this type cross isolation boundaries? | Sendable may be needed | Do not add Sendable |
+| Is the type `~Copyable` with single-owner transfer? | `~Copyable, Sendable` — ownership is the safety | — |
+| Can `nonisolated(nonsending)` propagate it without crossing? | Keep non-Sendable | — |
+
+**Anti-pattern — viral Sendability**: Making type A `Sendable` forces all stored properties to be `Sendable`, which forces locks on type B, which forces inner `State` structs, which forces `withLock` on every method, which prevents helper calls from within `withLock` (deadlock risk). The root cause: Sendable was granted at the top without need.
+
+**The fix**: Keep types non-Sendable by default. Use `nonisolated(nonsending)` to pass them through function chains without crossing boundaries.
+
+**Cross-references**: [IMPL-COMPILE], [IMPL-062], [IMPL-063], [Research: modern-concurrency-conventions.md]
+
+---
+
+### [IMPL-069] Isolation Hierarchy
+
+**Statement**: When a type requires concurrency safety, the mechanism MUST be selected according to the isolation hierarchy, starting from the highest rank. Higher-ranked mechanisms provide stronger compile-time guarantees with less ceremony.
+
+| Rank | Mechanism | Compile-time guarantee | Runtime cost |
+|------|-----------|----------------------|--------------|
+| **1** | Actor + `nonisolated(nonsending)` | Data-race freedom by construction | Async hop |
+| **2** | `~Copyable` + `Sendable` | Single-owner transfer, no sharing | Zero |
+| **3** | `sending` annotation | Region-based transfer verification | Zero |
+| **4** | `Mutex` / synchronous locking | Mutual exclusion (programmer-verified) | Lock acquisition |
+| **5** | `@unchecked Sendable` | None (programmer assertion) | Zero |
+
+**Decision procedure**: Start at Rank 1. Move down only when a higher rank is impossible due to a specific, documented constraint (e.g., synchronous-only access path prevents actor usage).
+
+A type at Rank 5 (`@unchecked Sendable`) is an escape hatch. If you find yourself reaching for it, verify that Ranks 1–4 are genuinely impossible — not merely inconvenient.
+
+**Cross-references**: [IMPL-COMPILE], [IMPL-062], [IMPL-063], [IMPL-068], [Research: modern-concurrency-conventions.md]
 
 ---
 
@@ -1355,12 +1543,21 @@ struct Channel: ~Copyable {
 
 Before presenting code as complete, verify EACH item:
 
+**Expression quality**:
 - [ ] No `.rawValue` chains at call sites — use typed operators [IMPL-002]
 - [ ] No `Int(bitPattern:)` at call sites — push to boundary overloads [IMPL-010]
 - [ ] No intermediate variables that merely restate expressions [IMPL-EXPR-001]
 - [ ] Ecosystem types used where available — no ad-hoc reimplementations [IMPL-060]
 - [ ] Property.View used for verb-as-property patterns — no hand-rolled structs [IMPL-020/021]
 - [ ] Bounded indices for static-capacity types [IMPL-050]
+
+**Compiler-enforced strictness**:
+- [ ] Types default to `~Copyable` unless Copyable is justified [IMPL-064]
+- [ ] Scoped/view types use `~Escapable` where `Lifetimes` is enabled [IMPL-065]
+- [ ] `sending` on all isolation-boundary parameters and returns [IMPL-066]
+- [ ] Ownership annotations on non-obvious parameter semantics [IMPL-067]
+- [ ] No unnecessary `Sendable` conformances [IMPL-068]
+- [ ] Concurrency mechanism selected by isolation hierarchy rank [IMPL-069]
 
 If ANY item fails, fix before presenting.
 
@@ -1371,10 +1568,13 @@ If ANY item fails, fix before presenting.
 See also:
 - **conversions** skill for [IDX-*], [CONV-*] type definitions and conversion APIs
 - **code-surface** skill for [API-NAME-*], [API-ERR-*], [API-IMPL-*] naming, errors, file structure
-- **memory-safety** skill for [MEM-*] ownership patterns
+- **memory-safety** skill for [MEM-*] ownership patterns, ~Copyable mechanics, unsafe marking
 - **advanced-patterns** skill for [PATTERN-026] centralization, memory ownership, unsafe operation patterns
 - **testing** skill for [TEST-018] literal conformances in tests
 - **existing-infrastructure** skill for [INFRA-*] catalog of typed operations, integration modules, and principled absences
 - **Semantic Dependencies.md** for [SEM-DEP-*] dependency classification rules
 - `Ordinal.Finite<N>` in swift-finite-primitives for bounded ordinal arithmetic infrastructure
 - `Index.Bounded.swift` in swift-finite-primitives for the typealias definition and narrowing/widening
+- `modern-concurrency-conventions.md` for the full isolation hierarchy analysis and ecosystem assessment
+- `sending-expansion-audit.md` for the comprehensive `sending` annotation inventory
+- `nonescapable-readiness-assessment.md` for ~Escapable candidate analysis and known gaps
