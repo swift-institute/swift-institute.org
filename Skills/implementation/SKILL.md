@@ -2076,6 +2076,29 @@ struct Channel<Element: ~Copyable>: @unchecked Sendable {
 
 ---
 
+### [IMPL-077] Verify Constraints Before Workarounds
+
+**Statement**: When a compiler error or handoff document claims a language limitation exists, the constraint MUST be verified via a minimal experiment before implementing a workaround. Stale handoff claims, compiler error messages, and remembered limitations are hypotheses, not facts.
+
+**Decision procedure**:
+
+| Step | Action |
+|------|--------|
+| 1 | Encounter apparent compiler limitation |
+| 2 | Write minimal experiment reproducing the limitation in isolation |
+| 3 | If experiment CONFIRMS limitation → implement workaround |
+| 4 | If experiment REFUTES limitation → write the code as it should be |
+
+**Anti-pattern — workaround-first**: The first response to a compiler error is a workaround (raw value, factory method, Result side-channel). In practice, the "limitation" often doesn't exist — the code was wrong, the claim was stale, or the experiment reveals a simpler path.
+
+**Rationale**: Workarounds have permanent costs: they add complexity, hide the natural API, and create maintenance burden. Verifying the constraint takes minutes. If the constraint is real, you lose nothing. If it isn't, you avoid permanent damage to the design.
+
+**Cross-references**: [IMPL-061], [IMPL-COMPILE]
+
+**Provenance**: 2026-03-30-noncopyable-descriptor-l3-cascade.md
+
+---
+
 ## Post-Implementation Checklist
 
 Before presenting code as complete, verify EACH item:

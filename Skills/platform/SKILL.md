@@ -797,6 +797,46 @@ Import visibility MUST be consistent across a module's files. Use `public import
 
 ---
 
+### [PATTERN-009] Typed-Throws-Safe Catch Patterns
+
+**Statement**: In catch blocks under typed throws, use the implicit `error` binding with `where` clauses — not `catch let error where`. The explicit `let` binding erases the concrete error type to `any Error`.
+
+**Correct**:
+```swift
+func retry() throws(IO.Error) {
+    while true {
+        do throws(IO.Error) {
+            try operation()
+            return
+        } catch where error.isInterrupted {
+            continue  // `error` is IO.Error — concrete type preserved
+        }
+    }
+}
+```
+
+**Incorrect**:
+```swift
+func retry() throws(IO.Error) {
+    while true {
+        do throws(IO.Error) {
+            try operation()
+            return
+        } catch let error where error.isInterrupted {
+            continue  // ❌ `error` is `any Error` — type erased
+        }
+    }
+}
+```
+
+**Rationale**: `catch let error` introduces a new binding whose type is inferred as `any Error` regardless of the `do throws(E)` annotation. The implicit `error` binding inherits the typed error. This distinction is not documented in the Swift language guide and is a common source of type-mismatch errors in typed-throws code.
+
+**Cross-references**: [API-ERR-001], [IMPL-075]
+
+**Provenance**: 2026-03-30-noncopyable-descriptor-l3-cascade.md
+
+---
+
 ## Cross-References
 
 See also:
