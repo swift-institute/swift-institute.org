@@ -829,6 +829,47 @@ struct Handle<Value: ~Copyable>: ~Copyable {
 
 ---
 
+### [MEM-OWN-014] Batch Slot Staging for Non-Sendable Sequences
+
+**Statement**: When a `Sequence` of non-Sendable elements must enter a `withLock` closure, the elements MUST be staged through `Ownership.Slot(Array(elements))` before the lock. Inside the lock, iterate from the Slot. The `sending` annotation on the parameter alone is not sufficient — captured sequences merge with the `inout sending State` region.
+
+**Correct**:
+```swift
+func send<S: Sequence>(contentsOf elements: sending S)
+    where S.Element == Element
+{
+    let slot = Ownership.Slot(Array(elements))
+    let action = _state.withLock { state in
+        let items = slot.take()
+        for element in items {
+            state.buffer.push(element, to: .back)
+        }
+        return state.signal()
+    }
+    action.execute()
+}
+```
+
+**Incorrect**:
+```swift
+func send<S: Sequence>(contentsOf elements: sending S) {
+    let action = _state.withLock { state in
+        for element in elements {  // ❌ Captured `elements` merges with state region
+            state.buffer.push(element, to: .back)
+        }
+        return state.signal()
+    }
+}
+```
+
+**Rationale**: `sending` transfers region ownership at the call boundary, but inside the closure, the captured value merges with the `inout sending State` parameter's region. `Ownership.Slot` is `@unchecked Sendable` — values taken from it are treated as "disconnected" from any region.
+
+**Cross-references**: [MEM-OWN-010], [MEM-COPY-006] Category 6, [IMPL-070]
+
+**Provenance**: 2026-03-30-sending-sendable-migration-cascade.md
+
+---
+
 ## Reference Primitives
 
 ### [MEM-REF-001] Reference Primitive Selection

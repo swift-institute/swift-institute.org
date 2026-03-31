@@ -211,6 +211,20 @@ llvm-project/llvm/utils/bisect --start=0 --end=10000 ./invoke_swift_passing_N.sh
 
 **Statement**: For optimizer bugs, reading the compiler source SHOULD be attempted early — particularly when the SIL dump reveals the failing pass and instruction. Look for TODO/FIXME comments, known-limitation guards, and bailout conditions near the crash site.
 
+**Local clone**: `/Users/coen/Developer/swiftlang/swift`
+
+**Key directories for SIL optimizer bugs**:
+
+| Path (relative to swiftlang/swift) | Content |
+|-------------------------------------|---------|
+| `SwiftCompilerSources/Sources/Optimizer/` | SIL passes written in Swift (e.g., `SimplifyMarkDependence.swift`) |
+| `lib/SILOptimizer/` | SIL passes written in C++ (e.g., `CopyPropagation.cpp`) |
+| `lib/SIL/IR/` | SIL core (e.g., `OperandOwnership.cpp`) |
+| `lib/SILGen/` | SIL generation from AST |
+| `lib/IRGen/` | LLVM IR generation from SIL (e.g., `GenStruct.cpp`) |
+| `include/swift/SILOptimizer/PassManager/Passes.def` | All pass names and tags |
+| `docs/DebuggingTheCompiler.md` | Canonical debugging reference |
+
 **When to read source**:
 1. The SIL dump clearly identifies the crashing pass and the specific operation
 2. Multiple experiments have failed to reproduce in isolation (the bug is in how the optimizer handles a pattern)
