@@ -454,10 +454,14 @@ If the bug is in raw SIL (`-emit-silgen`), the problem is in SILGen. If raw SIL 
 
 ## Cross-References
 
-- **experiment-process** skill for [EXP-004] reduction methodology, [EXP-004a] incremental construction
+- **experiment-process** skill for [EXP-004] reduction methodology, [EXP-004a] incremental construction, [EXP-018] experiment consolidation
 - **swift-pull-request** skill for [SWIFT-PR-011] dev toolchain check, PR submission workflow
 - **reflect-session** skill for [REFL-001] post-investigation reflection
 - **implementation** skill for [IMPL-061] compiler fix over workaround accumulation
+- Research: `swift-institute/Research/issue-investigation-best-practices.md` — literature study and comparative analysis
 - Research: `swift-institute/Research/Reflections/2026-03-22-copypropagation-nonescapable-root-cause-and-fix.md`
 - Research: `swift-institute/Research/Reflections/2026-03-31-noncopyable-io-completion-cascade-and-silgen-bug-discovery.md`
 - Research: `swift-institute/Research/compiler-pr-copypropagation-mark-dependence-handoff.md`
+- External: `swiftlang/swift/docs/DebuggingTheCompiler.md` — canonical debugging reference
+- External: `swiftlang/swift/utils/bug_reducer/README.md` — SIL-level reduction tool
+- External: `swiftlang/swift/include/swift/SILOptimizer/PassManager/Passes.def` — all SIL pass names

@@ -2046,6 +2046,36 @@ func handleResult() {
 
 ---
 
+### [IMPL-076] No @unchecked Sendable on Struct-Wrapping-Class
+
+**Statement**: When a struct's only stored property is a reference to a `Sendable` (or `@unchecked Sendable`) class, the struct MUST use plain `Sendable` conformance — not `@unchecked Sendable`. The struct is sendable because the class IS sendable; the `@unchecked` on the struct is redundant and misleading.
+
+**Correct**:
+```swift
+final class _Storage: @unchecked Sendable { /* synchronized internals */ }
+
+struct Channel<Element: ~Copyable>: Sendable {
+    let _storage: _Storage  // Class is Sendable → struct is Sendable
+}
+```
+
+**Incorrect**:
+```swift
+struct Channel<Element: ~Copyable>: @unchecked Sendable {
+    let _storage: _Storage
+    // ❌ @unchecked is redundant — _Storage is already Sendable
+    // Misleading: suggests Channel has unsafe internals
+}
+```
+
+**Rationale**: `@unchecked Sendable` is an escape hatch that disables the compiler's data-race checking. When applied reflexively to every type in a hierarchy (e.g., all channel structs), it obscures which types genuinely need manual safety verification. Only the actual synchronization points (the classes with locks/atomics) need `@unchecked`.
+
+**Cross-references**: [IMPL-068], [IMPL-069], [MEM-SEND-002]
+
+**Provenance**: 2026-03-30-modern-concurrency-sendability-pass.md
+
+---
+
 ## Post-Implementation Checklist
 
 Before presenting code as complete, verify EACH item:
