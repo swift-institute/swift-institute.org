@@ -496,6 +496,36 @@ struct `Set.Ordered - Model Tests` {
 
 ---
 
+### [SWIFT-TEST-015] @Test Symbol Length at Deep Nesting
+
+**Statement**: The `@Test` macro generates `@section`-attributed global variables with mangled names proportional to the full type nesting path. At deep nesting (e.g., `IO.Event.Channel.Test.FullDuplex`) with many tests in one file, the aggregate symbol names may exceed compiler thresholds, causing cryptic `@section` attribute errors.
+
+**Workaround**: Limit one test suite per file when the nesting path exceeds 4 levels. If a `@section` error appears, split the file and use a shorter nesting suffix.
+
+**Correct**:
+```
+// Separate files with shorter nesting
+IO.Event.Channel.Split.Tests.swift  → @Suite struct Test { @Suite struct Split { ... } }
+IO.Event.Channel.Lifecycle.Tests.swift → @Suite struct Test { @Suite struct Lifecycle { ... } }
+```
+
+**Incorrect**:
+```
+// Single file with deep nesting and many tests
+IO.Event.Channel.Tests.swift
+  → @Suite struct Test {
+       @Suite struct FullDuplex { /* 20+ tests */ }  // ❌ Symbol names too long
+     }
+```
+
+**Rationale**: The symbol length scales with nesting depth × test count. The mangled name for a test at 5 levels of nesting is ~180 characters. The principled fix at the compiler level would be symbol hashing for `@section`-attributed globals; at the codebase level, the fix is one suite per file.
+
+**Cross-references**: [TEST-009]
+
+**Provenance**: 2026-03-30-split-tests-and-test-infrastructure-limits.md
+
+---
+
 ## Cross-References
 
 See also:
