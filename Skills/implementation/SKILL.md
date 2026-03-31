@@ -175,7 +175,8 @@ This is the dual of [IMPL-INTENT]: intent-over-mechanism governs *how code reads
 | Parameter ownership semantics | `consuming` / `borrowing` / `inout` | [IMPL-067] |
 | Type does not need thread sharing | Non-`Sendable` by default | [IMPL-068] |
 | Concurrency mechanism selection | Isolation hierarchy | [IMPL-069] |
-| ~Copyable ownership through locks | Layer model (mechanism ≠ call site) | [IMPL-070] |
+| ~Copyable ownership through locks | Coroutine accessor or layer model | [IMPL-070] |
+| Interior mutability from let binding | `nonmutating _modify` on pointer-backed view | [IMPL-071] |
 | Error domain | Typed throws | [API-ERR-001] |
 | Capacity bound | `Bounded<N>` | [IMPL-050] |
 | Unsafe operation boundary | `@safe` / `@unsafe` | [MEM-SAFE-020] |
@@ -1841,31 +1842,63 @@ A type at Rank 5 (`@unchecked Sendable`) is an escape hatch. If you find yoursel
 
 ---
 
-### [IMPL-070] Ownership Transfer Layer Model
+### [IMPL-070] Ownership Transfer Through Mutex
 
-**Statement**: When transferring `consuming ~Copyable` values through `Mutex.withLock` closures, the Optional wrapper mechanism (`.take()!`, `var slot: V?`) MUST be confined to Layer 0/1 infrastructure. Layer 2 domain API call sites MUST use Layer 1 abstractions. `.take()!` at a Layer 2 call site is a compliance violation.
+**Statement**: Transferring `consuming ~Copyable` values through Mutex-protected state SHOULD use coroutine-based direct property access. Closure-based patterns (`withLock`) are backward compatibility — not the target for new code.
 
-**Layer model**:
+**End-state pattern** (coroutine Mutex with `@_rawLayout` + `nonmutating _modify`):
+```swift
+_state.locked.value.buffer.push(consume element, to: .back)
+```
+No closures, no Optional wrappers, no `.take()!`. The Mutex struct uses `_read` on `locked` (borrows self, works with `let`). The `Locked` view provides `nonmutating _modify` through its raw pointer (interior mutability). Validated: `mutex-coroutine-rawlayout` experiment, 6/6 CONFIRMED in debug + release.
+
+**Backward-compat pattern** (closure Mutex — existing code):
 
 | Layer | Contains | Audience |
 |-------|----------|----------|
 | **0** | `var slot: V? = value` + `.take()!` | Mutex extension internals only |
-| **1** | `withLock(consuming:body:)`, `withLock(deposit:body:)`, `Ownership.Slot` | Authors of coordination types |
+| **1** | `withLock(consuming:body:)`, `withLock(deposit:body:)` | Authors of coordination types |
 | **2** | `Bridge.push()`, `Channel.send()` | Consumers |
 
-**Decision procedure**:
+`.take()!` at a Layer 2 call site is a compliance violation per [IMPL-INTENT].
 
-| Question | Pattern |
-|----------|---------|
-| Does every path consume the value? | Always-consume — `withLock(consuming:body:)` [MEM-OWN-010] |
-| Does a state machine decide per-path? | Maybe-consume — state machine takes `inout Element?` [MEM-OWN-011] |
-| Read/mutate only, no ownership transfer? | Borrow-only — standard `withLock { state in ... }` |
+**Detection**: In code review, any `.take()!` at a domain API call site is mechanism leaking into intent. For new code: use the `locked` coroutine accessor. For existing code: route through a Layer 1 closure abstraction.
 
-**Future-proofing**: When the compiler gains consuming closures, Layer 0 is eliminated and Layer 1 implementation simplifies. Layer 2 API is unchanged. The entire purpose of the layering is that internal improvements don't propagate to consumers.
+**Cross-references**: [IMPL-INTENT], [IMPL-000], [IMPL-071], [MEM-OWN-010], [MEM-OWN-011], [MEM-OWN-012], [Research: noncopyable-ownership-transfer-patterns.md]
 
-**Detection**: During code review, `.take()!` at a Layer 2 call site (Bridge, Channel, Waiter, or any domain type) is mechanism leaking into intent. The fix: route through a Layer 1 abstraction.
+---
 
-**Cross-references**: [IMPL-INTENT], [IMPL-000], [MEM-OWN-010], [MEM-OWN-011], [MEM-OWN-012], [PATTERN-016], [Research: noncopyable-ownership-transfer-patterns.md]
+### [IMPL-071] nonmutating _modify for Interior Mutability
+
+**Statement**: When a `~Copyable` view type provides mutation through a raw pointer (not through its own stored properties), the `_modify` accessor MUST be marked `nonmutating`. This enables mutation through the view even when the view itself is borrowed — the pointer doesn't change, only what it points to.
+
+This is the coroutine counterpart to `borrowing func withLock` — both provide interior mutability from a `let`-bound container. `withLock` uses a closure; `nonmutating _modify` uses a coroutine.
+
+**Correct**:
+```swift
+struct Locked<Value: ~Copyable>: ~Copyable {
+    let pointer: UnsafeMutablePointer<Value>
+
+    var value: Value {
+        _read { yield unsafe pointer.pointee }
+        nonmutating _modify { yield &pointer.pointee }
+    }
+}
+```
+
+**Incorrect** — plain `_modify` requires mutable self, blocks `let` binding:
+```swift
+var value: Value {
+    _read { yield unsafe pointer.pointee }
+    _modify { yield &pointer.pointee }  // requires `var`, not `let`
+}
+```
+
+**When to use**: Any `~Copyable` view that wraps an `UnsafeMutablePointer` and provides `inout` access to the pointee. This includes Mutex locked views, Property.View patterns where the base is accessed through a pointer, and any RAII guard that provides scoped mutable access.
+
+**~Escapable note**: `~Escapable` on the view is desirable (prevents escaping the scope) but currently blocked by a lifetime checker limitation on class stored properties. Use `~Copyable` alone — the `_read` coroutine scope prevents escape, `~Copyable` prevents aliasing.
+
+**Cross-references**: [IMPL-022], [IMPL-070], [IMPL-064], [Research: noncopyable-ergonomics-compiler-state.md]
 
 ---
 
@@ -1888,7 +1921,8 @@ Before presenting code as complete, verify EACH item:
 - [ ] Ownership annotations on non-obvious parameter semantics [IMPL-067]
 - [ ] No unnecessary `Sendable` conformances [IMPL-068]
 - [ ] Concurrency mechanism selected by isolation hierarchy rank [IMPL-069]
-- [ ] ~Copyable ownership transfer uses Layer 1 abstractions, not raw `.take()!` [IMPL-070]
+- [ ] ~Copyable ownership transfer uses coroutine accessor or Layer 1 abstractions [IMPL-070]
+- [ ] Interior-mutable views use `nonmutating _modify`, not plain `_modify` [IMPL-071]
 
 If ANY item fails, fix before presenting.
 

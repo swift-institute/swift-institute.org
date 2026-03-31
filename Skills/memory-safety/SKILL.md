@@ -672,9 +672,23 @@ public protocol Parser<Input, Output, Failure> {
 
 ---
 
-### [MEM-OWN-010] Always-Consume Transfer
+### [MEM-LIFE-001] ~Escapable Class Stored Property Limitation
+
+**Statement**: `~Escapable` types accessed through class stored properties trigger lifetime checker errors ("lifetime-dependent value escapes its scope"). This is a known limitation of the `Lifetimes` feature in Swift 6.3. Use `~Copyable` alone when the view must be accessed through a class property — the `_read` coroutine scope prevents escape, `~Copyable` prevents aliasing.
+
+**Affected pattern**: Mutex `Locked` view, Property.View-like types stored in classes.
+
+**When resolved**: Add `~Escapable` back to the view type for stronger compile-time safety.
+
+**Cross-references**: [MEM-COPY-013], [IMPL-071], [Research: noncopyable-ergonomics-compiler-state.md]
+
+---
+
+### [MEM-OWN-010] Always-Consume Transfer (Closure Path)
 
 **Statement**: When every code path through a `Mutex.withLock` closure consumes a `~Copyable` value, the value MUST be passed as a `consuming` closure parameter via `withLock(consuming:body:)`. The Optional wrapper mechanism (`.take()!`) is confined to the extension's implementation per [IMPL-070].
+
+**Note**: For new code, prefer the coroutine accessor pattern (`_state.locked.value`) per [IMPL-070]. This closure pattern is backward compatibility for existing `withLock` call sites.
 
 **Call site** (reads as intent):
 ```swift
@@ -689,7 +703,7 @@ _state.withLock(consuming: element) { state, element in
 
 ---
 
-### [MEM-OWN-011] Maybe-Consume Transfer
+### [MEM-OWN-011] Maybe-Consume Transfer (Closure Path)
 
 **Statement**: When a state machine decides per-path whether to consume a `~Copyable` value, the state machine method MUST take `inout Element?`. It uses `.take()!` on consume paths and leaves the Optional populated on non-consume paths. The caller passes `&slot` through standard `withLock`.
 
