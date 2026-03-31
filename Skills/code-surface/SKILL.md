@@ -237,7 +237,9 @@ struct Profile { }   // in one file - FORBIDDEN
 
 **Rationale**: Single-type files enable precise naming, easier navigation, clear ownership, and reduced merge conflicts.
 
-**Exception**: Types with `~Copyable` generic parameters cannot have their nested types extracted into separate files due to constraint poisoning. See [PATTERN-022].
+**Exception — constraint poisoning ([PATTERN-022])**: When a parent type has conditional generic extensions (e.g., `extension Parent where Element: ~Copyable`), `extension Parent.Child` in a separate file cannot resolve sibling types declared in those extensions. The fix is fully-qualified names (e.g., `Async.Channel<Element>.Bounded.State`). Extraction is blocked only when the type has deep cross-references to many siblings, making full qualification impractical — typically state-machine types with references to multiple peer types. Types with simple field layouts (e.g., iterators, endpoint wrappers) extract cleanly.
+
+**Provenance**: 2026-03-31-async-primitives-code-surface-refactor.md
 
 ---
 
