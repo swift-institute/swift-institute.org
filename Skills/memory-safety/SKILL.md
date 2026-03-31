@@ -623,6 +623,34 @@ extension Reference.Indirect: @unchecked Sendable {}
 
 ---
 
+### [MEM-SEND-004] ~Copyable Structs Can Use Plain Sendable
+
+**Statement**: `~Copyable` structs whose stored properties are all `Sendable` MUST use plain `Sendable`, not `@unchecked Sendable`. The compiler synthesizes and checks `Sendable` conformance for `~Copyable` structs in the same way as `Copyable` structs.
+
+**Correct**:
+```swift
+public struct Channel.Reader<Element: ~Copyable & Sendable>: ~Copyable, Sendable {
+    let descriptor: Kernel.Descriptor  // Sendable
+}
+```
+
+**Incorrect**:
+```swift
+public struct Channel.Reader<Element: ~Copyable & Sendable>: ~Copyable, @unchecked Sendable {
+    let descriptor: Kernel.Descriptor  // ❌ @unchecked is unnecessary — all fields are Sendable
+}
+```
+
+**When `@unchecked` IS still needed on `~Copyable` types**: When stored properties include non-Sendable types with internal synchronization (e.g., `UnsafeMutablePointer` to a lock-protected region). In this case, `@unchecked` is about the non-Sendable field, not about `~Copyable`.
+
+**Rationale**: The assumption that `~Copyable` types require `@unchecked Sendable` is a common misconception. It was disproven empirically across swift-async-primitives (19 annotations removed) and swift-io (3 annotations removed). `@unchecked` suppresses the compiler's data-race checking — never use it when the compiler can verify safety directly.
+
+**Cross-references**: [MEM-SEND-001], [MEM-SEND-002], [MEM-SEND-003], [MEM-COPY-001]
+
+**Provenance**: 2026-03-31-convention3-unchecked-sendable-audit.md
+
+---
+
 ## Ownership Techniques
 
 ### [MEM-COPY-010] Noncopyable Workarounds for Associated Types
