@@ -1938,6 +1938,41 @@ func split() -> (Reader, Writer) { ... }
 
 ---
 
+### [IMPL-073] SE-0461 @concurrent Inference Is Body-Sensitive
+
+**Statement**: Under SE-0461, the `@concurrent` default for `@Sendable async` closures only triggers when the closure literal itself contains `await` in its body. A sync closure literal passed to an `async` parameter is promoted sync→async WITHOUT triggering `@concurrent` inference.
+
+| Closure Body | Parameter Type | Inference |
+|-------------|---------------|-----------|
+| Contains `await` | `@Sendable async` | `@concurrent` (runs on cooperative pool) |
+| No `await` (sync body) | `@Sendable async` | Sync→async promotion, NO `@concurrent` |
+| Any | `nonisolated(nonsending)` | Explicitly non-concurrent |
+
+**Correct reasoning**:
+```swift
+// unimplemented() body is { fatalError() } — sync, no await
+// → promoted sync→async, no @concurrent inference
+// → SAFE: does not move to cooperative pool
+
+// observe() body is { await witness.method(args) } — contains await
+// → @concurrent inferred for @Sendable async
+// → MUST use nonisolated(nonsending) passthrough to prevent pool hop
+```
+
+**Incorrect reasoning**:
+```swift
+// ❌ "All @Sendable async closures default to @concurrent"
+// This is the simplified rule — it misses the body-sensitivity
+```
+
+**Rationale**: This distinction is critical for macro code generation: generated closure literals with sync bodies (e.g., `fatalError()`) are safe, but generated closures with async bodies (e.g., `await witness.property(args)`) trigger `@concurrent` inference and need explicit `nonisolated(nonsending)` annotation.
+
+**Cross-references**: [IMPL-062]
+
+**Provenance**: 2026-03-29-se0461-concurrent-inference-macro-interaction.md
+
+---
+
 ## Post-Implementation Checklist
 
 Before presenting code as complete, verify EACH item:

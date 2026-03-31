@@ -770,6 +770,18 @@ let package = Package(
 
 ---
 
+### [TEST-027] Test Target Compilation Gate
+
+**Statement**: Test target compilation errors MUST be fixed before committing changes to the same package, even if the errors are pre-existing. A non-compiling test target masks new bugs introduced by the current change.
+
+**Rationale**: When a test target cannot compile, no tests run — including tests that would catch regressions from the current work. Pre-existing compilation errors create a false sense of "all tests pass" because no tests execute. This is strictly worse than a failing test, which at least signals that something is wrong.
+
+**Cross-references**: [TEST-001]
+
+**Provenance**: 2026-03-29-se0461-concurrent-inference-macro-interaction.md
+
+---
+
 ## Cross-References
 
 See also:
