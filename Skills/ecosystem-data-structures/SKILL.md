@@ -370,6 +370,10 @@ Need use-after-free detection?
   No  → Slab<E>          (O(1) insert/remove, stable indices)
 ```
 
+**Common naming confusion**: Code that self-describes as a "slab allocator" often implements a LIFO free-list with generation tokens — this is `Buffer.Arena`, not `Buffer.Slab`. `Buffer.Slab` is bitmap-tracked (`firstVacant()`, O(word) allocation) with no generation tokens. Always match by algorithmic requirements (free-list? generation tokens? O(1) alloc/dealloc?), not by the label in comments.
+
+**Provenance**: 2026-03-31-storage-free-arena-bounded-migration.md
+
 **Priority container**:
 ```
 Need both min and max?
