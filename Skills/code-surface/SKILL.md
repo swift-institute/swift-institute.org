@@ -126,6 +126,34 @@ func report(at location: SourceLocation) { }  // Obscures actual type
 
 ---
 
+### [API-NAME-004a] Namespace Adoption Typealiases
+
+**Statement**: A typealias that adopts a lower-layer type into a higher-layer namespace for domain extension is PERMITTED when the higher layer builds substantial domain behavior on the type. A typealias that merely saves keystrokes (rename bridge) is FORBIDDEN per [API-NAME-004].
+
+**Permitted** — namespace adoption (extends the concept):
+```swift
+// IO.Event = Kernel.Event — IO builds 52 types on this kernel concept
+public typealias Event = Kernel.Event  // Adoption: domain behavior built on top
+```
+
+**Forbidden** — rename bridge (saves keystrokes):
+```swift
+// IO.Deadline = Clock.Suspending.Instant — just a shorter name
+public typealias Deadline = Clock.Suspending.Instant  // ❌ No domain behavior added
+```
+
+**Decision test**: Does the higher-layer namespace declare 5+ types, extensions, or methods that build on the aliased type? If yes, it's adoption. If the typealias exists in isolation without domain-specific extensions, it's a bridge.
+
+**Rationale**: Namespace adoption makes a lower-layer concept first-class in the higher-layer domain, enabling natural nesting (e.g., `IO.Event.Channel`, `IO.Event.Selector`). Rename bridges add indirection without domain value.
+
+**Reference**: `swift-io/Research/io-event-namespace-typealias-vs-enum.md`
+
+**Cross-references**: [API-NAME-004], [API-NAME-001]
+
+**Provenance**: 2026-04-01-swift-io-code-surface-remediation.md
+
+---
+
 ## Error Handling
 
 ### [API-ERR-001] Typed Throws Required

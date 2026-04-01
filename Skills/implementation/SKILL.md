@@ -2234,6 +2234,34 @@ func parent() -> Path.View { ... }  // Separator byte at boundary, not \0
 
 ---
 
+### [IMPL-082] Scope Resolution on Extension Extraction
+
+**Statement**: When extracting methods from a nested extension body (`extension Outer { struct Inner { method() } }`) to an explicit extension (`extension Outer.Inner { method() }`), sibling types declared in `Outer` lose implicit scope resolution. All references to sibling types MUST be fully qualified after extraction.
+
+**Before** (implicit resolution works):
+```swift
+extension IO.Event {
+    struct Selector {
+        func register(_ channel: Channel) { ... }  // Channel resolves via IO.Event scope
+    }
+}
+```
+
+**After** (must fully qualify):
+```swift
+extension IO.Event.Selector {
+    func register(_ channel: IO.Event.Channel) { ... }  // Full path required
+}
+```
+
+**Root cause**: Swift's name lookup traverses the lexical nesting depth of the extension declaration. `extension Outer { struct Inner {} }` places `Inner`'s methods at nesting depth 2 (Outer scope visible). `extension Outer.Inner {}` places methods at depth 1 (only Inner's own scope visible). The fully-qualified type path is the same, but the lexical nesting differs.
+
+**Cross-references**: [API-IMPL-005], [API-IMPL-008]
+
+**Provenance**: 2026-04-01-swift-io-code-surface-remediation.md
+
+---
+
 ## Post-Implementation Checklist
 
 Before presenting code as complete, verify EACH item:
