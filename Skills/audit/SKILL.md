@@ -190,8 +190,9 @@ swift-institute/Research/prompts/naming-audit.md              // ❌ Prompt file
 2. **Determine scope** — from conversation context or explicit parameter
 3. **Read code** — walk all files in scope (see [AUDIT-012] for file scoping)
 4. **Check each requirement** — evaluate code against each loaded requirement ID; report only violations found
-5. **Classify findings** — assign severity per [AUDIT-004]
-6. **Write to `audit.md`** — create or update the section per [AUDIT-003]
+5. **Verify findings against source** — every finding reported by an agent or parallel scan MUST be verified against the actual source code before inclusion. Raw agent accuracy for code-surface rules with exceptions ([PATTERN-024], [MEM-COPY-006], [IMPL-024]) is ~45%. Common false-positive categories: hallucinated types, misapplied rules that have exceptions, and over-application to standard naming conventions (e.g., `isEmpty` flagged as compound identifier)
+6. **Classify findings** — assign severity per [AUDIT-004]
+7. **Write to `audit.md`** — create or update the section per [AUDIT-003]
 
 **General audit** (`/audit {package}` or `/audit` without "regarding"):
 

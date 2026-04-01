@@ -76,7 +76,11 @@ instance.openWrite { }  // Compound method - FORBIDDEN
 dir.walkFiles()         // Compound method - FORBIDDEN
 ```
 
+**Exception**: Swift's standard boolean naming convention (`is` + adjective) is NOT a compound identifier. `isEmpty`, `isFinished`, `isFulfilled`, `isClosed` are single-concept boolean properties following API Design Guidelines, not verb-noun compounds.
+
 **Rationale**: Nested accessors mirror the nested type philosophy and enable progressive disclosure.
+
+**Provenance (exception)**: 2026-04-01-async-primitives-audit-round-two.md
 
 ---
 
