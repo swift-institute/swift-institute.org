@@ -2201,6 +2201,39 @@ static func max(_ a: consuming Self, _ b: consuming Self) -> Self {
 
 ---
 
+### [IMPL-081] Null-Termination Awareness for Sub-View APIs
+
+**Statement**: When designing sub-view APIs on types derived from C strings (null-terminated buffers), the sub-view return type MUST reflect whether the null-termination invariant is preserved. Sub-views that shorten the buffer from the end preserve the original null terminator. Sub-views that shorten from the beginning or take a prefix do NOT — the byte at the new boundary is a data byte (e.g., a path separator), not `\0`.
+
+| Operation | Null-terminated? | Safe return type |
+|-----------|-----------------|-----------------|
+| `lastComponent` (suffix to end) | Yes — shares original `\0` | `Path.View` or typed view |
+| `parent` (prefix, excludes end) | No — separator at boundary | `Span<Char>` or byte count |
+| Arbitrary sub-range | No | `Span<Char>` |
+
+**Correct**:
+```swift
+// L1 scanning returns non-null-terminated span
+func parentBytes() -> Span<Char>? { ... }  // Callers construct owned Path when needed
+
+// Suffix sub-view preserves null terminator
+func lastComponentView() -> Path.View { ... }  // Safe — shares original \0
+```
+
+**Incorrect**:
+```swift
+// ❌ Returns Path.View for prefix — breaks null-termination contract
+func parent() -> Path.View { ... }  // Separator byte at boundary, not \0
+```
+
+**General principle**: When a type carries a hidden invariant (null-termination, alignment, capacity), sub-slicing operations must make explicit which invariants survive. The type system is the right place to encode this: different return types for different guarantee levels.
+
+**Cross-references**: [MEM-SPAN-001], [IMPL-065]
+
+**Provenance**: 2026-03-31-path-type-compliance-audit-and-l1-decomposition-design.md
+
+---
+
 ## Post-Implementation Checklist
 
 Before presenting code as complete, verify EACH item:
