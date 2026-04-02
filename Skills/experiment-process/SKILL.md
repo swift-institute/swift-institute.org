@@ -132,14 +132,31 @@ Sequence: (1) Identify uncertainty, (2) create minimal experiment, (3) run — s
 
 ### [EXP-002] Package Location Convention
 
-**Statement**: Experiment packages MUST be in an `Experiments/` directory with descriptive kebab-case names.
+**Statement**: Experiment packages MUST be in an `Experiments/` directory at the
+root of the appropriate repository, with descriptive kebab-case names.
 
-| Scope | Location |
-|-------|----------|
-| Package-specific | `{package-repo}/Experiments/` |
-| Ecosystem-wide (Swift) | `swift-institute/.../docc/Experiments/` |
-| Legislature-wide (legal) | `swift-nl-wetgever/Experiments/` |
-| Ecosystem-wide (legal) | `rule-law/Experiments/` |
+**Swift infrastructure**:
+
+| Scope | Location (absolute path) |
+|-------|--------------------------|
+| Ecosystem-wide | `/Users/coen/Developer/swift-institute/Experiments/` |
+| Primitives-specific | `/Users/coen/Developer/swift-primitives/Experiments/` |
+| Standards-specific | `/Users/coen/Developer/swift-standards/Experiments/` |
+| Foundations-specific | `/Users/coen/Developer/swift-foundations/Experiments/` |
+
+**Legal domain**:
+
+| Scope | Location (absolute path) |
+|-------|--------------------------|
+| Legal ecosystem-wide | `/Users/coen/Developer/rule-law/Experiments/` |
+| Legislature-wide (Dutch) | `/Users/coen/Developer/swift-nl-wetgever/Experiments/` |
+
+**Superrepo note**: `swift-primitives`, `swift-standards`, and `swift-foundations`
+are superrepos containing many packages as targets. `Experiments/` lives at the
+superrepo root, not inside individual target directories. Experiments about a
+specific target (e.g., `Buffer_Primitives`) still go in the superrepo's
+`Experiments/` directory — the experiment directory name identifies the target
+(e.g., `buffer-primitives-noncopyable-test/`).
 
 **Cross-references**: [EXP-002a], [EXP-008]
 
@@ -147,7 +164,30 @@ Sequence: (1) Identify uncertainty, (2) create minimal experiment, (3) run — s
 
 ### [EXP-002a] Experiment Triage
 
-**Statement**: Package-specific experiments (one package's types, reproducing a bug in one module) go in `{package-repo}/Experiments/`. Ecosystem-wide experiments (general Swift behavior, cross-package interaction, language feature exploration) go in `swift-institute/.../Experiments/`. Legislature-wide experiments (cross-statute encoding patterns, @Splat macro behavior) go in `swift-nl-wetgever/Experiments/`. Legal ecosystem-wide experiments go in `rule-law/Experiments/`.
+**Statement**: Before creating an experiment, determine scope. Experiments specific
+to one superrepo go in that superrepo. Ecosystem-wide experiments go in
+swift-institute.
+
+**Swift infrastructure**:
+
+| Criterion | Repo |
+|-----------|------|
+| One target's types, reproducing a bug in one module | The superrepo containing that target |
+| Multiple targets within one superrepo | That superrepo |
+| General Swift behavior (language feature, compiler) | `swift-institute` |
+| Cross-package interaction across layers | `swift-institute` |
+
+**Legal domain**:
+
+| Criterion | Repo |
+|-----------|------|
+| One statute's encoding patterns | `swift-nl-wetgever` (or relevant legislature repo) |
+| Cross-statute encoding patterns, @Splat macro behavior | Legislature repo (`swift-nl-wetgever`) |
+| Cross-layer legal experiments | `rule-law` |
+
+**Decision rule**: If the experiment only exercises types from one superrepo, it
+goes there. If it tests general Swift behavior or cross-repo interaction, it goes
+in swift-institute.
 
 **Cross-references**: [EXP-002], [EXP-006a]
 

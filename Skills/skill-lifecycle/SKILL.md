@@ -333,7 +333,7 @@ applies_to:
 
 **Statement**: Every skill update MUST be traceable to either a reflection entry ([REFL-PROC-005] SkillUpdate), a research document ([RES-*]), or an experiment result ([EXP-*]). Ad-hoc skill edits without provenance are forbidden.
 
-**Rationale**: Provenance ensures that skill changes are grounded in evidence, not convenience. It also enables the research-meta-analysis skill to track supersession chains.
+**Rationale**: Provenance ensures that skill changes are grounded in evidence, not convenience. It also enables the corpus-meta-analysis skill to track supersession chains.
 
 ---
 
@@ -358,7 +358,7 @@ applies_to:
 **Statement**: A skill MUST be reviewed when ANY of these conditions hold:
 - It has been updated 3+ times within 30 days (instability signal)
 - A research document challenges one of its foundational assumptions
-- The research-meta-analysis skill identifies it as stale ([META-020])
+- The corpus-meta-analysis skill identifies it as stale ([META-020])
 - Its `last_reviewed` date is older than its review cadence ([SKILL-LIFE-012])
 
 ---
@@ -483,4 +483,4 @@ applies_to:
 - **swift-institute-core** skill for Skill Index and Loading Order
 - **research-process** skill for [RES-006a] Documentation Promotion (skills are promoted documentation)
 - **reflections-processing** skill for [REFL-PROC-005] SkillUpdate provenance
-- **research-meta-analysis** skill for [META-020] staleness detection
+- **corpus-meta-analysis** skill for [META-020] staleness detection

@@ -1,9 +1,10 @@
 ---
-name: research-meta-analysis
+name: corpus-meta-analysis
 description: |
-  Meta-analysis of research and experiment corpus: staleness detection,
+  Meta-analysis of the full research and experiment corpus: staleness detection,
   findings verification, supersession protocol, consolidation, scope migration,
-  experiment revalidation/spawning, index freshness, and pruning.
+  experiment staleness/revalidation/consolidation/discovery coverage, index
+  freshness, and pruning.
   Apply periodically (monthly or at milestones) to maintain corpus health.
 
 layer: process
@@ -18,15 +19,16 @@ applies_to:
   - swift-primitives
   - swift-standards
   - swift-foundations
-last_reviewed: 2026-03-20
+last_reviewed: 2026-04-01
 ---
 
-# Research Meta-Analysis
+# Corpus Meta-Analysis
 
 Workflows for maintaining the health of the research and experiment corpus across
 the Swift Institute ecosystem. Covers staleness detection, findings verification,
-supersession, consolidation, scope migration, experiment revalidation/spawning,
-index freshness, infrastructure compliance, and full corpus sweeps.
+supersession, consolidation, scope migration, experiment staleness/revalidation/
+consolidation/discovery coverage, index freshness, infrastructure compliance, and
+full corpus sweeps.
 
 **Trigger**: Apply periodically (monthly or at ecosystem milestones), or when the
 corpus exceeds a size where manual tracking becomes unreliable.
@@ -369,23 +371,46 @@ evaluated for scope correctness. Documents at the wrong scope level MUST be migr
 
 **Migration process**:
 1. **Move** the document to the correct `Research/` directory per [RES-002a]:
-   - Package-specific: `{package-repo}/{package}/Research/`
-   - Primitives-wide: `swift-primitives/Documentation.docc/Research/`
+   - Superrepo-specific: `{superrepo}/Research/`
    - Ecosystem-wide: `swift-institute/Research/`
 2. **Update** the document's metadata to reflect the new scope
 3. **Update** `_index.md` in both the source and destination directories
 4. **Update** any cross-references in other documents that pointed to the old path
 5. **Git-move** (not copy-delete) to preserve history
 
-**Statement**: Scope migration also applies to experiments. An experiment that
-validates a cross-package pattern belongs in `swift-institute/Experiments/`, not
-in a single package.
+**Experiment scope migration**: Experiments MUST also be evaluated for scope
+correctness. The same promotion/demotion logic applies, using [EXP-002a] triage
+rules instead of [RES-002a].
 
-**Rationale**: Documents at the wrong scope are either invisible to the audience
-that needs them (too narrow) or create noise for an audience that doesn't (too broad).
-Correct scoping per [RES-002a] ensures research reaches the right consumers.
+| Current Scope | Signal for Promotion | New Scope |
+|---------------|---------------------|-----------|
+| Package-specific | Experiment tests general Swift behavior, not package-specific types | Ecosystem-wide |
+| Package-specific | Experiment's result applies to 3+ packages | Superrepo-wide or ecosystem-wide |
+| Package-specific | Experiment tests cross-package interaction | Ecosystem-wide |
 
-**Cross-references**: [RES-002a], [RES-004b], [META-016]
+| Current Scope | Signal for Demotion | New Scope |
+|---------------|---------------------|-----------|
+| Ecosystem-wide | Experiment only exercises one package's types | Package-specific |
+| Superrepo-wide | Experiment only exercises one package's types | Package-specific |
+
+**Experiment migration process**:
+1. **Move** the experiment directory to the correct `Experiments/` directory per
+   [EXP-002a]:
+   - Superrepo-specific: `{superrepo}/Experiments/`
+   - Ecosystem-wide (Swift): `swift-institute/Experiments/`
+   - Legislature-wide (legal): `swift-nl-wetgever/Experiments/`
+   - Ecosystem-wide (legal): `rule-law/Experiments/`
+2. **Update** the experiment's `main.swift` header if it references its own location
+3. **Update** `_index.md` in both the source and destination directories
+4. **Update** any cross-references in research documents that link to the experiment
+5. **Git-move** (not copy-delete) to preserve history
+
+**Rationale**: Documents and experiments at the wrong scope are either invisible to
+the audience that needs them (too narrow) or create noise for an audience that
+doesn't (too broad). Correct scoping per [RES-002a] and [EXP-002a] ensures corpus
+artifacts reach the right consumers.
+
+**Cross-references**: [RES-002a], [RES-004b], [EXP-002a], [META-016]
 
 ---
 
@@ -434,31 +459,38 @@ maintenance.
 
 | Phase | Check | IDs | Scope |
 |-------|-------|-----|-------|
-| 1. Staleness | Triage stale IN_PROGRESS documents | [META-001], [META-002] | All repos |
+| 1a. Research staleness | Triage stale IN_PROGRESS documents | [META-001], [META-002] | All repos |
+| 1b. Experiment staleness | Triage stale Active experiments | [META-022] | All repos |
 | 2. Verification | Verify findings in RECOMMENDATION/DECISION docs | [META-015], [META-015a] | All repos |
-| 3. Supersession | Identify and mark superseded documents | [META-003], [META-004] | All repos |
-| 4. Consolidation | Merge overlapping documents | [META-016] | All repos |
-| 5. Scope migration | Promote/demote misscoped documents | [META-017] | All repos |
-| 6. Experiment linkage | Spawn experiments, back-propagate results | [META-018] | All repos |
-| 7. Experiment revalidation | Re-run experiments if toolchain changed | [META-006], [META-007] | All repos |
-| 8. Index freshness | Audit all `_index.md` files | [META-008], [META-009] | All repos |
-| 9. Infrastructure | References, Reflections, Blog pipeline | [META-010]–[META-012] | swift-institute |
-| 10. Report | Produce corpus health report | [META-013] | Conversation output |
+| 3. Supersession | Identify and mark superseded documents and experiments | [META-003], [META-004], [META-007] | All repos |
+| 4a. Research consolidation | Merge overlapping research documents | [META-016] | All repos |
+| 4b. Experiment consolidation | Consolidate fragmented experiment clusters | [META-024] | All repos |
+| 5. Scope migration | Promote/demote misscoped documents and experiments | [META-017] | All repos |
+| 6. Research–experiment linkage | Spawn experiments, back-propagate results | [META-018] | All repos |
+| 7a. Toolchain revalidation | Re-run experiments if toolchain changed | [META-006] | All repos |
+| 7b. Source-change revalidation | Re-run experiments if validated package changed | [META-023] | All repos |
+| 8. Discovery coverage | Check milestone packages for discovery experiments | [META-025] | All repos |
+| 9. Claim/assumption audit | Check [CLAIM-*]/[ASSUMP-*] inventory | [META-026] | All repos |
+| 10. Index freshness | Audit all `_index.md` files | [META-008], [META-009] | All repos |
+| 11. Infrastructure | References, Reflections, Blog pipeline | [META-010]–[META-012] | swift-institute |
+| 12. Skill + audit health | Skill review cadence, audit section staleness | [META-020], [META-021] | All repos |
+| 13. Report | Produce corpus health report | [META-013] | Conversation output |
 
-**Statement**: Phases 1–6 are the core loop. Phases 7–9 are supplementary checks.
-When time is limited, the sweep MAY stop after phase 6 and defer phases 7–9 to the
-next sweep. Phase 10 (report) MUST always be produced, covering whichever phases
+**Statement**: Phases 1–6 are the core loop. Phases 7–12 are supplementary checks.
+When time is limited, the sweep MAY stop after phase 6 and defer phases 7–12 to the
+next sweep. Phase 13 (report) MUST always be produced, covering whichever phases
 were executed.
 
 **Statement**: The sweep operates across all four repositories: swift-institute,
 swift-primitives, swift-standards, swift-foundations. Each repository's `Research/`
 and `Experiments/` directories are included.
 
-**Parallelization**: Phases 1 and 2 may run concurrently (staleness is metadata-only,
-verification is content-based — they examine different things). Phases 3–6 are
-sequential because each may change document status that affects the next phase.
-Phase 7 is independent of 3–6 and may run in parallel with them. Phases 8–9 run
-last because prior phases may have created or moved documents.
+**Parallelization**: Phases 1a and 1b may run concurrently with phase 2 (staleness
+is metadata-only, verification is content-based — they examine different things).
+Phases 3–6 are sequential because each may change document status that affects the
+next phase. Phases 7a and 7b may run concurrently (toolchain vs source-change
+revalidation are independent triggers). Phases 8 and 9 may run concurrently. Phases
+10–12 run last because prior phases may have created or moved documents.
 
 **Rationale**: Without a defined sequence, individual META-* checks are invoked
 ad hoc and inconsistently. A single sweep ensures completeness and prevents the
@@ -479,15 +511,21 @@ stale findings into the consolidated document).
 | Section | Content | Phase |
 |---------|---------|-------|
 | Corpus Size | Total counts by type (research, experiments, reflections) and status | — |
-| Staleness | IN_PROGRESS documents exceeding threshold, with triage decisions | 1 |
+| Research Staleness | IN_PROGRESS documents exceeding threshold, with triage decisions | 1a |
+| Experiment Staleness | Active experiments with no result exceeding threshold | 1b |
 | Verification | Findings checked against current source: verified, resolved, or stale | 2 |
-| Supersession | Newly identified superseded documents, with actions taken | 3 |
-| Consolidation | Overlapping documents merged, with provenance trail | 4 |
-| Scope Migration | Documents promoted or demoted, with rationale | 5 |
-| Experiment Linkage | Experiments spawned from research, results back-propagated | 6 |
-| Revalidation | Experiments due for toolchain revalidation | 7 |
-| Index Freshness | Missing or stale `_index.md` files | 8 |
-| Infrastructure | Gaps in References/, Reflections/, Blog/ | 9 |
+| Supersession | Newly identified superseded documents and experiments, with actions taken | 3 |
+| Research Consolidation | Overlapping research documents merged, with provenance trail | 4a |
+| Experiment Consolidation | Fragmented experiment clusters consolidated per [EXP-018] | 4b |
+| Scope Migration | Documents and experiments promoted or demoted, with rationale | 5 |
+| Research–Experiment Linkage | Experiments spawned from research, results back-propagated | 6 |
+| Toolchain Revalidation | Experiments due for toolchain revalidation | 7a |
+| Source-Change Revalidation | Experiments invalidated by package source changes | 7b |
+| Discovery Coverage | Milestone packages without discovery experiments, top claims to validate | 8 |
+| Claim/Assumption Inventory | Orphaned, stale, duplicate, or resolved claim/assumption IDs | 9 |
+| Index Freshness | Missing or stale `_index.md` files | 10 |
+| Infrastructure | Gaps in References/, Reflections/, Blog/ | 11 |
+| Skill + Audit Health | Skills due for review, stale audit sections | 12 |
 | Future Work | Research or experiments identified as needed but not yet created | — |
 
 **Output location**: The report is ephemeral (conversation output). Durable actions
@@ -525,7 +563,7 @@ that become harder to triage over time.
 | Cross-reference rot | Referenced skills that no longer exist or have been superseded | Update references to point to absorbing skill |
 | PIC drift | Post-Implementation Checklist items that don't match current requirements | Update PIC to reflect current rules |
 
-**Integration with [META-019] full corpus sweep**: Skill health checks run as phase 10 (after index freshness, before final report).
+**Integration with [META-019] full corpus sweep**: Skill health checks run as phase 12 (after index freshness, before final report).
 
 **Cross-references**: [SKILL-LIFE-010], [SKILL-LIFE-011], [SKILL-LIFE-012], [SKILL-LIFE-020]
 
@@ -545,13 +583,187 @@ that become harder to triage over time.
 | 4. Check changes | For flagged sections, check `git log --since="{date}" -- Sources/` in the relevant package |
 | 5. Report | Sections that are both old AND have source changes are stale |
 
-**Integration with [META-019] full corpus sweep**: Audit staleness checks run as phase 10a (after skill health checks, before final report).
+**Integration with [META-019] full corpus sweep**: Audit staleness checks run as phase 12 (alongside skill health checks, before final report).
 
 **Rationale**: [AUDIT-010] defines when audit sections become unreliable, but the meta-analysis corpus sweep did not previously include audit files in its scope. Audit sections can silently go stale as code evolves between audits.
 
 **Provenance**: Reflection `2026-03-24-generalized-audit-skill-design.md`.
 
 **Cross-references**: [AUDIT-010], [AUDIT-009], [META-019], [META-020]
+
+---
+
+## Experiment Corpus Health
+
+### [META-022] Experiment Staleness Detection
+
+**Statement**: An experiment in Active state (per [EXP-008] lifecycle) MUST be triaged
+if its `main.swift` header has no Result line AND it has not been modified for 21 days.
+
+| Age Since Last Modification | Action |
+|-----------------------------|--------|
+| < 21 days | No action required |
+| 21–42 days | SHOULD triage |
+| > 42 days | MUST triage |
+
+**Triage outcomes**:
+
+| Condition | Action |
+|-----------|--------|
+| Experiment was run, result not recorded | Execute per [EXP-005], document result per [EXP-006] |
+| Experiment blocked on toolchain/bug | Add `// DEFERRED: {reason}` header note with resumption trigger |
+| Experiment no longer relevant | Mark SUPERSEDED per [META-007] |
+| Experiment still active, in progress | Update `main.swift` header with `// Last active: YYYY-MM-DD` and next steps |
+
+**Detection**: For each experiment directory, check:
+1. Does `main.swift` contain a `// Result:` line? If yes → not stale (has been documented)
+2. If no result, check `git log -1 --format=%ci -- .` for last modification date
+3. Apply age thresholds above
+
+**Rationale**: [META-001] catches stale research documents but experiments have a
+different lifecycle — they are Swift packages, not Markdown documents. An experiment
+created during an investigation but never executed or documented is invisible to
+the research staleness check. This requirement closes that gap.
+
+**Cross-references**: [EXP-008], [EXP-005], [EXP-006], [META-001]
+
+---
+
+### [META-023] Source-Change Experiment Revalidation
+
+**Statement**: When package source files change, experiments that validate behavior
+of that package SHOULD be checked for continued validity. This is independent of
+toolchain upgrades ([META-006]).
+
+**Detection**:
+
+| Step | Action |
+|------|--------|
+| 1. Identify | For each CONFIRMED experiment, determine which package it validates (from its `main.swift` header, imports, or cross-references) |
+| 2. Check changes | Run `git log --since="{experiment-date}" -- Sources/` in the validated package |
+| 3. Assess impact | If the changed files include types/functions the experiment exercises, flag for revalidation |
+| 4. Revalidate | Re-run per [EXP-005], update result if behavior changed |
+
+**Priority**:
+
+| Category | Priority | Rationale |
+|----------|----------|-----------|
+| Experiment validates a workaround for package code | HIGH | Workaround may be obsolete after refactor |
+| Experiment validates API behavior | MEDIUM | API contract may have changed |
+| Experiment validates compiler behavior only (no package imports) | SKIP | Not affected by package source changes |
+
+**Statement**: Experiments that import no package types (pure compiler/language
+behavior tests) are exempt from source-change revalidation. They are only subject
+to toolchain-triggered revalidation ([META-006]).
+
+**Rationale**: [META-006] catches experiments invalidated by toolchain changes.
+But an experiment can also become stale when the package code it validates is
+refactored, migrated, or deleted — independent of toolchain. A CONFIRMED workaround
+experiment is particularly dangerous when stale: it suggests a workaround is still
+needed when the underlying issue may have been resolved by a code change.
+
+**Cross-references**: [META-006], [EXP-005], [EXP-006], [META-015]
+
+---
+
+### [META-024] Experiment Consolidation Sweep
+
+**Statement**: During meta-analysis, `Experiments/` directories MUST be checked for
+consolidation candidates per [EXP-018]. An `Experiments/` directory is a
+consolidation candidate when it contains 5 or more experiments that share the same
+bug, feature, or design question.
+
+**Detection**:
+
+| Step | Action |
+|------|--------|
+| 1. Inventory | List all experiments in each `Experiments/` directory |
+| 2. Cluster | Group experiments by shared topic — use `main.swift` Purpose lines, naming patterns, and cross-references to research documents |
+| 3. Threshold | Flag clusters of 5+ experiments |
+| 4. Check existing | Verify no consolidated package already exists for the cluster |
+| 5. Consolidate | Apply [EXP-018] consolidation procedure |
+
+**Statement**: Consolidation candidates below the 5-experiment threshold MAY still
+be flagged if the experiments are highly fragmented (e.g., 4 experiments with
+near-identical Purpose lines that differ only in one variable).
+
+**Rationale**: [EXP-018] defines when and how to consolidate, but consolidation
+only happens if someone notices the fragmentation during an investigation. The meta
+sweep systematically detects it across the entire corpus, ensuring consolidation
+happens even when nobody is actively investigating the topic.
+
+**Cross-references**: [EXP-018], [META-016]
+
+---
+
+### [META-025] Discovery Coverage Check
+
+**Statement**: During meta-analysis, packages at significant milestones MUST be
+checked for discovery experiment coverage per [EXP-012].
+
+**Detection**:
+
+| Step | Action |
+|------|--------|
+| 1. Identify milestones | Check git tags and recent commits for version bumps (v1.0, v2.0), major refactors, or new public API surface |
+| 2. Check coverage | For each milestone package, check whether `Experiments/` contains discovery experiments dated after the milestone |
+| 3. Flag gaps | Packages at milestones with no post-milestone discovery experiments are flagged |
+
+**Priority** (per [EXP-012]):
+
+| Milestone | Priority |
+|-----------|----------|
+| Package milestone (v1.0, v2.0) | HIGH |
+| Toolchain update | HIGH |
+| Major refactor or API migration | MEDIUM |
+| Assumption audit | MEDIUM |
+
+**Statement**: The check does not require that every package have discovery
+experiments — only packages that have reached a milestone where proactive
+validation would increase confidence. Packages in early development or undergoing
+active investigation are exempt.
+
+**Statement**: When a gap is flagged, the sweep SHOULD identify the top 3 claims
+or assumptions (per [EXP-013], [EXP-014]) that would benefit most from empirical
+validation and record them in the corpus health report as future work.
+
+**Rationale**: [EXP-012] defines discovery triggers but relies on someone noticing
+the trigger during normal work. The meta sweep ensures milestone-driven discovery
+happens systematically, preventing the silent accumulation of unvalidated
+assumptions in mature packages.
+
+**Cross-references**: [EXP-012], [EXP-013], [EXP-014], [EXP-015], [META-018]
+
+---
+
+### [META-026] Claim and Assumption Inventory Audit
+
+**Statement**: During meta-analysis, `[CLAIM-XXX]` and `[ASSUMP-XXX]` identifiers
+across the corpus MUST be checked for completeness and freshness.
+
+**Checks**:
+
+| Check | Action |
+|-------|--------|
+| Orphaned IDs | `[CLAIM-XXX]` or `[ASSUMP-XXX]` referenced in research but with no corresponding experiment | Flag for experiment spawning per [META-018] |
+| Stale validations | Experiment validates a claim, but the claim's source code has changed since validation | Flag for revalidation per [META-023] |
+| Duplicate IDs | Same `[CLAIM-XXX]` ID used in different documents for different claims | Renumber to eliminate ambiguity |
+| Resolved claims | Claim validated and absorbed into production test suite | Mark claim as resolved, experiment as SUPERSEDED per [META-007] |
+
+**Inventory process**:
+1. **Grep** for `\[CLAIM-` and `\[ASSUMP-` across all `Research/` and `Experiments/`
+   directories
+2. **Build** a mapping: ID → source document → validating experiment (if any)
+3. **Check** each entry against the checks above
+4. **Report** orphaned, stale, and duplicate entries in the corpus health report
+
+**Rationale**: [EXP-013] and [EXP-014] define how to create claim and assumption
+inventories during package audits. But these inventories can drift: claims get
+validated without updating the ID, experiments get superseded without resolving the
+claim, or the same ID gets reused. This check ensures the claim–experiment linkage
+remains accurate.
+
+**Cross-references**: [EXP-013], [EXP-014], [EXP-015], [META-018], [META-023]
 
 ---
 

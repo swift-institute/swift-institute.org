@@ -58,6 +58,8 @@ DirectoryWalk          // Compound name - FORBIDDEN
 NonBlockingSelector    // Compound name - FORBIDDEN
 ```
 
+**Exception — macros** [PATTERN-015]: Swift macros MUST use compound names at file scope (e.g., `@CoW`, `@Defunctionalize`). The language does not support nested macro declarations, so the `Nest.Name` pattern cannot apply.
+
 **Rationale**: Nested types create natural namespaces, improve discoverability via autocomplete, and prevent naming collisions.
 
 ---

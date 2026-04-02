@@ -443,7 +443,7 @@ Files found at wrong scope levels are consolidated into the target scope's `Rese
 | Skill | Relationship |
 |-------|-------------|
 | **research-process** | Audit is compliance; Discovery research ([RES-012]) is investigative. An audit may trigger research; research may trigger an audit. |
-| **research-meta-analysis** | Meta-analysis flags stale audit sections ([AUDIT-010]) and checks index entries ([AUDIT-009]). |
+| **corpus-meta-analysis** | Meta-analysis flags stale audit sections ([AUDIT-010]) and checks index entries ([AUDIT-009]). |
 | **implementation** | Common audit target. Load via `/audit regarding /implementation`. |
 | **code-surface** | Common audit target. Load via `/audit regarding /code-surface`. |
 | **memory-safety** | Audit target for ~Copyable/ownership code. |

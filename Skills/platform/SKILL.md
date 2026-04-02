@@ -401,6 +401,57 @@ Direct `import Darwin`/`Glibc`/`Musl`/`WinSDK` remains a violation in ALL non-pl
 
 ---
 
+### [PLAT-ARCH-008c] Platform Extensions Over Primitive Conditionals
+
+**Statement**: When a lower-layer type (L1 Primitives) requires platform-specific behavior, the implementation MUST live in platform packages as extensions on the lower-layer type — NOT as `#if os(...)` blocks inside the primitive package. The platform package boundary replaces conditional compilation.
+
+**Decision procedure**:
+
+| Question | If Yes | If No |
+|----------|--------|-------|
+| Does the operation require platform-specific knowledge (separators, syscall conventions, encoding)? | Implement in the platform package | Implement in the primitive package |
+| Is the type visible in the platform package via re-exports? | Extend it directly | Add the dependency or re-export |
+| Does the platform package only compile on one platform? | No `#if os()` needed inside — the package boundary is the conditional | Use `#if os()` per [PLAT-ARCH-008a] |
+
+**Correct** — platform package extends lower-layer type:
+```swift
+// In swift-iso-9945 (compiles on POSIX only — no #if needed)
+import Path_Primitives  // via Kernel_Primitives re-export
+
+extension Path.View {
+    public var parentBytes: Span<Path.Char>? { ... }  // Scans for '/' only
+}
+
+// In swift-windows-primitives (compiles on Windows only)
+extension Path.View {
+    public var parentBytes: Span<Path.Char>? { ... }  // Scans for '/' and '\'
+}
+```
+
+**Incorrect** — conditionals inside the primitive:
+```swift
+// ❌ In swift-path-primitives
+extension Path.View {
+    public var parentBytes: Span<Path.Char>? {
+        #if os(Windows)
+        // Windows separator logic
+        #else
+        // POSIX separator logic
+        #endif
+    }
+}
+```
+
+**Why this is stronger than [PLAT-ARCH-008a]**: The domain authority exception permits `#if os()` at L3 (Foundations) where the platform stack cannot reasonably absorb the logic. This rule goes further for L1 (Primitives): platform-specific behavior MUST be pushed to the platform packages entirely, using the re-export chain to make the extensions visible to consumers. L1 primitives stay unconditionally platform-agnostic.
+
+**Mechanism**: The `Kernel_Primitives` re-export chain (`@_exported public import Path_Primitives`) makes lower-layer types visible in platform packages without adding direct dependencies. Extensions defined in `ISO_9945_Kernel` or `Windows_Kernel_Primitives` are visible to any consumer that imports `Kernel`.
+
+**Provenance**: Path decomposition architecture decision (2026-04-01). `Path.View.parentBytes`, `.lastComponentBytes`, `.appending` moved from `swift-path-primitives` to `swift-iso-9945` (POSIX) and `swift-windows-primitives` (Windows).
+
+**Cross-references**: [PLAT-ARCH-008a], [PLAT-ARCH-002], [PLAT-ARCH-006]
+
+---
+
 ### [PLAT-ARCH-009] L3 Platform Package Responsibilities
 
 **Statement**: Each L3 platform package (`swift-darwin`, `swift-linux`, `swift-windows`) MUST serve exactly two purposes: (1) re-export its platform primitives for the `swift-kernel` unification, and (2) provide L3-level platform-specific functionality.

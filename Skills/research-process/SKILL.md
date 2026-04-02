@@ -109,15 +109,31 @@ Research-first prevents implementation thrashing, documents rationale, and creat
 
 ### [RES-002] Document Location Convention
 
-**Statement**: Research documents MUST be created in a `Research/` directory with a descriptive, kebab-case filename.
+**Statement**: Research documents MUST be created in a `Research/` directory at the
+root of the appropriate repository, with a descriptive, kebab-case filename.
 
-| Scope | Location |
-|-------|----------|
-| Package-specific | `{package-repo}/Research/` |
-| Primitives-wide | `swift-primitives/.../docc/Research/` |
-| Ecosystem-wide (Swift) | `swift-institute/.../docc/Research/` |
-| Legislature-wide (legal) | `swift-nl-wetgever/Research/` |
-| Ecosystem-wide (legal) | `rule-law/Research/` |
+**Swift infrastructure**:
+
+| Scope | Location (absolute path) |
+|-------|--------------------------|
+| Ecosystem-wide | `/Users/coen/Developer/swift-institute/Research/` |
+| Primitives-specific | `/Users/coen/Developer/swift-primitives/Research/` |
+| Standards-specific | `/Users/coen/Developer/swift-standards/Research/` |
+| Foundations-specific | `/Users/coen/Developer/swift-foundations/Research/` |
+
+**Legal domain**:
+
+| Scope | Location (absolute path) |
+|-------|--------------------------|
+| Legal ecosystem-wide | `/Users/coen/Developer/rule-law/Research/` |
+| Legislature-wide (Dutch) | `/Users/coen/Developer/swift-nl-wetgever/Research/` |
+
+**Superrepo note**: `swift-primitives`, `swift-standards`, and `swift-foundations`
+are superrepos containing many packages as targets. `Research/` lives at the
+superrepo root, not inside individual target directories. Research about a specific
+target (e.g., `Buffer_Primitives`) still goes in the superrepo's `Research/`
+directory — the filename identifies the target (e.g.,
+`buffer-primitives-architectural-review.md`).
 
 **Cross-references**: [RES-002a], [RES-008]
 
@@ -125,18 +141,31 @@ Research-first prevents implementation thrashing, documents rationale, and creat
 
 ### [RES-002a] Research Triage
 
-**Statement**: Before creating a research document, determine scope. Package-specific decisions go in the package repo. Primitives-wide patterns go in swift-primitives. Ecosystem-wide analysis goes in swift-institute.
+**Statement**: Before creating a research document, determine scope. Research
+specific to one superrepo goes in that superrepo. Ecosystem-wide analysis goes in
+swift-institute.
 
-| Criterion | Package-Specific | Primitives-Wide | Ecosystem-Wide (Swift) | Legislature-Wide | Ecosystem-Wide (Legal) |
-|-----------|------------------|-----------------|------------------------|-----------------|----------------------|
-| One package's types | ✓ | | | | |
-| Multiple primitives packages | | ✓ | | | |
-| Swift packages across layers | | | ✓ | | |
-| General Swift design philosophy | | | ✓ | | |
-| One statute's encoding | ✓ | | | | |
-| Cross-statute legal patterns | | | | ✓ | |
-| Cross-layer legal architecture | | | | | ✓ |
-| Legal skill/process design | | | | | ✓ |
+**Swift infrastructure**:
+
+| Criterion | Repo |
+|-----------|------|
+| One target's types, naming, or design | The superrepo containing that target |
+| Multiple targets within one superrepo | That superrepo |
+| Packages across layers (primitives + standards, etc.) | `swift-institute` |
+| General Swift design philosophy, architecture | `swift-institute` |
+| Skill/process design | `swift-institute` |
+
+**Legal domain**:
+
+| Criterion | Repo |
+|-----------|------|
+| One statute's encoding | `swift-nl-wetgever` (or relevant legislature repo) |
+| Cross-statute legal patterns | Legislature repo (`swift-nl-wetgever`) |
+| Cross-layer legal architecture | `rule-law` |
+| Legal skill/process design | `rule-law` |
+
+**Decision rule**: If the research only matters to people working in one superrepo,
+it goes there. If it matters across repos, it goes in the institute/ecosystem repo.
 
 **Cross-references**: [RES-002], [RES-006a]
 

@@ -32,9 +32,11 @@ ECOSYSTEM_LINES=(
     '        .enableUpcomingFeature("InternalImportsByDefault"),'
     '        .enableUpcomingFeature("MemberImportVisibility"),'
     '        .enableUpcomingFeature("NonisolatedNonsendingByDefault"),'
+    '        .enableExperimentalFeature("LifetimeDependence"),'
     '        .enableExperimentalFeature("Lifetimes"),'
     '        .enableExperimentalFeature("SuppressedAssociatedTypes"),'
-    '        .enableExperimentalFeature("TildeSendable"),'
+    '        .enableUpcomingFeature("InferIsolatedConformances"),'
+    '        .enableUpcomingFeature("LifetimeDependence"),'
 )
 
 # ── Repository roots to process ──────────────────────────────────────────────
@@ -76,9 +78,9 @@ extract_package_settings() {
     local scan_line=$start_line
     local found_open=false
 
+    local opens closes
     while [ "$scan_line" -le "$total_lines" ]; do
         line_text=$(sed -n "${scan_line}p" "$file")
-        local opens closes
         opens=$(echo "$line_text" | tr -cd '[' | wc -c | tr -d ' ')
         closes=$(echo "$line_text" | tr -cd ']' | wc -c | tr -d ' ')
         depth=$((depth + opens - closes))
@@ -166,8 +168,8 @@ process_file() {
     local total_lines
     total_lines=$(wc -l < "$file")
 
+    local line_text opens closes
     while [ "$end_line" -le "$total_lines" ]; do
-        local line_text opens closes
         line_text=$(sed -n "${end_line}p" "$file")
         opens=$(echo "$line_text" | tr -cd '{' | wc -c | tr -d ' ')
         closes=$(echo "$line_text" | tr -cd '}' | wc -c | tr -d ' ')
