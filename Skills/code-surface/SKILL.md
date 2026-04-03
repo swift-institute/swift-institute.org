@@ -78,11 +78,14 @@ instance.openWrite { }  // Compound method - FORBIDDEN
 dir.walkFiles()         // Compound method - FORBIDDEN
 ```
 
-**Exception**: Swift's standard boolean naming convention (`is` + adjective) is NOT a compound identifier. `isEmpty`, `isFinished`, `isFulfilled`, `isClosed` are single-concept boolean properties following API Design Guidelines, not verb-noun compounds.
+**Exception — boolean naming**: Swift's standard boolean naming convention (`is` + adjective) is NOT a compound identifier. `isEmpty`, `isFinished`, `isFulfilled`, `isClosed` are single-concept boolean properties following API Design Guidelines, not verb-noun compounds.
 
-**Rationale**: Nested accessors mirror the nested type philosophy and enable progressive disclosure.
+**Exception — spec-mirroring identifiers**: Static constants, enum cases, and type names that directly mirror specification-defined terminology are exempt. When the compound form IS the specification's term, the identifier mirrors the spec rather than inventing a compound. Examples: HTTP status `.notFound` (RFC 9110 §15.5.5 "404 Not Found"), header field `.contentType` (RFC 9110 §8.3), CSS property `BackgroundColor` (CSS Backgrounds §3.2).
 
-**Provenance (exception)**: 2026-04-01-async-primitives-audit-round-two.md
+**Rationale**: Nested accessors mirror the nested type philosophy and enable progressive disclosure. Spec-mirroring identifiers are exempt because their names derive from external authority, not internal naming decisions.
+
+**Provenance (boolean exception)**: 2026-04-01-async-primitives-audit-round-two.md
+**Provenance (spec-mirroring exception)**: 2026-04-02 pre-publication audit decision
 
 ---
 

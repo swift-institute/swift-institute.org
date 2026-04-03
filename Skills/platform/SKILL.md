@@ -206,6 +206,48 @@ struct WindowsHandle { ... }           // Use Kernel.Descriptor
 
 ---
 
+### [PLAT-ARCH-005a] No Platform C Types in Public API
+
+**Statement**: Public APIs in the platform stack MUST NOT expose C types in parameters, return types, associated types, or generic constraints. All platform C types MUST be wrapped in ecosystem types at L1. This is the general principle; [PLAT-ARCH-005] is the specific instance for descriptors.
+
+**Scope**: `kevent`, `epoll_event`, `OVERLAPPED`, `sockaddr`, `iovec`, `io_uring_sqe`, `io_uring_cqe`, `timespec`, and any other C struct or typedef from system headers.
+
+**Correct** — ecosystem type wraps the C type:
+```swift
+// Public API uses ecosystem types
+public static func register(
+    _ kq: borrowing Kernel.Descriptor,
+    events: [Kernel.Kqueue.Event]        // ✓ Ecosystem type
+) throws(Kernel.Kqueue.Error)
+
+public static func register(
+    _ kq: borrowing Kernel.Descriptor,
+    event: Kernel.Kqueue.Event           // ✓ Singular overload, ecosystem type
+) throws(Kernel.Kqueue.Error)
+```
+
+**Incorrect** — C type leaks through the API:
+```swift
+// ❌ C type in public API
+public static func register(
+    _ kq: borrowing Kernel.Descriptor,
+    changelist: UnsafeBufferPointer<kevent>   // ❌ Exposes kevent
+) throws(Kernel.Kqueue.Error)
+
+// ❌ C type in return position
+public func poll() -> [epoll_event]           // ❌ Exposes epoll_event
+```
+
+**SPI exception**: `@_spi(Syscall)` APIs MAY expose C types when the SPI consumer is another platform-stack package that needs raw access. These MUST be marked `@unsafe` and documented as internal-only.
+
+**Decision test**: Can a consumer of this API write their code without importing the platform's C module? If no, a C type is leaking.
+
+**Rationale**: [PLAT-ARCH-005] established the principle for descriptors — `Kernel.Descriptor` wraps `Int32`/`HANDLE` so consumers never see the raw type. The same principle applies to all platform types. C types in public APIs force consumers to understand platform-specific representations, defeating the purpose of the typed wrapper layer.
+
+**Cross-references**: [PLAT-ARCH-005], [PLAT-ARCH-003], [PATTERN-001], [PLAT-ARCH-008]
+
+---
+
 ### [PLAT-ARCH-006] Re-Export Chain Architecture
 
 **Statement**: Each level MUST re-export everything below it using `@_exported public import`, so that consumers only need one import at their chosen abstraction level.

@@ -2,8 +2,10 @@
 name: modularization
 description: |
   Intra-package modularization: target decomposition, dependency structure, constraint isolation.
+  Consumer import precision: primary vs supplementary decomposition, umbrella vs variant imports.
   Cross-package integration: SE-0450 trait-gated targets for optional inter-package conformances.
-  Apply when organizing multiple targets within a SwiftPM package or auditing package structure.
+  Apply when organizing multiple targets within a SwiftPM package, auditing package structure,
+  or determining which module to import from a multi-product package.
 
 layer: implementation
 
@@ -16,7 +18,7 @@ applies_to:
   - swift
   - swift6
   - primitives
-last_reviewed: 2026-03-20
+last_reviewed: 2026-04-03
 ---
 
 # Modularization
@@ -228,9 +230,9 @@ The umbrella product name MUST match `{Domain} Primitives`. The umbrella target 
 func defaultConfiguration() -> Config { ... }  // ❌ Implementation in umbrella
 ```
 
-**Rationale**: The umbrella enables convenience without sacrificing granularity. Consumer choice: `import Parser_Primitives` (everything) or `import Parser_Map_Primitives` (selective). Haskell's `module Foo (module Bar)` re-export and OCaml's Core library demonstrate this is a well-established cross-ecosystem pattern.
+**Rationale**: The umbrella enables convenience without sacrificing granularity. Haskell's `module Foo (module Bar)` re-export and OCaml's Core library demonstrate this is a well-established cross-ecosystem pattern. The umbrella's role to consumers depends on the decomposition type — see [MOD-015].
 
-**Cross-references**: [MOD-012]
+**Cross-references**: [MOD-012], [MOD-015]
 
 ---
 
@@ -269,7 +271,9 @@ func defaultConfiguration() -> Config { ... }  // ❌ Implementation in umbrella
 
 **Rationale**: Minimal dependencies keep incremental compile times proportional to the change. Stevens-Myers-Constantine coupling density at ~7% is exceptionally low and near-optimal for balancing connectivity with independence. Adding a feature to Parser Error Primitives recompiles only the ~12 targets that depend on it, not all 34.
 
-**Cross-references**: [MOD-007], [MOD-003]
+For cross-package import precision (which product to import from another package), see [MOD-015].
+
+**Cross-references**: [MOD-007], [MOD-003], [MOD-015]
 
 ---
 
@@ -288,6 +292,76 @@ func defaultConfiguration() -> Config { ... }  // ❌ Implementation in umbrella
 **Rationale**: Brent's theorem: given DAG with work W and span S, execution time on P processors is bounded by T_P >= max(W/P, S). With depth 3 and 35 targets: max parallelism = 35/3 ~ 11.7x. Contrast: a deeper DAG (depth 10) would yield only 3.5x — shallow DAGs are disproportionately better. The wide shallow shape is near-optimal for build parallelism (Mokhov et al. 2018, Amdahl's law: sequential fraction = 3/35 ~ 8.6%).
 
 **Cross-references**: [MOD-001], [MOD-003]
+
+---
+
+## Consumer Import Requirements
+
+### [MOD-015] Consumer Import Precision
+
+**Statement**: Consumer packages MUST import the narrowest module that provides the types they need. The correct import depends on the provider package's decomposition type.
+
+**Primary decomposition** — variants are independently useful modules along a clear axis (strategy, operation, algorithm). Core is scaffolding; the variants are the product.
+
+- Consumers MUST import specific variant modules, never the umbrella
+- Package.swift MUST declare dependencies on specific variant products, not the umbrella product
+
+**Supplementary decomposition** — Core contains the main API surface (the protocols, the foundational types). Variants add minor opt-in features (one additional algorithm, stdlib extensions, one alternate representation).
+
+- The umbrella IS the canonical consumer import
+- Importing the umbrella is correct even though variants exist
+
+**Distinguishing test**: Could Core stand alone as a complete, useful package? If yes — the variants are supplementary and the umbrella is canonical. If Core is just namespace scaffolding for the variants — the decomposition is primary and consumers must be selective.
+
+**Classification** (L1 primitives):
+
+| Decomposition | Packages | Consumer import |
+|---------------|----------|----------------|
+| Primary | array, ascii-parser, ascii-serializer, async, binary, binary-parser, bit-vector, buffer, graph, heap, kernel, list, machine, memory, numeric, parser, parser-machine, pool, serializer, slab, storage, test, time, tree | Specific variants |
+| Supplementary | sequence, affine, queue, algebra, hash-table, bit, cardinal, ordinal, index, identity, finite, dimension, geometry, set, rendering, cyclic, cyclic-index, input, link, source, text, token, vector, range, sample, lexer, algebra-affine, algebra-cardinal, algebra-modular, bit-index, bit-pack | Umbrella |
+
+**Correct** (primary decomposition — consumer imports specific variant):
+```swift
+// Consumer needs ring buffer specifically
+import Buffer_Ring_Primitives
+
+// Consumer needs DFS traversal specifically
+import Graph_DFS_Primitives
+
+// Package.swift
+.product(name: "Buffer Ring Primitives", package: "swift-buffer-primitives"),
+.product(name: "Graph DFS Primitives", package: "swift-graph-primitives"),
+```
+
+**Incorrect** (primary decomposition — umbrella pulls in everything):
+```swift
+// ❌ Pulls in Ring, Linear, Slab, Linked, Slots, Arena — only needs Ring
+import Buffer_Primitives
+
+// ❌ Pulls in all 16 graph algorithms — only needs DFS
+import Graph_Primitives
+```
+
+**Correct** (supplementary decomposition — umbrella is canonical):
+```swift
+// Sequence protocols are the main product — umbrella is canonical
+import Sequence_Primitives
+
+// Cardinal arithmetic is the main product — umbrella is canonical
+import Cardinal_Primitives
+```
+
+**Incorrect** (supplementary decomposition — Core is not consumer-facing):
+```swift
+// ❌ Core is an implementation detail, not a consumer-facing product
+import Sequence_Primitives_Core
+```
+
+**Rationale**: Primary decomposition packages can have 10–35 variant modules. Importing the umbrella defeats the modularization investment — consumers pay compile-time cost for every variant and lose the signal of which specific capabilities they depend on. Supplementary decomposition packages have 1–2 minor additions atop a complete Core; the umbrella adds negligible overhead and is the natural consumer interface.
+
+**Provenance**: Import precision audit, 2026-04-03 (`swift-primitives/Research/audit.md`).
+
+**Cross-references**: [MOD-005], [MOD-006], [MOD-003]
 
 ---
 
