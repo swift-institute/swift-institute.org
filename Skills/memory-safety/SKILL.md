@@ -1007,6 +1007,70 @@ var outer: Ownership.Borrow<Element> {
 
 ---
 
+### [MEM-LIFE-006] ~Escapable Parameters in Async Methods
+
+**Scope**: Async functions accepting `Span<T>` or `MutableSpan<T>` parameters.
+
+**Statement**: `~Escapable` function parameters (`Span<T>`, `inout MutableSpan<T>`) CAN be used in `async` methods and survive across suspension points (`await`). The compiler ties their lifetime to the function scope — not to the synchronous interval between suspensions.
+
+| Path | Parameter type | Why it works |
+|------|---------------|--------------|
+| Read | `inout MutableSpan<T>` | Coroutine stores a reference to caller's buffer; the `inout` binding is alive for the full function scope |
+| Write | `Span<T>` | Value parameter; alive for the full function scope |
+| Partial-write retry | `Span<T>` + `extracting(droppingFirst:)` | Sub-span derived from parameter; same lifetime |
+
+**Correct** — Span across await in retry loop:
+```swift
+public mutating func write(
+    _ buffer: Span<UInt8>
+) async throws(IO.Event.Failure) -> Int {
+    while true {
+        // ... attempt syscall with buffer ...
+        case .wouldBlock:
+            try await arm()  // Span survives this suspension
+        // ...
+    }
+}
+```
+
+**Correct** — MutableSpan across await:
+```swift
+public mutating func read(
+    into buffer: inout MutableSpan<UInt8>
+) async throws(IO.Event.Failure) -> Int {
+    while true {
+        // ... attempt syscall into &buffer ...
+        case .wouldBlock:
+            try await arm()  // inout MutableSpan survives this suspension
+        // ...
+    }
+}
+```
+
+**Correct** — `extracting(droppingFirst:)` replaces pointer arithmetic for partial writes:
+```swift
+public mutating func write(
+    all data: Span<UInt8>
+) async throws(IO.Error) {
+    var offset = 0
+    while offset < data.count {
+        let slice = data.extracting(droppingFirst: offset)
+        let n = try await channel.write(slice)
+        offset += n
+    }
+}
+```
+
+**The limitation remains**: `~Escapable` values cannot be *stored* in class fields or captured in `@escaping` closures ([MEM-LIFE-001]). Async function parameters are fine because the parameter lifetime is scoped to the function call — the caller's buffer is guaranteed alive until the function returns.
+
+**Empirical proof**: swift-io Channel migration (commit `6a691f88`) — replaced 18 unsafe pointer sites with Span/MutableSpan parameters in async methods with EAGAIN retry loops.
+
+**Cross-references**: [MEM-SPAN-001], [MEM-LIFE-001], [MEM-SAFE-012]
+
+**Provenance**: HANDOFF-escapable-async-skill-update.md (swift-io unsafe pointer audit)
+
+---
+
 ## Post-Implementation Checklist
 
 Before presenting code as complete, verify EACH item:
