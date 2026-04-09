@@ -449,7 +449,51 @@ extension Storage where Element: ~Copyable {
 }
 ```
 
-**Cross-references**: [API-ERR-001], [API-NAME-001]
+**Cross-references**: [API-ERR-001], [API-NAME-001], [IMPL-042]
+
+---
+
+### [IMPL-042] Non-Throwing Specialization for Generic Callback APIs
+
+**Statement**: When a public API propagates a user-supplied typed error through a generic parameter (a closure `throws(E)` or a protocol witness with `associatedtype Failure: Error`) and the callback is invoked in a hot path, the API MUST provide a specialized overload constrained to `Failure == Never`. The specialized overload MUST duplicate the implementation body — it MUST NOT forward to the generic version.
+
+**Problem**: Typed throws with a *generic* error parameter cannot always be specialized away by the compiler. Even when the caller binds the parameter to `Never`, a generic outer type (e.g. `struct Parser<Sink: Handler>` where `Handler.Failure` is the propagated error) hides the binding from the body's codegen. The callee retains error-propagation scaffolding — boxing, spill slots, and cleanup edges that can never execute — and the hot path pays for machinery it does not use.
+
+**Solution**: Duplicate the hot-path body under a `where` clause that fixes the propagated error to `Never`. Because the duplicated body is compiled in a context where the error type is *concrete*, the compiler eliminates the propagation scaffolding entirely. This is a direct application of [IMPL-COMPILE]: the invariant "this callback cannot throw" is expressed where the compiler can act on it.
+
+```swift
+public struct Parser<Sink: SAX.Handler> {
+    // Generic body — propagates Sink.Failure through the per-token loop.
+    public mutating func parse(bytes: Span<Byte>) throws(Parse.Error) {
+        /* full body */
+    }
+}
+
+extension Parser where Sink.Failure == Never {
+    // Duplicated body — compiled with no error propagation through callbacks.
+    public mutating func parse(bytes: Span<Byte>) throws(Parse.Error) {
+        /* full body — NOT `try self.parseGeneric(bytes:)` */
+    }
+}
+```
+
+**Why not forward**: A `where Failure == Never` overload whose body is `try self.genericParse(bytes:)` does not specialize. The forwarded call resolves to the generic entry point, which still carries the propagation scaffolding. Specialization requires the body itself to be visible in the specialized context.
+
+**When to apply**:
+
+| Condition | Required |
+|-----------|----------|
+| Callback is invoked in a tight loop or per-element/per-token | Yes |
+| Benchmarks attribute measurable cost to error propagation | Yes |
+| Body is stable enough that duplication is maintainable | Yes |
+
+If any condition fails, the duplication is unjustified — see [IMPL-001] (principled absence: no hot path, no specialization).
+
+**Duplication hygiene**: Because the two bodies MUST stay in lockstep, place them in adjacent files or adjacent sections of the same file, mark the duplicate with a `// WHY:` comment per [PATTERN-016] that names the optimization and warns against folding, and verify SIL before merging.
+
+**Provenance**: `compnerd/xylem` `Sources/SAXParser/SAXParser.swift:309` — the duplicated `parse(bytes:)` under `where Processor.Failure == Never` eliminates per-callback error boxing in the SAX hot loop. The source comment at line 313 explicitly warns: *"The body is intentionally duplicated from the generic overload so the compiler can eliminate per-callback error boxing when Failure == Never. Do not fold the two paths together without measuring SIL."*
+
+**Cross-references**: [API-ERR-001], [IMPL-001], [IMPL-040], [IMPL-COMPILE], [PATTERN-016], [BENCH-*]
 
 ---
 
