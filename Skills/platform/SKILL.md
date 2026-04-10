@@ -46,18 +46,23 @@ L3  swift-kernel          (Foundations)   Unified cross-platform module
          └── swift-windows   (Foundations)   Windows L3: re-exports + Windows-specific L3 code
               ↑
 L2  swift-iso-9945        (Standards)     POSIX specification — shared by Darwin + Linux
+    swift-linux-standard   (Standards)    Linux kernel API spec (epoll, io_uring)
+    swift-darwin-standard  (Standards)    Darwin/XNU kernel API spec (kqueue, mach)
+    swift-windows-standard (Standards)    Windows kernel API spec (IOCP, WinSock)
               ↑
 L1  swift-kernel-primitives (Primitives)  Cross-platform syscall-shaped vocabulary
-         ├── swift-darwin-primitives        Darwin-specific primitives (kqueue, mach)
-         ├── swift-linux-primitives         Linux-specific primitives (epoll, io_uring)
-         └── swift-windows-primitives       Windows-specific primitives (IOCP, WinSock)
+         ├── swift-cpu-primitives           CPU vocabulary (atomics, barriers, spin hints)
+         └── swift-{loader,terminal,...}-primitives  Domain vocabulary
 ```
 
 | Level | Package | Layer | Contains |
 |-------|---------|-------|----------|
 | L1 shared | `swift-kernel-primitives` | Primitives | Cross-platform `Kernel` namespace, `Kernel.Descriptor`, `Kernel.Error`, file/socket/thread/memory primitives |
-| L1 platform | `swift-{darwin,linux,windows}-primitives` | Primitives | Platform-specific syscall wrappers that extend `Kernel` |
-| L2 | `swift-iso-9945` | Standards | POSIX specification (IEEE 1003.1), shared by Darwin and Linux |
+| L1 vocabulary | `swift-cpu-primitives` | Primitives | CPU vocabulary: `CPU.Atomic`, `CPU.Barrier`, `CPU.Spin` |
+| L2 spec | `swift-iso-9945` | Standards | POSIX specification (IEEE 1003.1), shared by Darwin and Linux |
+| L2 platform | `swift-linux-standard` | Standards | Linux kernel API spec (epoll, io_uring, syscall ABI) |
+| L2 platform | `swift-darwin-standard` | Standards | Darwin/XNU kernel API spec (kqueue, mach ports) |
+| L2 platform | `swift-windows-standard` | Standards | Windows kernel API spec (IOCP, WinSock) |
 | L3 platform | `swift-{darwin,linux,windows}` | Foundations | Platform-specific foundations code (NUMA, entropy, thread affinity) |
 | L3 unified | `swift-kernel` | Foundations | Cross-platform unification via conditional re-exports |
 
@@ -83,7 +88,7 @@ L1  swift-kernel-primitives (Primitives)  Cross-platform syscall-shaped vocabula
 ```swift
 // ❌ Platform-specific code in swift-kernel-primitives
 #if os(Linux)
-extension Kernel.IO { public enum Uring {} }  // Belongs in swift-linux-primitives
+extension Kernel.IO { public enum Uring {} }  // Belongs in swift-linux-standard
 #endif
 
 // ❌ POSIX code duplicated in both Darwin and Linux primitives
@@ -107,14 +112,14 @@ import Darwin_Kernel_Primitives  // Consumer should import Kernel, not platform 
 // swift-kernel-primitives — defines the shared root
 public enum Kernel {}
 
-// swift-linux-primitives — extends it
+// swift-linux-standard — extends it
 extension Kernel.IO { public enum Uring {} }
 extension Kernel.Event { public enum Poll {} }
 
-// swift-darwin-primitives — extends it
+// swift-darwin-standard — extends it
 extension Kernel { public enum Kqueue {} }
 
-// swift-windows-primitives — extends it
+// swift-windows-standard — extends it
 extension Kernel.IO.Completion { public enum Port {} }
 
 // swift-iso-9945 — extends it via typealias
@@ -143,15 +148,15 @@ public enum KqueueEventNotification {}  // Should be Kernel.Kqueue
 **Statement**: Each platform-specific package MUST also define a platform root namespace for platform-only types that don't fit under `Kernel`.
 
 ```swift
-// swift-darwin-primitives
+// swift-darwin-standard
 public enum Darwin: Sendable {}
 extension Darwin { public typealias Kernel = Kernel_Primitives.Kernel }
 
-// swift-linux-primitives
+// swift-linux-standard
 public enum Linux: Sendable {}
 extension Linux { public typealias Kernel = Kernel_Primitives.Kernel }
 
-// swift-windows-primitives
+// swift-windows-standard
 public enum Windows {}
 extension Windows { public typealias Kernel = Kernel_Primitives.Kernel }
 
@@ -188,7 +193,7 @@ extension Kernel.Descriptor {
     public var fileDescriptor: Int32 { ... }
 }
 
-// swift-windows-primitives — Windows veneer
+// swift-windows-standard — Windows veneer
 extension Kernel.Descriptor {
     public static func borrowing(handle: HANDLE) -> Self { ... }
     public var handle: HANDLE { ... }
@@ -298,7 +303,7 @@ import Kernel                              ← consumer writes this
 
 ### [PLAT-ARCH-007] POSIX Code Belongs in ISO 9945
 
-**Statement**: POSIX syscall wrappers shared by Darwin and Linux MUST live in `swift-iso-9945` (Layer 2, Standards), NOT be duplicated in `swift-darwin-primitives` and `swift-linux-primitives`.
+**Statement**: POSIX syscall wrappers shared by Darwin and Linux MUST live in `swift-iso-9945` (Layer 2, Standards), NOT be duplicated in `swift-darwin-standard` and `swift-linux-standard`.
 
 ```
                     swift-iso-9945 (POSIX)
@@ -311,20 +316,20 @@ import Kernel                              ← consumer writes this
                     │ Kernel.Termios      │
                     └─────────┬───────────┘
                        ↗              ↖
-    swift-darwin-primitives    swift-linux-primitives
+    swift-darwin-standard    swift-linux-standard
     (kqueue, mach)             (epoll, io_uring)
 ```
 
-Both `swift-darwin-primitives` and `swift-linux-primitives` depend on `swift-iso-9945`. `swift-windows-primitives` does NOT — Windows is not POSIX.
+Both `swift-darwin-standard` and `swift-linux-standard` depend on `swift-iso-9945`. `swift-windows-standard` does NOT — Windows is not POSIX.
 
 **Incorrect**:
 ```swift
-// ❌ In swift-darwin-primitives
+// ❌ In swift-darwin-standard
 extension Kernel.Process {
     public static func fork() -> ... { }  // This is POSIX — belongs in swift-iso-9945
 }
 
-// ❌ In swift-linux-primitives (duplicated)
+// ❌ In swift-linux-standard (duplicated)
 extension Kernel.Process {
     public static func fork() -> ... { }  // Same POSIX code duplicated
 }
@@ -464,7 +469,7 @@ extension Path.View {
     public var parentBytes: Span<Path.Char>? { ... }  // Scans for '/' only
 }
 
-// In swift-windows-primitives (compiles on Windows only)
+// In swift-windows-standard (compiles on Windows only)
 extension Path.View {
     public var parentBytes: Span<Path.Char>? { ... }  // Scans for '/' and '\'
 }
@@ -488,7 +493,7 @@ extension Path.View {
 
 **Mechanism**: The `Kernel_Primitives` re-export chain (`@_exported public import Path_Primitives`) makes lower-layer types visible in platform packages without adding direct dependencies. Extensions defined in `ISO_9945_Kernel` or `Windows_Kernel_Primitives` are visible to any consumer that imports `Kernel`.
 
-**Provenance**: Path decomposition architecture decision (2026-04-01). `Path.View.parentBytes`, `.lastComponentBytes`, `.appending` moved from `swift-path-primitives` to `swift-iso-9945` (POSIX) and `swift-windows-primitives` (Windows).
+**Provenance**: Path decomposition architecture decision (2026-04-01). `Path.View.parentBytes`, `.lastComponentBytes`, `.appending` moved from `swift-path-primitives` to `swift-iso-9945` (POSIX) and `swift-windows-standard` (Windows).
 
 **Cross-references**: [PLAT-ARCH-008a], [PLAT-ARCH-002], [PLAT-ARCH-006]
 
@@ -519,10 +524,11 @@ The L3 unified package `swift-kernel` then:
 | Package | Location | Tier/Layer |
 |---------|----------|------------|
 | `swift-kernel-primitives` | `swift-primitives/swift-kernel-primitives/` | L1, Tier 17 |
-| `swift-darwin-primitives` | `swift-primitives/swift-darwin-primitives/` | L1, Tier 18 |
-| `swift-linux-primitives` | `swift-primitives/swift-linux-primitives/` | L1, Tier 18 |
-| `swift-windows-primitives` | `swift-primitives/swift-windows-primitives/` | L1, Tier 18 |
-| `swift-iso-9945` | `swift-standards/swift-iso-9945/` | L2 |
+| `swift-cpu-primitives` | `swift-primitives/swift-cpu-primitives/` | L1 |
+| `swift-iso-9945` | `swift-iso/swift-iso-9945/` | L2 |
+| `swift-linux-standard` | `swift-linux-foundation/swift-linux-standard/` | L2 |
+| `swift-darwin-standard` | `swift-standards/swift-darwin-standard/` | L2 |
+| `swift-windows-standard` | `swift-microsoft/swift-windows-standard/` | L2 |
 | `swift-darwin` | `swift-foundations/swift-darwin/` | L3 |
 | `swift-linux` | `swift-foundations/swift-linux/` | L3 |
 | `swift-windows` | `swift-foundations/swift-windows/` | L3 |
