@@ -96,7 +96,7 @@ extension Kernel.IO { public enum Uring {} }  // Belongs in swift-linux-standard
 
 // ❌ Platform conditional in a consumer package (swift-io, swift-file-system)
 #if canImport(Darwin)
-import Darwin_Kernel_Primitives  // Consumer should import Kernel, not platform modules
+import Darwin_Kernel_Standard  // Consumer should import Kernel, not platform modules
 #endif
 ```
 
@@ -264,8 +264,7 @@ import Kernel                              ← consumer writes this
   └─ @_exported Kernel_Primitives          ← cross-platform primitives
   └─ @_exported POSIX_Kernel               ← (Darwin/Linux only)
   └─ @_exported Darwin_Kernel              ← (Darwin only)
-       └─ @_exported Darwin_Primitives
-       └─ @_exported Darwin_Kernel_Primitives
+       └─ @_exported Darwin_Kernel_Standard
 ```
 
 **The unification file** (`swift-kernel/Sources/Kernel/Exports.swift`):
@@ -289,8 +288,7 @@ import Kernel                              ← consumer writes this
 **Platform foundations exports** (e.g., `swift-darwin/Sources/Darwin Kernel/Exports.swift`):
 
 ```swift
-@_exported public import Darwin_Primitives
-@_exported public import Darwin_Kernel_Primitives
+@_exported public import Darwin_Kernel_Standard
 ```
 
 **Result**: Platform conditionals exist in exactly two places — the L3 `Exports.swift` files and `Package.swift` dependency conditions. Consumer code is unconditional.
@@ -359,9 +357,9 @@ func read(from descriptor: Kernel.Descriptor) throws(Kernel.Error) -> [UInt8] {
 ```swift
 // ❌ Platform imports in consumer code
 #if canImport(Darwin)
-import Darwin_Kernel_Primitives
+import Darwin_Kernel_Standard
 #elseif canImport(Glibc)
-import Linux_Kernel_Primitives
+import Linux_Kernel_Standard
 #endif
 
 // ❌ Platform conditionals in consumer logic
@@ -491,7 +489,7 @@ extension Path.View {
 
 **Why this is stronger than [PLAT-ARCH-008a]**: The domain authority exception permits `#if os()` at L3 (Foundations) where the platform stack cannot reasonably absorb the logic. This rule goes further for L1 (Primitives): platform-specific behavior MUST be pushed to the platform packages entirely, using the re-export chain to make the extensions visible to consumers. L1 primitives stay unconditionally platform-agnostic.
 
-**Mechanism**: The `Kernel_Primitives` re-export chain (`@_exported public import Path_Primitives`) makes lower-layer types visible in platform packages without adding direct dependencies. Extensions defined in `ISO_9945_Kernel` or `Windows_Kernel_Primitives` are visible to any consumer that imports `Kernel`.
+**Mechanism**: The `Kernel_Primitives` re-export chain (`@_exported public import Path_Primitives`) makes lower-layer types visible in platform packages without adding direct dependencies. Extensions defined in `ISO_9945_Kernel` or `Windows_Kernel_Standard` are visible to any consumer that imports `Kernel`.
 
 **Provenance**: Path decomposition architecture decision (2026-04-01). `Path.View.parentBytes`, `.lastComponentBytes`, `.appending` moved from `swift-path-primitives` to `swift-iso-9945` (POSIX) and `swift-windows-standard` (Windows).
 
@@ -505,9 +503,9 @@ extension Path.View {
 
 | L3 Package | Re-exports | L3 Functionality |
 |------------|------------|------------------|
-| `swift-darwin` | `Darwin_Primitives`, `Darwin_Kernel_Primitives` | `Darwin.System.NUMA`, `Darwin.Random` (arc4random) |
-| `swift-linux` | `Linux_Primitives`, `Linux_Kernel_Primitives` | `Linux.System.NUMA`, `Linux.Thread.Affinity`, `Linux.Random` (getrandom) |
-| `swift-windows` | `Windows_Primitives`, `Windows_Kernel_Primitives` | `Windows.System.NUMA`, `Windows.Thread.Affinity`, `Windows.Random` |
+| `swift-darwin` | `Darwin_Kernel_Standard` | `Darwin.System.NUMA`, `Darwin.Random` (arc4random) |
+| `swift-linux` | `Linux_Kernel_Standard` | `Linux.System.NUMA`, `Linux.Thread.Affinity`, `Linux.Random` (getrandom) |
+| `swift-windows` | `Windows_Kernel_Standard` | `Windows.System.NUMA`, `Windows.Thread.Affinity`, `Windows.Random` |
 
 The L3 unified package `swift-kernel` then:
 - Re-exports the correct platform's L3 module via conditionals
@@ -642,16 +640,16 @@ Duplication is intentional: packages compile independently, no conditional compi
 ```swift
 // CORRECT — Platform identity
 #if os(macOS) || os(iOS) || os(tvOS) || os(watchOS) || os(visionOS)
-import Darwin_Kernel_Primitives
+import Darwin_Kernel_Standard
 #elseif os(Linux)
-import Linux_Kernel_Primitives
+import Linux_Kernel_Standard
 #elseif os(Windows)
-import Windows_Kernel_Primitives
+import Windows_Kernel_Standard
 #endif
 
 // INCORRECT — canImport for platform identity
-#if canImport(Darwin_Kernel_Primitives)
-import Darwin_Kernel_Primitives
+#if canImport(Darwin_Kernel_Standard)
+import Darwin_Kernel_Standard
 #endif
 ```
 
@@ -672,7 +670,7 @@ Use `canImport` for optional features (e.g., `#if canImport(SwiftUI)`). Use `os(
 
 | Package.swift Target | Import Identifier |
 |---------------------|-------------------|
-| `"Darwin Kernel Primitives"` | `Darwin_Kernel_Primitives` |
+| `"Darwin Kernel Standard"` | `Darwin_Kernel_Standard` |
 | `"Real Primitives"` | `Real_Primitives` |
 | `"IO Primitives"` | `IO_Primitives` |
 
@@ -708,7 +706,7 @@ When a Swift type name collides with a system module (e.g., `Darwin` type vs App
 
 ```swift
 // CORRECT
-let uuid = Darwin_Primitives.Darwin.Identity.UUID.parse(string)
+let uuid = Darwin_Standard_Core.Darwin.Identity.UUID.parse(string)
 
 // INCORRECT — Ambiguous
 let uuid = Darwin.Identity.UUID.parse(string)
@@ -716,7 +714,7 @@ let uuid = Darwin.Identity.UUID.parse(string)
 
 | Type Name | Collides With | Resolution |
 |-----------|---------------|------------|
-| `Darwin` | Apple's Darwin C module | `Darwin_Primitives.Darwin` |
+| `Darwin` | Apple's Darwin C module | `Darwin_Standard_Core.Darwin` |
 | `Foundation` | Apple's Foundation | Avoid; primitives don't use Foundation |
 | `System` | Apple's System module | `System_Primitives.System` |
 
