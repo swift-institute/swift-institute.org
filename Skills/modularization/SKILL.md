@@ -18,7 +18,7 @@ applies_to:
   - swift
   - swift6
   - primitives
-last_reviewed: 2026-04-03
+last_reviewed: 2026-04-10
 ---
 
 # Modularization
@@ -233,6 +233,40 @@ func defaultConfiguration() -> Config { ... }  // ❌ Implementation in umbrella
 **Rationale**: The umbrella enables convenience without sacrificing granularity. Haskell's `module Foo (module Bar)` re-export and OCaml's Core library demonstrate this is a well-established cross-ecosystem pattern. The umbrella's role to consumers depends on the decomposition type — see [MOD-015].
 
 **Cross-references**: [MOD-012], [MOD-015]
+
+---
+
+### [MOD-016] @_spi Per-File Opt-In
+
+**Statement**: `@_spi` visibility is per-file. An `@_spi(Syscall) @_exported public import` in `exports.swift` re-exports the SPI surface to *downstream modules* that import the target with `@_spi(Syscall)`. It does NOT grant SPI access to sibling `.swift` files within the same target. Each implementation file MUST independently declare its own `@_spi` import.
+
+**Correct** (every file that touches SPI members opts in):
+```swift
+// exports.swift — re-exports SPI to downstream modules
+@_spi(Syscall) @_exported public import Kernel_Descriptor_Primitives
+
+// IO.Read.swift — same target, still needs its own @_spi import
+@_spi(Syscall) import Kernel_Descriptor_Primitives
+
+// File.Open.swift — same target, still needs its own @_spi import
+@_spi(Syscall) import Kernel_Descriptor_Primitives
+```
+
+**Incorrect**:
+```swift
+// ❌ Assuming exports.swift's @_spi import propagates to siblings
+// exports.swift
+@_spi(Syscall) @_exported public import Kernel_Descriptor_Primitives
+
+// IO.Read.swift — no @_spi import, expects to inherit from exports.swift
+let fd = descriptor._rawValue  // ❌ Compile error: _rawValue is not accessible
+```
+
+**Rationale**: Each `.swift` file is an independent compilation unit for SPI purposes. The per-file ceremony ensures every file that reaches into SPI members explicitly declares that intent, making the SPI boundary auditable (`grep @_spi(Syscall)` identifies all boundary code). The 81-file burden in iso-9945 is proportional to the risk and documents the exact blast radius.
+
+**Provenance**: `swift-kernel-primitives/Research/spi-and-path-cleanup.md`, 2026-04-10.
+
+**Cross-references**: [MOD-002], [MOD-005]
 
 ---
 
