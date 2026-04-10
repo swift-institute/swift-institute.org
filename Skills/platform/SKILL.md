@@ -23,7 +23,7 @@ applies_to:
   - windows
   - posix
   - platform
-last_reviewed: 2026-03-20
+last_reviewed: 2026-04-10
 ---
 
 # Platform
@@ -519,18 +519,33 @@ The L3 unified package `swift-kernel` then:
 
 **Statement**: The following packages constitute the complete platform stack. New platform packages MUST NOT be created without explicit architectural discussion.
 
-| Package | Location | Tier/Layer |
-|---------|----------|------------|
-| `swift-kernel-primitives` | `swift-primitives/swift-kernel-primitives/` | L1, Tier 17 |
-| `swift-cpu-primitives` | `swift-primitives/swift-cpu-primitives/` | L1 |
-| `swift-iso-9945` | `swift-iso/swift-iso-9945/` | L2 |
-| `swift-linux-standard` | `swift-linux-foundation/swift-linux-standard/` | L2 |
-| `swift-darwin-standard` | `swift-standards/swift-darwin-standard/` | L2 |
-| `swift-windows-standard` | `swift-microsoft/swift-windows-standard/` | L2 |
-| `swift-darwin` | `swift-foundations/swift-darwin/` | L3 |
-| `swift-linux` | `swift-foundations/swift-linux/` | L3 |
-| `swift-windows` | `swift-foundations/swift-windows/` | L3 |
-| `swift-kernel` | `swift-foundations/swift-kernel/` | L3 (unified) |
+**L1 — Vocabulary (cross-platform concepts, domain-agnostic):**
+
+| Package | Location | Contains |
+|---------|----------|----------|
+| `swift-kernel-primitives` | `swift-primitives/swift-kernel-primitives/` | `Kernel` namespace, `Kernel.Descriptor`, `Kernel.Error`, file/socket/memory vocabulary |
+| `swift-cpu-primitives` | `swift-primitives/swift-cpu-primitives/` | `CPU.Atomic`, `CPU.Barrier`, `CPU.Spin`, `CPU.Timestamp` |
+
+**L2 — Specification Implementations (external specs faithfully encoded):**
+
+| Package | Organization | Location | Spec Authority |
+|---------|-------------|----------|---------------|
+| `swift-iso-9945` | `swift-iso` | `swift-iso/swift-iso-9945/` | IEEE 1003.1 (POSIX) |
+| `swift-linux-standard` | `swift-linux-foundation` | `swift-linux-foundation/swift-linux-standard/` | Linux kernel (kernel.org) |
+| `swift-darwin-standard` | `swift-standards` | `swift-standards/swift-darwin-standard/` | Apple (Darwin/XNU) |
+| `swift-windows-standard` | `swift-microsoft` | `swift-microsoft/swift-windows-standard/` | Microsoft (Win32) |
+| `swift-x86-standard` | `swift-intel` | `swift-intel/swift-x86-standard/` | Intel SDM / AMD APM |
+| `swift-arm-standard` | `swift-arm-ltd` | `swift-arm-ltd/swift-arm-standard/` | ARM Architecture Reference Manual |
+| `swift-riscv-standard` | `swift-riscv` | `swift-riscv/swift-riscv-standard/` | RISC-V ISA Specification |
+
+**L3 — Foundations (composition, Swift-native ergonomics):**
+
+| Package | Location | Contains |
+|---------|----------|----------|
+| `swift-darwin` | `swift-foundations/swift-darwin/` | Darwin L3: re-exports L2 + Darwin-specific composition |
+| `swift-linux` | `swift-foundations/swift-linux/` | Linux L3: re-exports L2 + Linux-specific composition |
+| `swift-windows` | `swift-foundations/swift-windows/` | Windows L3: re-exports L2 + Windows-specific composition |
+| `swift-kernel` | `swift-foundations/swift-kernel/` | Unified cross-platform: re-exports L3 platform packages |
 
 All paths are relative to `/Users/coen/Developer/`.
 
@@ -566,6 +581,105 @@ extension Parser.Error {
 **Provenance**: Reflection `2026-03-20-pass4-compound-renames-and-generic-nesting.md`.
 
 **Cross-references**: [API-NAME-001], [API-IMPL-009]
+
+---
+
+### [PLAT-ARCH-012] Vocabulary / Spec / Composition Principle
+
+**Statement**: The L1/L2/L3 distinction is determined by WHO defined the types:
+
+| Question | Answer | Layer |
+|----------|--------|-------|
+| Did **we** define these types? | Our abstractions, our naming, our design | **L1 Vocabulary** |
+| Did **they** define these types? | External spec, their documentation, their ABI | **L2 Spec Implementation** |
+| Do we **compose** both into a Swift-native API? | Ergonomics, async, composed abstractions | **L3 Composition** |
+
+**Examples**:
+
+| Domain | L1 (our concepts) | L2 (their spec) | L3 (our composition) |
+|--------|-------------------|------------------|---------------------|
+| Time | `swift-time-primitives` (Duration, Instant) | `swift-iso-8601` (ISO 8601 encoding) | `swift-time` (composed API) |
+| CPU | `swift-cpu-primitives` (Atomic, Barrier) | `swift-x86-standard` (CPUID, RDTSC) | `swift-cpu` (feature detection, dispatch) |
+| Platform | `swift-kernel-primitives` (Descriptor, Error) | `swift-linux-standard` (io_uring, epoll) | `swift-linux` (event loops, async) |
+
+**Test**: Can you point to an external man page, spec chapter, or SDK document that defines this type's API surface? Yes → L2. No → L1 (if atomic concept) or L3 (if composed).
+
+**Provenance**: io_uring implementation session (2026-04-10), `iso-9945/Research/platform-stack-layering-linux-primitives-role.md`.
+
+**Cross-references**: [PLAT-ARCH-001], [PLAT-ARCH-010]
+
+---
+
+### [PLAT-ARCH-013] Shell + Values OptionSet Pattern
+
+**Statement**: When a concept is universal (all platforms) but the constants are platform-specific, the type MUST use the shell + values pattern:
+
+1. **L1** defines the empty OptionSet shell (type + rawValue + init)
+2. **L2** adds platform-specific static constants via extension
+
+```swift
+// L1 swift-kernel-primitives — the shell (no constants)
+extension Kernel.File.Open {
+    public struct Options: OptionSet, Sendable {
+        public let rawValue: Int32
+        public init(rawValue: Int32) { self.rawValue = rawValue }
+    }
+}
+
+// L2 swift-iso-9945 — POSIX adds its constants
+extension Kernel.File.Open.Options {
+    public static let create = Self(rawValue: O_CREAT)
+    public static let truncate = Self(rawValue: O_TRUNC)
+}
+
+// L2 swift-linux-standard — Linux adds platform-specific constants
+extension Kernel.File.Open.Options {
+    public static let direct = Self(rawValue: O_DIRECT)  // Linux-only
+}
+```
+
+**Boolean init extensions** for guided call-site ergonomics:
+
+```swift
+// L2 — boolean init references statics, not platform constants [IMPL-002]
+extension Kernel.File.Open.Options {
+    public init(
+        create: Bool = false,
+        truncate: Bool = false,
+        closeOnExec: Bool = true   // safe default
+    ) {
+        var result: Self = []
+        if create { result.insert(.create) }
+        if truncate { result.insert(.truncate) }
+        if closeOnExec { result.insert(.closeOnExec) }
+        self = result
+    }
+}
+```
+
+**When the concept is POSIX-only** (not universal — e.g., AT_* flags, mlockall flags), the type MUST be defined in `swift-iso-9945` directly — not as a shell in kernel-primitives. The shell pattern is only for genuinely cross-platform concepts.
+
+**Naming convention**: OptionSet types use `.Options` suffix, not `.Flags`. `.Flags` is C-speak for mechanism; `.Options` reads as intent per [IMPL-INTENT].
+
+**Provenance**: io_uring semantic flag modeling (2026-04-10), shell type audit.
+
+**Cross-references**: [PLAT-ARCH-005a], [IMPL-002], [IMPL-INTENT]
+
+---
+
+### [PLAT-ARCH-014] ISA Standard Packages
+
+**Statement**: CPU instruction set architecture (ISA) packages are L2 — they faithfully encode an external specification. They are NOT L1 hardware primitives.
+
+| Package | Spec Authority | Contains |
+|---------|---------------|----------|
+| `swift-x86-standard` | Intel SDM / AMD APM | CPUID, RDTSC, RDRAND, MSR access |
+| `swift-arm-standard` | ARM Architecture Reference Manual | CNTFRQ, WFE, SEV, DMB, counter/timestamp reads |
+| `swift-riscv-standard` | RISC-V ISA Specification | (stub — future ISA features) |
+
+`swift-cpu-primitives` (L1) defines the **cross-arch vocabulary** — `CPU.Atomic`, `CPU.Barrier`, `CPU.Spin`. The ISA standards (L2) faithfully encode **each architecture's specification**. `swift-cpu` (L3, future) would compose both into runtime feature detection and ISA-adaptive dispatch.
+
+**Cross-references**: [PLAT-ARCH-001], [PLAT-ARCH-010], [PLAT-ARCH-012]
 
 ---
 
@@ -623,8 +737,8 @@ Duplication is intentional: packages compile independently, no conditional compi
 
 ```swift
 .product(
-    name: "ARM Primitives",
-    package: "swift-arm-primitives",
+    name: "ARM Standard",
+    package: "swift-arm-standard",
     condition: .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .linux])
 )
 ```
