@@ -22,6 +22,11 @@ applies_to:
   - swift-incits
   - swift-foundations
   - swift-institute
+  - swift-linux-foundation
+  - swift-microsoft
+  - swift-arm-ltd
+  - swift-intel
+  - swift-riscv
   - rule-law
   - swift-nl-wetgever
 last_reviewed: 2026-03-20
@@ -58,12 +63,17 @@ The skill MUST iterate over these directories:
 | 8 | `swift-ecma/` | No | `swift-ecma-*/` with standalone `.git/` directories |
 | 9 | `swift-incits/` | No | `swift-incits-*/` with standalone `.git/` directories |
 | 10 | `swift-standards/` | No | `swift-*-standard/` with standalone `.git/` directories |
-| 11 | `swift-foundations/` | Yes (standalone `.git/`) | `swift-*/` with submodule `.git` files |
-| 12 | `swift-institute/` | Yes (standalone `.git/`) | No sub-repos |
-| 13 | `swift-nl-wetgever/` | Yes (standalone `.git/`) | `*/` with standalone `.git/` directories (1057 statute packages) |
-| 14 | `swift-us-nv-legislature/` | Yes (standalone `.git/`) | `*/` with standalone `.git/` directories (820 NRS packages) |
-| 15 | `swift-law/` | Yes (standalone `.git/`) | Submodules to org-repos (not checked out locally) |
-| 16 | `rule-law/` | Yes (standalone `.git/`) | `rule-*/` with standalone `.git/` directories |
+| 11 | `swift-linux-foundation/` | No | `swift-*/` with standalone `.git/` directories |
+| 12 | `swift-microsoft/` | No | `swift-*/` with standalone `.git/` directories |
+| 13 | `swift-arm-ltd/` | No | `swift-*/` with standalone `.git/` directories |
+| 14 | `swift-intel/` | No | `swift-*/` with standalone `.git/` directories |
+| 15 | `swift-riscv/` | No | `swift-*/` with standalone `.git/` directories |
+| 16 | `swift-foundations/` | Yes (standalone `.git/`) | `swift-*/` with submodule `.git` files |
+| 17 | `swift-institute/` | Yes (standalone `.git/`) | No sub-repos |
+| 18 | `swift-nl-wetgever/` | Yes (standalone `.git/`) | `*/` with standalone `.git/` directories (1057 statute packages) |
+| 19 | `swift-us-nv-legislature/` | Yes (standalone `.git/`) | `*/` with standalone `.git/` directories (820 NRS packages) |
+| 20 | `swift-law/` | Yes (standalone `.git/`) | Submodules to org-repos (not checked out locally) |
+| 21 | `rule-law/` | Yes (standalone `.git/`) | `rule-*/` with standalone `.git/` directories |
 
 **Statement**: For each directory, first process all sub-repos (`swift-*/`), then process the
 parent repo (if it is a git repo). Parent must go last so submodule pointer updates are captured
@@ -109,6 +119,11 @@ DIRS=(
   "swift-ecma"
   "swift-incits"
   "swift-standards"
+  "swift-linux-foundation"
+  "swift-microsoft"
+  "swift-arm-ltd"
+  "swift-intel"
+  "swift-riscv"
   "swift-foundations"
   "swift-nl-wetgever"
   "swift-us-nv-legislature"
