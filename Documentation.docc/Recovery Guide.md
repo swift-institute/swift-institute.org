@@ -50,7 +50,7 @@ find ~/.claude/file-history -name "*@v*" -exec grep -l "unique pattern" {} \; 2>
 # Found ordinal-cardinal-foundations.md via:
 grep -rh "Ordinal and Cardinal" ~/.claude/file-history/ 2>/dev/null
 
-# Result: /Users/coen/.claude/file-history/dfa43cdc.../b79764e2ae1f5353@v1
+# Result: ~/.claude/file-history/{hash-dir}/{content-hash}@v1
 ```
 
 ### 3. Check tool-results (Second Best Source)
@@ -58,17 +58,17 @@ grep -rh "Ordinal and Cardinal" ~/.claude/file-history/ 2>/dev/null
 Tool results contain file contents that were read during sessions:
 
 ```bash
-# Project directories use dashes instead of slashes:
-# /Users/coen/Developer/swift-institute → -Users-coen-Developer-swift-institute
+# Project directories use dashes instead of slashes.
+# Example: /Users/{user}/Developer/swift-institute → -Users-{user}-Developer-swift-institute
 
 # Find tool-results with your content
-grep -rl "unique pattern" ~/.claude/projects/-Users-*/*/tool-results/toolu_*.txt 2>/dev/null
+grep -rl "unique pattern" ~/.claude/projects/*/tool-results/toolu_*.txt 2>/dev/null
 
 # List tool-results by size (files are named toolu_*.txt)
 find ~/.claude/projects -name "toolu_*.txt" -path "*/tool-results/*" -size +10k | head -20
 
 # Search within a specific project's tool-results
-ls ~/.claude/projects/-Users-coen-Developer-swift-institute/*/tool-results/
+ls ~/.claude/projects/{project-slug}/*/tool-results/
 ```
 
 **Example from Research recovery:**

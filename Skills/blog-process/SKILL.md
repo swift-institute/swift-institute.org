@@ -16,7 +16,7 @@ applies_to:
 
 migrated_from: Blog/Blog Post Process.md
 migration_date: 2026-01-28
-last_reviewed: 2026-03-20
+last_reviewed: 2026-04-14
 ---
 
 # Blog Post Process
@@ -422,6 +422,49 @@ After review, add metadata: `review_date`, `reviewer`, `review_notes`.
 **Collaborative review**: For posts targeting critical audiences (e.g., Swift Forums) or first-of-its-kind content, the **collaborative-discussion** skill can be used as a review mechanism. This is especially useful when the review surfaces contested editorial points that require explicit convergence rather than unilateral resolution.
 
 **Cross-references**: [BLOG-005], [BLOG-007]
+
+---
+
+### [BLOG-013] Receipts: Link Every Load-Bearing Claim to a Runnable Experiment
+
+**Statement**: Each load-bearing technical claim in a blog post MUST be backed by a reproducible experiment per [EXP-002], and the post MUST link from the claim's prose directly to the experiment's source on GitHub.
+
+A *load-bearing claim* is any assertion the post relies on for its argument: "the compiler rejects X with diagnostic Y", "approach A compiles but approach B does not", "this fix produces these specific lines of code". Style claims, opinions, and expository background are exempt — only claims that the reader could in principle dispute by running code.
+
+**Why**: Blog posts are written for external audiences who do not start from a position of trust. Every claim is implicitly a "trust me on this." Linking each claim to a runnable Swift package converts the post from assertion to demonstration. The reader can clone, build, and verify. This is the same evidence-over-assertion ethos that grounds [EXP-002] for internal research.
+
+**How to apply**:
+
+| Step | Action |
+|------|--------|
+| 1. Audit claims | Before drafting, list every claim in the post that asserts compiler/runtime/language behavior. Each one is a candidate for a backing experiment. |
+| 2. Map to experiments | For each claim, identify whether an experiment already exists (often yes, since posts emerge from experimental work). If no, plan a variant. |
+| 3. Add experiment variants | Create per-claim variants in the existing experiment package most relevant to the claim, never in a per-post directory. The experiment is named by what it tests, not by who consumes it. Naming: `V{N}_{descriptive}` (e.g., `V7_Retroactive`, `V8_ModuleSelectors`). Each variant should be minimal and prove exactly one claim. If no existing experiment fits, create a new package in `Experiments/` flat (no `blog-` prefix) per [EXP-002]. |
+| 4. Link inline | In the post, link from the claim's prose to the variant's GitHub URL. Format: parenthetical or inline reference, not a footnote. |
+| 5. Verify on draft completion | Before moving to Review per [BLOG-006], every load-bearing claim must have its link in place. |
+
+**Inline link format** — preferred:
+
+```markdown
+Every variant fails. Identical error.
+([V1–V5](https://github.com/swift-institute/swift-institute/tree/main/Experiments/{experiment-name}))
+```
+
+**Acceptable alternative** — footnote-style for dense passages:
+
+```markdown
+The compiler emits a different error here[^v7].
+
+[^v7]: [V7_Retroactive](https://github.com/swift-institute/swift-institute/tree/main/Experiments/{experiment-name}/Sources/V7_Retroactive)
+```
+
+**Anti-pattern**: A claim asserted in prose without a link, when an experiment exists or could trivially be added. Any reader who wants to verify must hunt through the repo. Trust degrades.
+
+**Anti-pattern**: A blanket "see this experiment for all claims" link at the bottom of the post. Per-claim links are higher-friction to write but dramatically lower-friction to verify. The asymmetry is the point.
+
+**Exception**: Posts published while the author is still establishing their public footprint MAY ship with partial receipts (the author commits to backfilling). The post's Notes column in `Blog/_index.md` SHOULD record what's pending.
+
+**Cross-references**: [EXP-002], [EXP-005], [EXP-006], [BLOG-005], [BLOG-006]
 
 ---
 

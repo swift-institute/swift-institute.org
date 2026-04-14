@@ -235,7 +235,7 @@ This is namespace hygiene. Names that look similar should mean similar things. W
 
 ### Plans Survive Session Boundaries
 
-The plan at `/Users/coen/.claude/plans/melodic-tickling-hedgehog.md` captures not just what to do but why. When a session ends and another begins, the new context has the plan. Without it, the next session would re-derive decisions already made: why Cache over Pool, why ~Copyable requires class wrappers, why `any Error` is acceptable in Cache.Error for now.
+An internal implementation plan captured not just what to do but why. When a session ends and another begins, the new context has the plan. Without it, the next session would re-derive decisions already made: why Cache over Pool, why ~Copyable requires class wrappers, why `any Error` is acceptable in Cache.Error for now.
 
 The plan is a compressed conversation history optimized for resumption. Not chat logs (too verbose), not code (too implicit)—the plan captures decisions at the level where they're actionable.
 

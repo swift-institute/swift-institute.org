@@ -42,10 +42,6 @@ Research → Experiments → Implementation → Iterate → Testing → Document
 
 Documentation does not drive research or experiments — it captures them. Inline `///` describes the implementation as it IS. The `.docc` articles reference the research that informed the design, the experiments that verified it, and the tests that guard it.
 
-Two exemplar projects inform these conventions:
-- `swift-us-nv-nrs-78-private-corporations` — .docc as navigation scaffolding
-- `wet-zeggenschap-lichaamsmateriaal` — .docc as substantive content layer
-
 **Scope**: All inline DocC comments, `.docc` catalogue files, and code comment quality patterns (workaround/deviation/anticipatory templates). README conventions are covered by the **readme** skill.
 
 ---
@@ -58,11 +54,6 @@ Two exemplar projects inform these conventions:
 
 **Correct**:
 ```swift
-/// Toestemming bij leven
-public struct `Artikel 14`: Sendable { ... }
-```
-
-```swift
 /// Submits work to the executor pool.
 public func submit<T>(_ work: @Sendable () throws -> T) async throws(IO.Lifecycle.Error<IO.Error>) -> T
 ```
@@ -70,7 +61,7 @@ public func submit<T>(_ work: @Sendable () throws -> T) async throws(IO.Lifecycl
 **Incorrect**:
 ```swift
 /// This struct uses @Splat macro and stores arguments in a nested type.
-public struct `Artikel 14`: Sendable { ... }  // ❌ Describes implementation, not behavior
+public struct Arena: ~Copyable { ... }  // ❌ Describes implementation, not behavior
 ```
 
 **Rationale**: The summary line is the first thing readers see in quick help and symbol lists. It must orient, not explain internals.
@@ -85,36 +76,33 @@ public struct `Artikel 14`: Sendable { ... }  // ❌ Describes implementation, n
 2. Blank line
 3. Specification section heading (when modeling an external spec)
 4. Specification text in blockquote (`>`) when modeling external specs
-5. `## Voorbeeld` / `## Example` with working Swift code (when implemented)
+5. `## Example` with working Swift code (when implemented)
 
 **Correct** (specification-mirroring type):
 ```swift
-/// Toestemming bij leven
+/// Version 4 (random) UUID.
 ///
-/// ## Wetsartikel
+/// ## RFC 4122 Section 4.4
 ///
-/// > **Toestemming bij leven**
+/// > The version 4 UUID is meant for generating UUIDs from truly-random
+/// > or pseudo-random numbers.
 /// >
-/// > [1.](<doc:Artikel 14/Lid 1>) Het bij leven [afnemen](<doc:Artikel 1/Afnemen>)
-/// > van [lichaamsmateriaal](<doc:Artikel 1/Lichaamsmateriaal>) en het
-/// > [bewaren](<doc:Artikel 1/Bewaren>) of gebruiken daarvan vindt niet plaats dan
-/// > nadat de [beslissingsbevoegde](<doc:Artikel 1/Beslissingsbevoegde>) voor deze
-/// > [handelingen](<doc:Artikel 1/Handelingen met lichaamsmateriaal>)
-/// > [toestemming](<doc:Artikel 1/Toestemming>) heeft gegeven.
+/// > The algorithm is as follows:
+/// >
+/// > - Set the two most significant bits (bits 6 and 7) of the
+/// >   clock_seq_hi_and_reserved to zero and one, respectively.
+/// > - Set the four most significant bits (bits 12 through 15) of the
+/// >   time_hi_and_version field to the 4-bit version number from
+/// >   Section 4.1.3.
+/// > - Set all the other bits to randomly (or pseudo-randomly) chosen
+/// >   values.
 ///
-/// ## Voorbeeld
+/// ## Example
 ///
 /// ```swift
-/// let artikel14 = try `Artikel 14`(
-///     `Artikel 14`.Arguments(
-///         lid1: .init(
-///             `beslissingsbevoegde heeft toestemming gegeven voor afnemen`: true
-///         ),
-///         ...
-///     )
-/// )
+/// let uuid = RFC_4122.UUID.v4()
 /// ```
-public struct `Artikel 14`: Sendable { ... }
+public struct V4: Sendable { ... }
 ```
 
 **Correct** (infrastructure type):
@@ -175,8 +163,8 @@ public func submit<T>(_ work: @Sendable () throws -> T) async throws(IO.Lifecycl
 
 **Correct**:
 ```swift
-/// Whether the actions with body material are permitted.
-public let `de handelingen met lichaamsmateriaal zijn toegestaan`: Bool
+/// Whether the pool has been shut down and will reject new work.
+public let isTerminating: Bool
 ```
 
 ```swift
@@ -195,7 +183,7 @@ var count: Int  // ❌ Documentation adds no information
 
 ### [DOC-005] Specification-Mirroring Documentation
 
-**Statement**: When a type models an external specification (statute, RFC, ISO), the inline documentation MUST contain:
+**Statement**: When a type models an external specification (RFC, ISO, etc.), the inline documentation MUST contain:
 
 1. Summary line = specification section title
 2. Specification section heading (domain-appropriate, see [DOC-041])
@@ -204,23 +192,23 @@ var count: Int  // ❌ Documentation adds no information
 
 **Correct**:
 ```swift
-/// Committees of board of directors; Designation.
+/// Name String UUID from a namespace (Version 5, SHA-1).
 ///
-/// # Statute
+/// ## RFC 4122 Section 4.3
 ///
-/// > [1.](<doc:NRS 78/125/1>) Unless otherwise provided in articles, board
-/// > may designate one or more committees with powers of the board in
-/// > management of business and affairs.
+/// > [1.](<doc:RFC 4122/Section 4.3/1>) The version 5 UUID is meant for
+/// > generating UUIDs from "names" that are drawn from, and unique within,
+/// > some "name space".
 /// >
-/// > [2.](<doc:NRS 78/125/2>) Each committee must include at least one
-/// > director.
-public struct `125` { ... }
+/// > [2.](<doc:RFC 4122/Section 4.3/2>) The concept of name and name space
+/// > should be broadly construed, and not limited to textual names.
+public struct V5: Sendable { ... }
 ```
 
 **Incorrect**:
 ```swift
-/// Deals with board committees.
-public struct `125` { ... }  // ❌ No spec text, no section heading, vague summary
+/// Deals with namespace UUIDs.
+public struct V5: Sendable { ... }  // ❌ No spec text, no section heading, vague summary
 ```
 
 **Rationale**: Specification-mirroring types exist to model a specification. The documentation must carry that specification text so developers don't need to consult external sources.
@@ -235,15 +223,14 @@ public struct `125` { ... }  // ❌ No spec text, no section heading, vague summ
 
 **Correct**:
 ```swift
-/// > [1.](<doc:Artikel 14/Lid 1>) Het bij leven afnemen van lichaamsmateriaal
-/// > en het bewaren of gebruiken daarvan vindt niet plaats dan nadat de
-/// > beslissingsbevoegde toestemming heeft gegeven.
+/// > [1.](<doc:RFC 4122/Section 4.4/1>) The version 4 UUID is meant for
+/// > generating UUIDs from truly-random or pseudo-random numbers.
 /// >
-/// > [2.](<doc:Artikel 14/Lid 2>) De beheerder draagt zorg voor het vragen
-/// > van de in het eerste lid bedoelde toestemming.
+/// > [2.](<doc:RFC 4122/Section 4.4/2>) Set the two most significant bits
+/// > of the clock_seq_hi_and_reserved to zero and one, respectively.
 /// >
-/// > [3.](<doc:Artikel 14/Lid 3>) Een eenmaal verleende toestemming kan te
-/// > allen tijde worden ingetrokken.
+/// > [3.](<doc:RFC 4122/Section 4.4/3>) Set the four most significant bits
+/// > of the time_hi_and_version field to the 4-bit version number.
 ```
 
 **Rationale**: Subsection links create a navigable table of contents within the parent type's documentation, enabling direct navigation to specific clauses.
@@ -258,9 +245,9 @@ public struct `125` { ... }  // ❌ No spec text, no section heading, vague summ
 
 **Correct**:
 ```swift
-/// > 3.-6. [Provisions for remote participation via electronic communications,
-/// > videoconferencing, or teleconferencing with identity verification and
-/// > reasonable participation opportunities]
+/// > 3.-6. [Specifies the conversion of the name to a canonical sequence
+/// > of octets, the hashing strategy, and the byte ordering rules for
+/// > the resulting UUID fields]
 ```
 
 **Rationale**: Brackets signal summarization versus verbatim text, preserving the reader's ability to distinguish between exact specification language and editorial summaries.
@@ -273,23 +260,21 @@ public struct `125` { ... }  // ❌ No spec text, no section heading, vague summ
 
 | Format | Use Case | Example |
 |--------|----------|---------|
-| DocC link | Explicit authored links, cross-article, defined terms | `[artikel 8](<doc:Artikel 8>)` |
-| Backtick auto-link | Casual sibling references | `` ``195`` `` |
+| DocC link | Explicit authored links, cross-article, defined terms | `[Section 4.1](<doc:RFC 4122/Section 4.1>)` |
+| Backtick auto-link | Casual sibling references | `` ``V4`` `` |
 
 DocC links MUST be used when linking to a different specification section or a defined term. Backtick auto-links MAY be used for sibling references within the same parent scope.
 
 **Correct**:
 ```swift
-/// > De [beheerder](<doc:Artikel 1/Beheerder>) draagt zorg voor het vragen van
-/// > [toestemming](<doc:Artikel 1/Toestemming>), met dien verstande dat degene die
-/// > de toestemming feitelijk vraagt, zich er voor het vragen van de toestemming van
-/// > vergewist dat de beslissingsbevoegde bekend is met de informatie, bedoeld in
-/// > [artikel 8](<doc:Artikel 8>).
+/// > The [namespace](<doc:RFC 4122/Namespaces>) provides a way to generate
+/// > [name-based UUIDs](<doc:RFC 4122/Section 4.3>), ensuring that the same
+/// > name in the same namespace always produces the same UUID, as defined in
+/// > [Section 4.1](<doc:RFC 4122/Section 4.1>).
 ```
 
 ```swift
-/// unless the articles authorize the board of directors to fix and
-/// determine these matters as provided in ``195`` and ``196``.
+/// Delegates to ``V4`` and ``V5`` depending on the requested version.
 ```
 
 **Rationale**: Consistent link formatting enables navigation. DocC links for cross-article references create clickable paths; backtick links for siblings keep local references lightweight.
@@ -302,16 +287,16 @@ DocC links MUST be used when linking to a different specification section or a d
 
 **Correct**:
 ```swift
-/// > _[afnemen](<doc:Artikel 1/Afnemen>)_: handeling waardoor stoffen,
-/// > bestanddelen of delen van de donor worden afgescheiden...
+/// > _[UUID](<doc:RFC 4122/UUID>)_: A 128-bit number used to uniquely
+/// > identify information in computer systems.
 /// >
-/// > _[beheerder](<doc:Artikel 1/Beheerder>)_: de rechtspersoon die
-/// > lichaamsmateriaal bewaart of verstrekt...
+/// > _[Namespace](<doc:RFC 4122/Namespace>)_: A UUID that uniquely
+/// > identifies the context of a name.
 ```
 
 ```swift
-/// NRS 78.3782: _[Acquiring person](<doc:NRS 78/3782>)_
-/// NRS 78.3783: _[Acquisition](<doc:NRS 78/3783>)_
+/// RFC 4122 Section 4.1.7: _[Nil UUID](<doc:RFC 4122/Nil>)_
+/// RFC 4122 Section 4.4: _[Version 4 UUID](<doc:RFC 4122/V4>)_
 ```
 
 **Rationale**: Definition indices create a navigable glossary. The italic-plus-link pattern is visually consistent and DocC-renderable.
@@ -320,7 +305,7 @@ DocC links MUST be used when linking to a different specification section or a d
 
 ### [DOC-010] Explanatory Material Exclusion
 
-**Statement**: Explanatory material (legislative rationale, design commentary, Memorie van Toelichting, explanatory memoranda) MUST NOT appear in inline `///` comments. References to Research/ documents and Experiments/ packages MUST NOT appear in inline `///` comments. Inline docs contain specification text, code examples, and cross-references only. Explanatory material and research/experiment references belong exclusively in `.docc` articles.
+**Statement**: Explanatory material (design commentary, explanatory memoranda, rationale text) MUST NOT appear in inline `///` comments. References to Research/ documents and Experiments/ packages MUST NOT appear in inline `///` comments. Inline docs contain specification text, code examples, and cross-references only. Explanatory material and research/experiment references belong exclusively in `.docc` articles.
 
 **Rationale**: Inline docs are the self-sufficient developer reference read alongside source code. Explanatory material and research/experiment links would bloat source files and mix normative specification text with non-normative commentary. The .docc catalogue is the appropriate layer for this depth.
 
@@ -354,9 +339,9 @@ Sources/{Module Name}/{Module Name}.docc/
     @TitleHeading("{Domain Heading}")
 }
 
-> Important: {Legal disclaimers or version notes if applicable.}
+> Important: {Disclaimers or version notes if applicable.}
 
-{Preamble text if applicable (e.g., legislative enacting clause).}
+{Preamble text if applicable.}
 
 ## Topics
 
@@ -365,24 +350,24 @@ Sources/{Module Name}/{Module Name}.docc/
 - ``{Symbol}``
 ```
 
-`@DisplayName` provides human-readable title. `@TitleHeading` provides domain context (e.g., "Nevada Revised Statutes", "Wet zeggenschap lichaamsmateriaal", "Swift Institute").
+`@DisplayName` provides human-readable title. `@TitleHeading` provides domain context (e.g., "RFC 4122", "Swift Primitives", "Swift Institute").
 
 **Correct**:
 ```markdown
-# ``Wet_Zeggenschap_Lichaamsmateriaal``
+# ``RFC_4122``
 
 @Metadata {
-    @DisplayName("Wet zeggenschap lichaamsmateriaal")
-    @TitleHeading("Regels voor handelingen met lichaamsmateriaal...")
+    @DisplayName("RFC 4122")
+    @TitleHeading("A Universally Unique IDentifier (UUID) URN Namespace")
 }
 
-> Important: Geconsolideerde tekst...
+> Important: This module implements RFC 4122 as published July 2005.
 
 ## Topics
 
-### Hoofdstuk 1: Begripsbepalingen
+### Section 4: Algorithms for Creating a UUID
 
-- ``Artikel 1``
+- ``Section_4``
 ```
 
 **Rationale**: The root page is the entry point for the entire module's documentation. Consistent structure enables predictable navigation.
@@ -416,43 +401,14 @@ This is sufficient for early development, shell types, or types whose inline doc
 
 | Section | Purpose | Content Source |
 |---------|---------|---------------|
-| `## Wetsartikel` / `## Specification` | Blockquoted spec text with cross-links | Mirrors inline docs |
-| `## Voorbeeld` / `## Example` | Working Swift code example | Mirrors inline docs |
-| `## Memorie van Toelichting` / `## Rationale` | Explanatory material | Exclusive to .docc |
+| `## Specification` | Blockquoted spec text with cross-links | Mirrors inline docs |
+| `## Example` | Working Swift code example | Mirrors inline docs |
+| `## Rationale` | Explanatory material | Exclusive to .docc |
 | `## Research` | Links to relevant research documents | Exclusive to .docc |
 | `## Experiments` | Links to relevant experiment packages | Exclusive to .docc |
-| `## Topics → ### Conclusies` | Derived conclusions as navigable symbols | Exclusive to .docc |
+| `## Topics → ### Conclusions` | Derived conclusions as navigable symbols | Exclusive to .docc |
 
 When specification text appears in a .docc article, it MUST match the inline `///` version semantically. The .docc article is the superset — it mirrors inline content and adds explanatory depth.
-
-**Correct**:
-```markdown
-# ``Wet_Zeggenschap_Lichaamsmateriaal/Artikel 14``
-
-@Metadata {
-    @DisplayName("Artikel 14 Toestemming bij leven")
-}
-
-Wet zeggenschap lichaamsmateriaal
-
-## Wetsartikel
-
-> **Toestemming bij leven**
->
-> [1.](<doc:Lid 1>) Het bij leven [afnemen](<doc:Artikel 1/Afnemen>)...
-
-## Voorbeeld
-
-` ` `swift
-let artikel14 = try `Artikel 14`(...)
-` ` `
-
-## Memorie van Toelichting
-
-Ingevolge artikel 14, eerste lid, mag lichaamsmateriaal bij een levende
-donor worden afgenomen indien de beslissingsbevoegde toestemming heeft
-gegeven...
-```
 
 **Correct** (article with research and experiment references):
 ```markdown
@@ -486,7 +442,7 @@ enabling stack allocation and ~Copyable storage...
 
 ### [DOC-024] Subsection Pages
 
-**Statement**: When a type has documented subsections (statute lids, RFC sub-clauses), each SHOULD have its own article page:
+**Statement**: When a type has documented subsections (RFC sub-clauses, ISO sub-sections), each SHOULD have its own article page:
 
 ```markdown
 # ``{Module_Identifier}/{Parent}/{Subsection}``
@@ -499,11 +455,11 @@ enabling stack allocation and ~Copyable storage...
 
 **Correct**:
 ```markdown
-# ``NRS_78_Private_Corporations/NRS 78/310/1``
+# ``RFC_4122/Section 4.1/3``
 
 @Metadata {
-    @DisplayName("NRS 78.310(1) Location of meetings")
-    @TitleHeading("Nevada Revised Statutes")
+    @DisplayName("RFC 4122 Section 4.1.3 Version")
+    @TitleHeading("RFC 4122")
 }
 ```
 
@@ -515,29 +471,30 @@ enabling stack allocation and ~Copyable storage...
 
 **Statement**: The root page's `## Topics` section MUST group symbols by logical domain sections, not alphabetically. Section headings MUST match the domain's own organizational structure.
 
-**Correct** (statute chapters):
+**Correct** (RFC sections):
 ```markdown
 ## Topics
 
-### Hoofdstuk 1: Begripsbepalingen
+### Section 3: Namespace Registration Template
 
-- ``Artikel 1``
+- ``Section_3``
 
-### Hoofdstuk 2: Algemene bepalingen
+### Section 4: Algorithms for Creating a UUID
 
-- ``Artikel 2``
-- ``Artikel 3``
+- ``V1``
+- ``V4``
+- ``V5``
 ```
 
 **Incorrect**:
 ```markdown
 ## Topics
 
-### A
+### V
 
-- ``Artikel 1``
-- ``Artikel 2``
-- ``Artikel 3``
+- ``V1``
+- ``V4``
+- ``V5``
 ```
 
 **Rationale**: Domain-native organization preserves the specification's own structure, making navigation intuitive for domain experts.
@@ -546,7 +503,7 @@ enabling stack allocation and ~Copyable storage...
 
 ### [DOC-026] Companion Document Subdirectories
 
-**Statement**: Large companion documents (explanatory memoranda, detailed rationale, legislative history) SHOULD be organized in subdirectories within `.docc/`:
+**Statement**: Large companion documents (detailed rationale, design history, extended references) SHOULD be organized in subdirectories within `.docc/`:
 
 ```
 Sources/{Module Name}/{Module Name}.docc/
@@ -561,12 +518,12 @@ The root page MUST link to companion documents in its `## Topics` section.
 
 **Correct**:
 ```
-Wet Zeggenschap Lichaamsmateriaal.docc/
-├── Wet Zeggenschap Lichaamsmateriaal.md
-├── Artikel 1.md ... Artikel 35.md
-└── Memorie van Toelichting/
-    ├── Memorie van Toelichting.md
-    └── MvT Hoofdstuk 1 ... 14.md
+RFC 4122.docc/
+├── RFC 4122.md
+├── Section 3.md ... Section 4.md
+└── Design Rationale/
+    ├── Design Rationale.md
+    └── Chapter 1.md ... Chapter 4.md
 ```
 
 **Rationale**: Subdirectories prevent .docc root from becoming cluttered while enabling arbitrarily deep companion material. The index file provides navigable chapter structure.
@@ -667,11 +624,11 @@ The `## Experiments` section SHOULD appear after `## Research` and before `## To
 
 **Correct**:
 ```markdown
-- [NRS Chapter 78 — Private Corporations](https://www.leg.state.nv.us/nrs/NRS-078.html)
+- [RFC 4122 — A Universally Unique IDentifier (UUID) URN Namespace](https://www.rfc-editor.org/rfc/rfc4122)
 ```
 
 ```markdown
-Officiële publicatie: [Kamerstuk 35844, nr. 3](https://zoek.officielebekendmakingen.nl/kst-35844-3.html)
+- [ISO 32000-1 — Portable Document Format](https://www.iso.org/standard/51502.html)
 ```
 
 **Rationale**: The external link enables verification of the Swift model against the authoritative source.
@@ -680,20 +637,20 @@ Officiële publicatie: [Kamerstuk 35844, nr. 3](https://zoek.officielebekendmaki
 
 ### [DOC-031] Cross-Module References
 
-**Statement**: When inline documentation references specifications outside the current module (e.g., a different statute, a different RFC), the reference MUST use the full specification identifier:
+**Statement**: When inline documentation references specifications outside the current module (e.g., a different RFC, a different ISO standard), the reference MUST use the full specification identifier:
 
 **Correct**:
 ```swift
-/// as required by NRS 77.310
+/// as required by RFC 3986 Section 3.3
 ```
 
 ```swift
-/// als bedoeld in artikel 7:446, tweede lid, onderdeel a, van het Burgerlijk Wetboek
+/// conforms to ISO 32000-1 Section 7.5.5
 ```
 
 DocC links SHOULD be used when the referenced specification has a corresponding Swift module.
 
-**Rationale**: Full identifiers are unambiguous. Bare numbers like "77.310" are meaningless without the specification context.
+**Rationale**: Full identifiers are unambiguous. Bare numbers like "3.3" are meaningless without the specification context.
 
 ---
 
@@ -703,10 +660,10 @@ DocC links SHOULD be used when the referenced specification has a corresponding 
 
 **Correct**:
 ```swift
-/// [NRS 78.191](<doc:NRS 78/191>) to [NRS 78.307](<doc:NRS 78/307>), inclusive
+/// [Section 4.1](<doc:RFC 4122/Section 4.1>) through [Section 4.5](<doc:RFC 4122/Section 4.5>), inclusive
 ```
 
-**Rationale**: Range references are a standard legal citation pattern. Linking both endpoints enables navigation to either bound.
+**Rationale**: Range references are a standard specification citation pattern. Linking both endpoints enables navigation to either bound.
 
 ---
 
@@ -716,16 +673,16 @@ DocC links SHOULD be used when the referenced specification has a corresponding 
 
 **Correct**:
 ```swift
-/// > **Toestemming bij leven**
+/// > **Version 4 UUID**
 /// >
-/// > [1.](<doc:Artikel 14/Lid 1>) Het bij leven afnemen van
-/// > lichaamsmateriaal en het bewaren of gebruiken daarvan...
+/// > [1.](<doc:RFC 4122/Section 4.4/1>) The version 4 UUID is meant for
+/// > generating UUIDs from truly-random or pseudo-random numbers...
 ```
 
 **Incorrect**:
 ```swift
-/// Het bij leven afnemen van lichaamsmateriaal en het bewaren
-/// of gebruiken daarvan...
+/// The version 4 UUID is meant for generating UUIDs from truly-random
+/// or pseudo-random numbers...
 // ❌ No blockquote — reader cannot distinguish spec text from commentary
 ```
 
@@ -759,13 +716,12 @@ DocC links SHOULD be used when the referenced specification has a corresponding 
 
 | Domain | Spec Heading | Explanatory Heading |
 |--------|-------------|---------------------|
-| Dutch legislation | `## Wetsartikel` | `## Memorie van Toelichting` |
-| US state statutes | `# Statute` | `## Legislative Notes` |
 | RFCs | `## RFC {N} Section {M}` | `## Design Notes` |
 | ISO standards | `## ISO {N} Section {M}` | `## Rationale` |
+| IETF drafts | `## Draft {Name} Section {M}` | `## Design Notes` |
 | General | `## Specification` | `## Rationale` |
 
-**Rationale**: Domain-native headings help domain experts orient immediately. A lawyer reads "Wetsartikel" and knows what follows; an engineer reads "RFC 4122 Section 4.1" and knows what follows.
+**Rationale**: Domain-native headings help domain experts orient immediately. An engineer reading "RFC 4122 Section 4.1" immediately knows what follows.
 
 ---
 

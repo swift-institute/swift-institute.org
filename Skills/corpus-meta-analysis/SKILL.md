@@ -397,9 +397,7 @@ rules instead of [RES-002a].
 1. **Move** the experiment directory to the correct `Experiments/` directory per
    [EXP-002a]:
    - Superrepo-specific: `{superrepo}/Experiments/`
-   - Ecosystem-wide (Swift): `swift-institute/Experiments/`
-   - Legislature-wide (legal): `swift-nl-wetgever/Experiments/`
-   - Ecosystem-wide (legal): `rule-law/Experiments/`
+   - Ecosystem-wide: `swift-institute/Experiments/`
 2. **Update** the experiment's `main.swift` header if it references its own location
 3. **Update** `_index.md` in both the source and destination directories
 4. **Update** any cross-references in research documents that link to the experiment

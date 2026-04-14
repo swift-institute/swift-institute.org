@@ -270,7 +270,8 @@ PKG="/path/to/package" && echo "# $(basename $PKG)" > /tmp/$(basename $PKG)-sour
 
 **Example invocation**:
 ```bash
-PKG="/Users/coen/Developer/swift-primitives/swift-storage-primitives" && \
+DEV_ROOT="${DEV_ROOT:-${HOME}/Developer}" && \
+PKG="${DEV_ROOT}/swift-primitives/swift-storage-primitives" && \
 OUT="/tmp/$(basename $PKG)-sources.swift" && \
 { echo "# $(basename $PKG)"; \
   echo -e "\n## Package Manifest\n"; \
@@ -308,7 +309,7 @@ Claude: [Runs bash command for sources, then tests]
 
 **Export specific package by path**:
 ```
-User: "export /Users/coen/Developer/swift-primitives/swift-buffer-primitives for llm"
+User: "export swift-primitives/swift-buffer-primitives for llm"
 Claude: [Exports to /tmp/swift-buffer-primitives-sources.swift]
 ```
 
@@ -335,5 +336,5 @@ Claude: [Exports to /tmp/swift-buffer-primitives-sources.swift]
 
 ## Cross-References
 
-- Research: `/Users/coen/Developer/swift-institute/Research/swift-package-export-for-llm.md`
+- Research: `Research/swift-package-export-for-llm.md`
 - **swift-institute-core** skill for package locations

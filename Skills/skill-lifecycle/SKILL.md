@@ -196,7 +196,7 @@ migration_date: YYYY-MM-DD        # Optional
 
 **Statement**: After creating a skill, you MUST update `swift-institute-core/SKILL.md` to add the skill to the Skill Index section.
 
-**Location**: `/Users/coen/Developer/swift-institute/Skills/swift-institute-core/SKILL.md`
+**Location**: `Skills/swift-institute-core/SKILL.md`
 
 **Add to Skill Index table**:
 ```markdown
@@ -215,7 +215,7 @@ migration_date: YYYY-MM-DD        # Optional
 
 **Files to update**:
 
-1. **Workspace CLAUDE.md** (`/Users/coen/Developer/CLAUDE.md`):
+1. **Workspace CLAUDE.md**:
    - Add row to Skill Routing table:
    ```markdown
    | {Task description} | **{skill-name}** | [{ID-PREFIX}-*] |
@@ -245,21 +245,21 @@ migration_date: YYYY-MM-DD        # Optional
 
 **For institute-level skills**:
 ```bash
-cd /Users/coen/Developer/swift-institute
+cd swift-institute
 ./Scripts/sync-skills.sh
 ```
 
 **Verify symlink created**:
 ```bash
-ls -la /Users/coen/Developer/.claude/skills/{skill-name}
-# Should show: {skill-name} -> /Users/coen/Developer/swift-institute/Skills/{skill-name}
+ls -la .claude/skills/{skill-name}
+# Should show: {skill-name} -> ../../Skills/{skill-name}
 ```
 
 **For self-managing repos** (swift-institute, swift-primitives, swift-foundations):
 - Symlinks are tracked in git via relative paths
 - After sync, commit the new symlink:
 ```bash
-cd /Users/coen/Developer/swift-institute
+cd swift-institute
 git add .claude/skills/{skill-name}
 git commit -m "Add {skill-name} skill"
 ```
@@ -273,8 +273,8 @@ git commit -m "Add {skill-name} skill"
 **Statement**: After sync, you MUST verify the skill is discoverable and invocable.
 
 **Verification checklist**:
-- [ ] Symlink exists at `/Users/coen/Developer/.claude/skills/{skill-name}`
-- [ ] Symlink resolves: `ls /Users/coen/Developer/.claude/skills/{skill-name}/SKILL.md`
+- [ ] Symlink exists at `.claude/skills/{skill-name}`
+- [ ] Symlink resolves: `ls .claude/skills/{skill-name}/SKILL.md`
 - [ ] YAML is valid: no syntax errors when skill is loaded
 - [ ] Skill appears in swift-institute-core Skill Index
 - [ ] Skill Routing table updated in workspace CLAUDE.md
@@ -299,12 +299,12 @@ Claude: [Uses Skill tool with skill: "{skill-name}"]
 
 **Source location**:
 ```
-/Users/coen/Developer/swift-primitives/Skills/primitives/SKILL.md
+swift-primitives/Skills/primitives/SKILL.md
 ```
 
-**Symlink target**:
+**Symlink target** (in swift-primitives):
 ```
-/Users/coen/Developer/.claude/skills/primitives -> /Users/coen/Developer/swift-primitives/Skills/primitives
+.claude/skills/primitives -> ../../Skills/primitives
 ```
 
 **YAML `applies_to`** should be specific:

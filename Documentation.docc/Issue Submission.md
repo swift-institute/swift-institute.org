@@ -8,7 +8,7 @@ Workflow for creating minimal reproduction packages and submitting Swift compile
 
 ## Overview
 
-This document defines the *issue submission workflow*—the process followed after an experiment (per the **experiment-process** skill (investigation workflow)) surfaces behavior that appears to be a genuine Swift compiler bug. Issue packages are created in `/Users/coen/Developer/coenttb/` under the `coenttb` GitHub organization.
+This document defines the *issue submission workflow*—the process followed after an experiment (per the **experiment-process** skill (investigation workflow)) surfaces behavior that appears to be a genuine Swift compiler bug. Issue packages are created in `https://github.com/coenttb` under the `coenttb` GitHub organization.
 
 **Entry point**: An experiment concluded with `Result: REFUTED` or unexpected behavior that appears to be a compiler bug, not user error.
 
@@ -99,7 +99,7 @@ Upon confirmation:
 
 6. **Create the repository**:
    ```bash
-   cd /Users/coen/Developer/coenttb/
+   cd coenttb
    mkdir swift-issue-{name}
    cd swift-issue-{name}
    git init
@@ -183,7 +183,7 @@ The workflow MUST abort and request clarification if:
 
 **Scope**: Where to create issue packages and how to name them.
 
-**Statement**: Issue packages MUST be created in `/Users/coen/Developer/coenttb/` with the naming pattern `swift-issue-{crash-location}-{key-feature}` or `swift-issue-{behavior}-{key-feature}`.
+**Statement**: Issue packages MUST be created in `https://github.com/coenttb` with the naming pattern `swift-issue-{crash-location}-{key-feature}` or `swift-issue-{behavior}-{key-feature}`.
 
 ### Naming Pattern
 
@@ -216,13 +216,13 @@ swift-issue-windows-existential-crash-other-package/  # Dependency module
 
 **Correct**:
 ```text
-/Users/coen/Developer/coenttb/swift-issue-irgen-async-typed-throws-noncopyable/
-/Users/coen/Developer/coenttb/swift-issue-silgen-pack-expansion-cross-module/
+https://github.com/coenttb/swift-issue-irgen-async-typed-throws-noncopyable
+https://github.com/coenttb/swift-issue-silgen-pack-expansion-cross-module
 ```
 
 **Incorrect**:
 ```text
-/Users/coen/Developer/swift-issue-foo/        ❌ Not in coenttb/
+~/Developer/swift-issue-foo/                  ❌ Not in coenttb/
 ~/Developer/coenttb/issue-test/               ❌ Wrong naming pattern
 /tmp/swift-bug/                               ❌ Ephemeral location
 Experiments/swift-issue-irgen-crash/          ❌ Issues go to coenttb/, not Experiments/
@@ -915,7 +915,7 @@ public enum Box<T>: Boxable {  // ❌ Unnecessary conformance
 
 **Correct**:
 ```bash
-cd /Users/coen/Developer/coenttb/
+cd coenttb
 mkdir swift-issue-{name}
 cd swift-issue-{name}
 git init
@@ -1105,7 +1105,7 @@ Help needed with typed throws   # ❌ Sounds like question, not bug report
                                             ▼
 5. CREATE REPOSITORY
    │
-   ├─ mkdir /Users/coen/Developer/coenttb/swift-issue-{name}
+   ├─ mkdir https://github.com/coenttb/swift-issue-{name}
    ├─ Write all files
    ├─ git init && git add && git commit
    └─ gh repo create coenttb/swift-issue-{name} --public

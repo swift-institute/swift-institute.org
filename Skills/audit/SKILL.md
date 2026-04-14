@@ -15,9 +15,6 @@ applies_to:
   - swift-primitives
   - swift-standards
   - swift-foundations
-  - rule-law
-  - swift-nl-wetgever
-  - swift-us-nv-legislature
 
 last_reviewed: 2026-03-26
 ---
@@ -90,9 +87,7 @@ swift-institute/Research/prompts/naming-audit.md              // ❌ Prompt file
 |-------|----------|
 | Single package | `{package}/Research/audit.md` |
 | Superrepo-wide | `{superrepo}/Research/audit.md` |
-| Ecosystem-wide (Swift) | `swift-institute/Research/audit.md` |
-| Legislature-wide (legal) | `swift-nl-wetgever/Research/audit.md` |
-| Ecosystem-wide (legal) | `rule-law/Research/audit.md` |
+| Ecosystem-wide | `swift-institute/Research/audit.md` |
 
 **Rationale**: Mirrors the established research location convention. Predictable from scope alone.
 

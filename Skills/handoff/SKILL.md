@@ -271,14 +271,14 @@ The investigation MUST NOT modify these to avoid merge conflicts.}
 **Sequential example**:
 ````
 ```
-Read /Users/coen/Developer/HANDOFF.md — it contains the full handoff context for continuing {brief task description}. Verify the current state (files exist, code compiles, git state matches), then proceed from the Next Steps section.
+Read {absolute-path-to-HANDOFF.md} — it contains the full handoff context for continuing {brief task description}. Verify the current state (files exist, code compiles, git state matches), then proceed from the Next Steps section.
 ```
 ````
 
 **Branching example**:
 ````
 ```
-Read /Users/coen/Developer/HANDOFF-{topic-kebab}.md — it contains a focused investigation brief on {issue description}. Read the full document, then investigate the Issue. Write findings where the Findings Destination section directs. Do not modify files listed under "Do Not Touch."
+Read {absolute-path-to-HANDOFF-{topic-kebab}.md} — it contains a focused investigation brief on {issue description}. Read the full document, then investigate the Issue. Write findings where the Findings Destination section directs. Do not modify files listed under "Do Not Touch."
 ```
 ````
 

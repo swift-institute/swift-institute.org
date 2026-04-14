@@ -1,8 +1,9 @@
 ---
 name: quick-commit-and-push-all
 description: |
-  Commit all changes and push every sub-repo across all Swift Institute and legal encoding
-  directories to remote. Apply when the user wants to save progress across all repositories.
+  Commit all changes and push every sub-repo across Swift Institute ecosystem
+  directories to remote. Apply when the user wants to save progress across
+  all repositories.
 
 layer: process
 
@@ -27,16 +28,14 @@ applies_to:
   - swift-arm-ltd
   - swift-intel
   - swift-riscv
-  - rule-law
-  - swift-nl-wetgever
-last_reviewed: 2026-03-20
+last_reviewed: 2026-04-14
 ---
 
 # Quick Commit and Push All
 
-Commit all uncommitted changes in every git repository across Swift Institute and legal
-encoding directories and push to remote. This is a quick "save everything" workflow —
-not for crafting meaningful commit messages.
+Commit all uncommitted changes in every git repository across the Swift Institute
+ecosystem directories and push to remote. This is a quick "save everything"
+workflow — not for crafting meaningful commit messages.
 
 ---
 
@@ -47,7 +46,7 @@ not for crafting meaningful commit messages.
 1. **Parent-level git repos** — The directory itself if it has a `.git` directory (not file).
 2. **Sub-repos** — Each subdirectory that has a `.git` directory or `.git` file (submodule).
 
-All directories are flat siblings under `/Users/coen/Developer/`.
+All directories are flat siblings under the development root (e.g. `${HOME}/Developer/`).
 
 The skill MUST iterate over these directories:
 
@@ -70,10 +69,6 @@ The skill MUST iterate over these directories:
 | 15 | `swift-riscv/` | No | `swift-*/` with standalone `.git/` directories |
 | 16 | `swift-foundations/` | Yes (standalone `.git/`) | `swift-*/` with submodule `.git` files |
 | 17 | `swift-institute/` | Yes (standalone `.git/`) | No sub-repos |
-| 18 | `swift-nl-wetgever/` | Yes (standalone `.git/`) | `*/` with standalone `.git/` directories (1057 statute packages) |
-| 19 | `swift-us-nv-legislature/` | Yes (standalone `.git/`) | `*/` with standalone `.git/` directories (820 NRS packages) |
-| 20 | `swift-law/` | Yes (standalone `.git/`) | Submodules to org-repos (not checked out locally) |
-| 21 | `rule-law/` | Yes (standalone `.git/`) | `rule-*/` with standalone `.git/` directories |
 
 **Statement**: For each directory, first process all sub-repos (`swift-*/`), then process the
 parent repo (if it is a git repo). Parent must go last so submodule pointer updates are captured
@@ -105,6 +100,7 @@ rather than making individual tool calls per repo. This avoids hundreds of seque
 Example script structure:
 
 ```bash
+DEV_ROOT="${DEV_ROOT:-${HOME}/Developer}"
 DATE=$(date +%Y-%m-%d)
 
 # All directories with sub-repos (standards body orgs + layer repos)
@@ -125,22 +121,10 @@ DIRS=(
   "swift-intel"
   "swift-riscv"
   "swift-foundations"
-  "swift-nl-wetgever"
-  "swift-us-nv-legislature"
-  "rule-law"
 )
 
-# swift-law (org-of-orgs, no sub-repos to iterate)
-cd /Users/coen/Developer/swift-law
-if [ -n "$(git status --porcelain)" ]; then
-  echo "COMMIT: swift-law"
-  git add -A
-  git commit -m "Save progress: $DATE"
-  git push
-fi
-
 for parent_dir in "${DIRS[@]}"; do
-  base="/Users/coen/Developer/$parent_dir"
+  base="${DEV_ROOT}/${parent_dir}"
   [ -d "$base" ] || continue
   for repo in "$base"/*/; do
     [ -d "$repo/.git" ] || [ -f "$repo/.git" ] || continue
@@ -165,7 +149,7 @@ for parent_dir in "${DIRS[@]}"; do
 done
 
 # swift-institute (no sub-repos)
-cd /Users/coen/Developer/swift-institute
+cd "${DEV_ROOT}/swift-institute"
 if [ -n "$(git status --porcelain)" ]; then
   echo "COMMIT: swift-institute"
   git add -A

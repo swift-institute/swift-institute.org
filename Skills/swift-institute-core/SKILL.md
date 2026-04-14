@@ -61,17 +61,11 @@ This is the root meta-skill for the Swift Institute ecosystem.
 - **collaborative-discussion** - [COLLAB-*] Claude-ChatGPT collaborative discussions
 - **reflect-session** - [REFL-*] Structured post-session reflection capture
 - **reflections-processing** - [REFL-PROC-*] Triage reflections into skill/doc/research improvements
-- **dutch-law** - [NL-WET-*] Dutch legislation lookup via wetten.overheid.nl
 - **corpus-meta-analysis** - [META-*] Corpus health: staleness, supersession, revalidation, pruning
 - **quick-commit-and-push-all** - [SAVE-*] Commit and push all sub-repos to remote
 - **issue-investigation** - [ISSUE-*] Systematic compiler/toolchain issue investigation: reproduce, reduce, verify, resolve
 - **swift-pull-request** - [SWIFT-PR-*] Submit PRs to swiftlang/swift: fork, branch, commit, test, CI, reviewers
 - **handoff** - [HANDOFF-*] Structured agent-to-agent handoff: sequential (HANDOFF.md) and branching (HANDOFF-{topic}.md)
-
-### Legal Domain Skills (rule-law/Skills/)
-- **rule-law-core** - [RL-CORE-*] Legal ecosystem manifest, skill index, loading order
-- **legal-encoding** - [LEG-ENC-*, JUD-ENC-*, COMP-ENC-*, PROD-ENC-*] Statute, judiciary, composition, and product encoding patterns
-- **legal-testing** - [LEG-TEST-*] Legal type testing: parametric Bool?, snapshot error descriptions, ternary logic
 
 ### Absorption History
 - **naming**, **errors**, **code-organization** → absorbed into **code-surface**
@@ -117,9 +111,9 @@ Skills are loaded based on their `requires:` DAG. The order is:
 
 ## Package Locations
 
-| Package | Path |
-|---------|------|
-| swift-primitives | `/Users/coen/Developer/swift-primitives/` |
-| swift-standards | `/Users/coen/Developer/swift-standards/` |
-| swift-foundations | `/Users/coen/Developer/swift-foundations/` |
-| swift-institute | `/Users/coen/Developer/swift-institute/` |
+| Package | Repository |
+|---------|-----------|
+| swift-primitives | https://github.com/swift-primitives |
+| swift-standards | https://github.com/swift-standards |
+| swift-foundations | https://github.com/swift-foundations |
+| swift-institute | https://github.com/swift-institute |

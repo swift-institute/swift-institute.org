@@ -135,21 +135,12 @@ Sequence: (1) Identify uncertainty, (2) create minimal experiment, (3) run — s
 **Statement**: Experiment packages MUST be in an `Experiments/` directory at the
 root of the appropriate repository, with descriptive kebab-case names.
 
-**Swift infrastructure**:
-
-| Scope | Location (absolute path) |
-|-------|--------------------------|
-| Ecosystem-wide | `/Users/coen/Developer/swift-institute/Experiments/` |
-| Primitives-specific | `/Users/coen/Developer/swift-primitives/Experiments/` |
-| Standards-specific | `/Users/coen/Developer/swift-standards/Experiments/` |
-| Foundations-specific | `/Users/coen/Developer/swift-foundations/Experiments/` |
-
-**Legal domain**:
-
-| Scope | Location (absolute path) |
-|-------|--------------------------|
-| Legal ecosystem-wide | `/Users/coen/Developer/rule-law/Experiments/` |
-| Legislature-wide (Dutch) | `/Users/coen/Developer/swift-nl-wetgever/Experiments/` |
+| Scope | Repository |
+|-------|------------|
+| Ecosystem-wide | `swift-institute/Experiments/` |
+| Primitives-specific | `swift-primitives/Experiments/` |
+| Standards-specific | `swift-standards/Experiments/` |
+| Foundations-specific | `swift-foundations/Experiments/` |
 
 **Superrepo note**: `swift-primitives`, `swift-standards`, and `swift-foundations`
 are superrepos containing many packages as targets. `Experiments/` lives at the
@@ -168,22 +159,12 @@ specific target (e.g., `Buffer_Primitives`) still go in the superrepo's
 to one superrepo go in that superrepo. Ecosystem-wide experiments go in
 swift-institute.
 
-**Swift infrastructure**:
-
 | Criterion | Repo |
 |-----------|------|
 | One target's types, reproducing a bug in one module | The superrepo containing that target |
 | Multiple targets within one superrepo | That superrepo |
 | General Swift behavior (language feature, compiler) | `swift-institute` |
 | Cross-package interaction across layers | `swift-institute` |
-
-**Legal domain**:
-
-| Criterion | Repo |
-|-----------|------|
-| One statute's encoding patterns | `swift-nl-wetgever` (or relevant legislature repo) |
-| Cross-statute encoding patterns, @Splat macro behavior | Legislature repo (`swift-nl-wetgever`) |
-| Cross-layer legal experiments | `rule-law` |
 
 **Decision rule**: If the experiment only exercises types from one superrepo, it
 goes there. If it tests general Swift behavior or cross-repo interaction, it goes

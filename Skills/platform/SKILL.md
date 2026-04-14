@@ -547,7 +547,7 @@ The L3 unified package `swift-kernel` then:
 | `swift-windows` | `swift-foundations/swift-windows/` | Windows L3: re-exports L2 + Windows-specific composition |
 | `swift-kernel` | `swift-foundations/swift-kernel/` | Unified cross-platform: re-exports L3 platform packages |
 
-All paths are relative to `/Users/coen/Developer/`.
+All paths are relative to the workspace root.
 
 **Cross-references**: [PLAT-ARCH-001]
 

@@ -573,9 +573,9 @@ The new document MUST be added to `## Topics` sections in related documents.
 
 | Package Pattern | Repository | Path |
 |-----------------|------------|------|
-| `swift-*-primitives` | swift-primitives | `/Users/coen/Developer/swift-primitives/{package}/` |
-| `swift-rfc-*`, `swift-iso-*`, `swift-ietf-*` | swift-standards | `/Users/coen/Developer/swift-standards/{package}/` |
-| Other `swift-*` | swift-foundations | `/Users/coen/Developer/swift-foundations/{package}/` |
+| `swift-*-primitives` | swift-primitives | `https://github.com/swift-primitives/{package}` |
+| `swift-rfc-*`, `swift-iso-*`, `swift-ietf-*` | swift-standards | `https://github.com/swift-standards/{package}` |
+| Other `swift-*` | swift-foundations | `https://github.com/swift-foundations/{package}` |
 
 **Documentation.docc location**: `{package}/Sources/{primary-target}/Documentation.docc/`
 
@@ -585,7 +585,7 @@ To find the primary target, inspect `{package}/Sources/` and identify the main s
 ```
 Entry: [Package: swift-kernel]
 Repository: swift-foundations
-Path: /Users/coen/Developer/swift-foundations/swift-kernel/Sources/Kernel/Documentation.docc/
+Path: https://github.com/swift-foundations/swift-kernel/tree/main/Sources/Kernel/Documentation.docc/
 Target: _Package-Insights.md
 ```
 
@@ -653,7 +653,7 @@ This document captures insights that emerged during development of {package-name
 **Correct**:
 ```
 Package swift-ascii lacks Documentation.docc
-Action: Create /Users/coen/Developer/swift-foundations/swift-ascii/Sources/ASCII/Documentation.docc/
+Action: Create https://github.com/swift-foundations/swift-ascii/tree/main/Sources/ASCII/Documentation.docc/
         with _Package-Insights.md using template
 ```
 

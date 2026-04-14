@@ -241,7 +241,7 @@ llvm-project/llvm/utils/bisect --start=0 --end=10000 ./invoke_swift_passing_N.sh
 
 **Statement**: For optimizer bugs, reading the compiler source SHOULD be attempted early — particularly when the SIL dump reveals the failing pass and instruction. Look for TODO/FIXME comments, known-limitation guards, and bailout conditions near the crash site.
 
-**Local clone**: `/Users/coen/Developer/swiftlang/swift`
+**Local clone**: `${DEV_ROOT}/swiftlang/swift` (clone from https://github.com/swiftlang/swift)
 
 **Key directories for SIL optimizer bugs**:
 

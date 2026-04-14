@@ -325,9 +325,9 @@ Becomes: "Names should describe mechanism, not origin."
 
 | Package Pattern | Repository | Path |
 |-----------------|------------|------|
-| `swift-*-primitives` | swift-primitives | `/Users/coen/Developer/swift-primitives/{package}/` |
-| `swift-rfc-*`, `swift-iso-*`, `swift-ietf-*` | swift-standards | `/Users/coen/Developer/swift-standards/{package}/` |
-| Other `swift-*` | swift-foundations | `/Users/coen/Developer/swift-foundations/{package}/` |
+| `swift-*-primitives` | swift-primitives | `swift-primitives/{package}/` |
+| `swift-rfc-*`, `swift-iso-*`, `swift-ietf-*` | swift-standards | `swift-standards/{package}/` |
+| Other `swift-*` | swift-foundations | `swift-foundations/{package}/` |
 
 **Research location**: `{package}/Research/_Package-Insights.md`
 

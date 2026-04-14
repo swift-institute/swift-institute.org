@@ -18,9 +18,9 @@ last_reviewed: 2026-03-24
 
 # Swift Pull Request Process
 
-Workflow for submitting PRs to `swiftlang/swift` from the `coenttb` GitHub account.
+Workflow for submitting PRs to `swiftlang/swift` from a fork.
 
-**Provenance**: Research conducted 2026-03-22 from CONTRIBUTING.md, GettingStarted.md, FirstPullRequest.md, ContinuousIntegration.md, CODEOWNERS, and empirical analysis of 10+ merged PRs. Full findings at `/Users/coen/Developer/swift-institute/Research/pr-submission-research.md`.
+**Provenance**: Research conducted 2026-03-22 from CONTRIBUTING.md, GettingStarted.md, FirstPullRequest.md, ContinuousIntegration.md, CODEOWNERS, and empirical analysis of 10+ merged PRs. Full findings at `Research/pr-submission-research.md`.
 
 ---
 
@@ -32,19 +32,19 @@ Workflow for submitting PRs to `swiftlang/swift` from the `coenttb` GitHub accou
 
 **One-time setup**:
 ```bash
-cd /Users/coen/Developer/swiftlang/swift
+cd ${DEV_ROOT}/swiftlang/swift
 
 # Fork (if not already forked):
 gh repo fork swiftlang/swift --clone=false
 
 # Add fork as remote:
-git remote add coenttb https://github.com/coenttb/swift.git
+git remote add myfork https://github.com/{username}/swift.git
 ```
 
 **Verify**:
 ```bash
 git remote -v
-# Should show both origin (swiftlang) and coenttb (fork)
+# Should show both origin (swiftlang) and myfork (fork)
 ```
 
 **Rationale**: The upstream repo restricts push access. All external contributions go through fork-based PRs.
@@ -286,13 +286,13 @@ EOF
 )"
 
 # Push to fork:
-git push --set-upstream coenttb branch-name
+git push --set-upstream myfork branch-name
 
 # Create PR:
 gh pr create \
   --repo swiftlang/swift \
   --base main \
-  --head coenttb:branch-name \
+  --head {username}:branch-name \
   --title "[Component] Description" \
   --body "$(cat <<'EOF'
 PR body here (see SWIFT-PR-006).
@@ -335,8 +335,8 @@ EOF
 
 **CODEOWNERS lookup**:
 ```bash
-# Find owners for your changed files:
-cat /Users/coen/Developer/swiftlang/swift/.github/CODEOWNERS | grep "relevant/path"
+# Find owners for your changed files (in local clone):
+cat ${DEV_ROOT}/swiftlang/swift/.github/CODEOWNERS | grep "relevant/path"
 
 # Or check the file on GitHub:
 gh api repos/swiftlang/swift/contents/.github/CODEOWNERS --jq '.content' | base64 -d | grep "path"
@@ -373,7 +373,7 @@ gh api repos/swiftlang/swift/contents/.github/CODEOWNERS --jq '.content' | base6
 
 **One-time setup** (skip if already done):
 - [ ] Fork: `gh repo fork swiftlang/swift --clone=false`
-- [ ] Add remote: `git remote add coenttb https://github.com/coenttb/swift.git`
+- [ ] Add remote: `git remote add myfork https://github.com/{username}/swift.git`
 
 **Per-PR workflow**:
 - [ ] **FIRST**: Test reproducer against latest Swift dev toolchain (`TOOLCHAINS=swift xcrun swiftc -O ...`). If it passes, the bug is already fixed — stop here. ([SWIFT-PR-011])
@@ -387,7 +387,7 @@ gh api repos/swiftlang/swift/contents/.github/CODEOWNERS --jq '.content' | base6
 - [ ] Verify referenced issue describes your bug — not a different bug in the same area ([SWIFT-PR-003])
 - [ ] Stage specific files (not `.swift-version` or unrelated changes)
 - [ ] Commit with `[Component] Description` format ([SWIFT-PR-003])
-- [ ] Push to fork: `git push -u coenttb branch-name`
+- [ ] Push to fork: `git push -u myfork branch-name`
 - [ ] Include AI disclosure in PR body if AI-assisted ([SWIFT-PR-006])
 - [ ] Create PR via `gh pr create --repo swiftlang/swift` ([SWIFT-PR-007])
 - [ ] Verify CODEOWNERS auto-assigned reviewer(s) ([SWIFT-PR-009])
@@ -400,8 +400,8 @@ gh api repos/swiftlang/swift/contents/.github/CODEOWNERS --jq '.content' | base6
 
 ## Cross-References
 
-- **Research**: `/Users/coen/Developer/swift-institute/Research/pr-submission-research.md`
-- **Upstream docs**: `/Users/coen/Developer/swiftlang/swift/CONTRIBUTING.md`
-- **Upstream docs**: `/Users/coen/Developer/swiftlang/swift/docs/HowToGuides/FirstPullRequest.md`
-- **Upstream docs**: `/Users/coen/Developer/swiftlang/swift/docs/ContinuousIntegration.md`
-- **CODEOWNERS**: `/Users/coen/Developer/swiftlang/swift/.github/CODEOWNERS`
+- **Research**: `Research/pr-submission-research.md`
+- **Upstream docs**: https://github.com/swiftlang/swift/blob/main/CONTRIBUTING.md
+- **Upstream docs**: https://github.com/swiftlang/swift/blob/main/docs/HowToGuides/FirstPullRequest.md
+- **Upstream docs**: https://github.com/swiftlang/swift/blob/main/docs/ContinuousIntegration.md
+- **CODEOWNERS**: https://github.com/swiftlang/swift/blob/main/.github/CODEOWNERS

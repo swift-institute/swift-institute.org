@@ -490,6 +490,6 @@ Claude: [Verifies convergence criteria met]
 
 ## Cross-References
 
-- Research: `/Users/coen/Developer/swift-institute/Research/collaborative-llm-discussion.md`
+- Research: `Research/collaborative-llm-discussion.md`
 - **package-export** skill for preparing code context
 - **research-process** skill for when discussion reveals need for deeper analysis

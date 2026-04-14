@@ -112,21 +112,12 @@ Research-first prevents implementation thrashing, documents rationale, and creat
 **Statement**: Research documents MUST be created in a `Research/` directory at the
 root of the appropriate repository, with a descriptive, kebab-case filename.
 
-**Swift infrastructure**:
-
-| Scope | Location (absolute path) |
-|-------|--------------------------|
-| Ecosystem-wide | `/Users/coen/Developer/swift-institute/Research/` |
-| Primitives-specific | `/Users/coen/Developer/swift-primitives/Research/` |
-| Standards-specific | `/Users/coen/Developer/swift-standards/Research/` |
-| Foundations-specific | `/Users/coen/Developer/swift-foundations/Research/` |
-
-**Legal domain**:
-
-| Scope | Location (absolute path) |
-|-------|--------------------------|
-| Legal ecosystem-wide | `/Users/coen/Developer/rule-law/Research/` |
-| Legislature-wide (Dutch) | `/Users/coen/Developer/swift-nl-wetgever/Research/` |
+| Scope | Repository |
+|-------|------------|
+| Ecosystem-wide | `swift-institute/Research/` |
+| Primitives-specific | `swift-primitives/Research/` |
+| Standards-specific | `swift-standards/Research/` |
+| Foundations-specific | `swift-foundations/Research/` |
 
 **Superrepo note**: `swift-primitives`, `swift-standards`, and `swift-foundations`
 are superrepos containing many packages as targets. `Research/` lives at the
@@ -145,8 +136,6 @@ directory — the filename identifies the target (e.g.,
 specific to one superrepo goes in that superrepo. Ecosystem-wide analysis goes in
 swift-institute.
 
-**Swift infrastructure**:
-
 | Criterion | Repo |
 |-----------|------|
 | One target's types, naming, or design | The superrepo containing that target |
@@ -154,15 +143,6 @@ swift-institute.
 | Packages across layers (primitives + standards, etc.) | `swift-institute` |
 | General Swift design philosophy, architecture | `swift-institute` |
 | Skill/process design | `swift-institute` |
-
-**Legal domain**:
-
-| Criterion | Repo |
-|-----------|------|
-| One statute's encoding | `swift-nl-wetgever` (or relevant legislature repo) |
-| Cross-statute legal patterns | Legislature repo (`swift-nl-wetgever`) |
-| Cross-layer legal architecture | `rule-law` |
-| Legal skill/process design | `rule-law` |
 
 **Decision rule**: If the research only matters to people working in one superrepo,
 it goes there. If it matters across repos, it goes in the institute/ecosystem repo.
