@@ -4,73 +4,60 @@
     @TitleHeading("Swift Institute")
 }
 
-Requirements and patterns for Embedded Swift compatibility.
+Patterns and constraints for writing Swift packages compatible with Embedded Swift.
 
 ## Overview
 
-This document defines requirements for writing Swift packages compatible with Embedded Swift compilation mode. Embedded Swift is a language subset targeting baremetal and resource-constrained environments.
+Embedded Swift is a language subset targeting baremetal and resource-constrained environments. Packages at the Primitives and Standards layers of the Swift Institute are compatible with Embedded Swift; Foundations and above are not constrained this way.
 
-**Normative language**: This document uses RFC 2119 conventions:
-- **MUST** / **MUST NOT**: Absolute requirement or prohibition
-- **SHOULD** / **SHOULD NOT**: Recommended unless valid reason exists
-- **MAY**: Optional
+This document covers how to compile for Embedded Swift, which concurrency features are available, and how to write dual-target code that works in both standard and Embedded builds.
 
 ---
 
-## Quick Reference
+## Quick reference
 
-| Section | Requirements | Focus |
-|---------|--------------|-------|
-| [Compilation](#compilation) | 3 | Toolchain, flags, build commands |
-| [Concurrency Model](#concurrency-model) | 4 | What works, what doesn't, why |
-| [Compatibility Patterns](#compatibility-patterns) | 3 | Writing dual-target code |
+| Section | Focus |
+|---------|-------|
+| [Compilation](#Compilation) | Toolchain, flags, build commands |
+| [Concurrency model](#Concurrency-model) | What works, what does not, and why |
+| [Compatibility patterns](#Compatibility-patterns) | Writing dual-target code |
 
 ---
 
 ## Compilation
 
-**Scope**: Building Swift code for Embedded targets.
+### Toolchain
 
----
+Embedded Swift compilation requires a development snapshot toolchain. Release toolchains fail with:
 
-### Development Toolchain Requirement
+```
+error: module 'Swift' cannot be imported in embedded Swift mode
+```
 
-**Scope**: Toolchain selection for Embedded compilation.
+A typical invocation uses the snapshot toolchain's `swiftc` directly:
 
-**Statement**: Embedded Swift compilation MUST use a development snapshot toolchain. Release toolchains (Swift 6.x) fail with "module 'Swift' cannot be imported in embedded Swift mode."
-
-**Correct**:
 ```bash
-# Development snapshot toolchain
-/path/to/swift-DEVELOPMENT-SNAPSHOT-2026-01-07-a.xctoolchain/usr/bin/swiftc \
+/path/to/swift-DEVELOPMENT-SNAPSHOT-<date>.xctoolchain/usr/bin/swiftc \
     -enable-experimental-feature Embedded ...
 ```
 
-**Incorrect**:
-```bash
-# Release toolchain - will fail
-swiftc -enable-experimental-feature Embedded ...
-# error: module 'Swift' cannot be imported in embedded Swift mode
-```
-
-**Rationale**: Embedded Swift is experimental. Release toolchains don't include the necessary runtime stubs.
+Embedded Swift is still experimental; release toolchains do not include the runtime stubs that Embedded mode needs. As of Swift 6.3, release toolchains remain unable to compile Embedded mode; tracking the current nightly is necessary for Embedded work.
 
 ---
 
-### Required Compiler Flags
+### Required compiler flags
 
-**Scope**: Compiler flags for Embedded compilation.
-
-**Statement**: Embedded Swift compilation MUST include these flags:
+Embedded Swift compilation needs these flags at a minimum:
 
 | Flag | Purpose |
 |------|---------|
 | `-enable-experimental-feature Embedded` | Enable Embedded mode |
-| `-wmo` | Whole module optimization (required) |
-| `-parse-as-library` | Library code without main entry |
-| `-package-name <name>` | Required if using `package` access level |
+| `-wmo` | Whole-module optimization (required) |
+| `-parse-as-library` | Library code without a `main` entry point |
+| `-package-name <name>` | Required if the code uses `package` access |
 
-**Correct**:
+A complete invocation for a host build looks like:
+
 ```bash
 swiftc -enable-experimental-feature Embedded -wmo -parse-as-library \
     -package-name MyPackage Sources/*.swift
@@ -78,14 +65,11 @@ swiftc -enable-experimental-feature Embedded -wmo -parse-as-library \
 
 ---
 
-### Cross-Compilation Flags
+### Cross-compilation
 
-**Scope**: Targeting specific embedded architectures.
-
-**Statement**: Cross-compilation for embedded targets SHOULD use architecture-specific flags:
+Cross-compiling for embedded targets uses architecture-specific flags. A representative ARM Cortex-M invocation:
 
 ```bash
-# ARM Cortex-M example
 swiftc -enable-experimental-feature Embedded -wmo \
     -target armv7em-none-none-eabi \
     -Osize \
@@ -93,37 +77,29 @@ swiftc -enable-experimental-feature Embedded -wmo \
     Sources/*.swift
 ```
 
-The `-Osize` flag optimizes for binary size. The `-disable-stack-protector` removes stack canaries (unavailable on baremetal).
+The `-Osize` flag optimizes for binary size. The `-disable-stack-protector` flag removes stack canaries, which are unavailable on baremetal.
 
 ---
 
-## Concurrency Model
+## Concurrency model
 
-**Scope**: Concurrency feature availability in Embedded Swift.
+### Three tiers of availability
 
----
-
-### Three-Tier Availability Model
-
-**Scope**: Understanding which concurrency features work.
-
-**Statement**: Concurrency features in Embedded Swift fall into three categories:
+Concurrency features fall into three categories in Embedded Swift:
 
 | Tier | Behavior | Features |
 |------|----------|----------|
-| **Fully available** | Compile AND link | `Sendable`, `@Sendable`, `sending`, `nonisolated`, `actor` (sync only) |
-| **Compile-only** | Compile, fail to link | `async/await`, `Task`, `AsyncSequence`, `#isolation` |
-| **Unavailable** | Fail to compile | `@MainActor` |
+| Fully available | Compiles and links | `Sendable`, `@Sendable`, `sending`, `nonisolated`, `actor` (synchronous use only) |
+| Compile-only | Compiles, fails to link | `async` / `await`, `Task`, `AsyncSequence`, `#isolation` |
+| Unavailable | Fails to compile | `@MainActor` |
 
-**Rationale**: Swift's concurrency *type system* is present in Embedded mode. The *runtime* (scheduler, task creation) is not.
+Swift's concurrency type system is present in Embedded mode; the runtime (scheduler, task creation) is not.
 
 ---
 
-### Compile-Only Features
+### Compile-only features
 
-**Scope**: Features that compile but fail to link.
-
-**Statement**: Features in the "compile-only" tier produce linker errors referencing missing runtime symbols:
+Features in the compile-only tier produce linker errors referencing missing runtime symbols:
 
 ```
 Undefined symbols for architecture arm64:
@@ -132,17 +108,13 @@ Undefined symbols for architecture arm64:
   "_swift_task_asyncMainDrainQueue"
 ```
 
-This boundary reveals the architectural split: type checking works; runtime dispatch doesn't.
-
-**Implication**: Libraries MAY define async API surfaces with `#if !hasFeature(Embedded)` guards. The guards are about runtime availability, not language availability.
+This boundary reflects the architectural split: type checking works, runtime dispatch does not. Libraries can define async API surfaces guarded with `#if !hasFeature(Embedded)`. The guards are about runtime availability, not language availability.
 
 ---
 
-### The @MainActor Exception
+### The @MainActor exception
 
-**Scope**: Why `@MainActor` fails differently.
-
-**Statement**: `@MainActor` produces "unknown attribute" at parse time, not link time:
+`@MainActor` fails at parse time with "unknown attribute", not at link time:
 
 ```swift
 @MainActor
@@ -150,39 +122,31 @@ struct Data { }
 // error: unknown attribute 'MainActor'
 ```
 
-**Rationale**: `MainActor` has platform semantics (main dispatch queue, main thread). Embedded systems have no standard "main execution context." The attribute is undefined because the concept is undefined.
-
-Custom global actors (`@MyGlobalActor`) compile (though they fail to link). The difference: custom actors have no platform-specific meaning.
+`MainActor` has platform semantics — main dispatch queue, main thread. Embedded systems have no standard "main execution context," and the attribute is therefore undefined. Custom global actors (`@MyGlobalActor`) do compile, though they still fail to link. The difference is that custom actors have no platform-specific meaning.
 
 ---
 
-### Sendable as the Embedded Story
+### Sendable as the Embedded story
 
-**Scope**: What concurrency model is actually available.
-
-**Statement**: The fully-available concurrency subset centers on `Sendable`:
+The fully-available concurrency subset centers on `Sendable`:
 
 - `Sendable` protocol conformance
 - `@Sendable` closure annotation
 - `sending` parameter modifier
 - `@unchecked Sendable` escape hatch
 - `nonisolated` function modifier
-- `actor` keyword (sync usage only)
+- `actor` keyword (synchronous use only)
 
-Every item is a compile-time annotation informing the type checker. None require runtime support.
-
-**Design implication**: For Embedded systems, this enables types designed for concurrent access without actual concurrent execution—suitable for interrupt contexts and event loops.
+Each of these is a compile-time annotation that informs the type checker. None requires runtime support. On Embedded systems this enables types designed for concurrent access without actual concurrent execution — suitable for interrupt contexts and event loops.
 
 ---
 
-### Explicit Concurrency Import
+### Explicit concurrency import
 
-**Scope**: Import requirements for concurrency types.
-
-**Statement**: Concurrency types (`Task`, `Actor`) require explicit `import _Concurrency` in Embedded mode:
+Concurrency types (`Task`, `Actor`) require an explicit `import _Concurrency` in Embedded mode:
 
 ```swift
-import _Concurrency  // Required in Embedded, implicit in standard Swift
+import _Concurrency  // Required in Embedded; implicit in standard Swift
 
 actor Counter { ... }
 ```
@@ -191,19 +155,12 @@ Without the import, `Task` produces "cannot find 'Task' in scope." This asymmetr
 
 ---
 
-## Compatibility Patterns
+## Compatibility patterns
 
-**Scope**: Writing code that works in both standard and Embedded Swift.
+### Conditional compilation guards
 
----
+Packages targeting Embedded Swift use `#if !hasFeature(Embedded)` around unavailable features:
 
-### Conditional Compilation Guards
-
-**Scope**: Feature guards for Embedded compatibility.
-
-**Statement**: Packages targeting Embedded Swift MUST use `#if !hasFeature(Embedded)` guards around unavailable features:
-
-**Correct**:
 ```swift
 #if !hasFeature(Embedded)
 extension Tagged: Codable where RawValue: Codable { }
@@ -214,7 +171,7 @@ public func fetchAsync() async throws -> Data { ... }
 #endif
 ```
 
-**Features requiring guards**:
+Features that typically need guards:
 
 | Feature | Reason |
 |---------|--------|
@@ -226,11 +183,9 @@ public func fetchAsync() async throws -> Data { ... }
 
 ---
 
-### Sync Alternatives Pattern
+### Sync alternatives
 
-**Scope**: Providing non-async APIs alongside async APIs.
-
-**Statement**: Libraries with async APIs SHOULD provide sync alternatives for Embedded compatibility:
+Libraries with async APIs provide sync alternatives for Embedded compatibility:
 
 ```swift
 // Available everywhere
@@ -242,56 +197,38 @@ public func read(from descriptor: Descriptor) async throws(IO.Error) -> Data
 #endif
 ```
 
-The `Sendable` annotations carry forward into Embedded builds. The async APIs disappear. What remains is type-safe data structures ready for manual concurrency coordination.
+`Sendable` annotations carry forward into Embedded builds. The async APIs disappear. What remains is type-safe data structures ready for manual concurrency coordination.
 
 ---
 
-### Binary Size as Feedback
+### Binary size as feedback
 
-**Scope**: Using binary size to verify Embedded compilation.
+Embedded compilation should produce significantly smaller binaries than standard compilation. A 60–70% size reduction is a good signal that Embedded mode is working correctly:
 
-**Statement**: Embedded compilation SHOULD produce significantly smaller binaries than standard compilation. A 60-70% size reduction indicates Embedded mode is working correctly:
+| Target | Approximate size | Indicates |
+|--------|------------------|-----------|
+| macOS arm64 | ~22 KB | Full runtime metadata |
+| ARM Cortex-M | ~6 KB | Embedded mode working |
 
-| Target | Size | Indicates |
-|--------|------|-----------|
-| macOS arm64 | ~22KB | Full runtime metadata |
-| ARM Cortex-M | ~6KB | Embedded mode working |
-
-The size reduction proves what Embedded mode removes: runtime metadata, reflection support, existential containers, dynamic dispatch infrastructure.
+The reduction comes from what Embedded mode removes: runtime metadata, reflection support, existential containers, and dynamic dispatch infrastructure.
 
 ---
 
-## Compiler Behavior
+## Interpreting compiler failures
 
-**Scope**: Understanding compiler responses in Embedded mode.
-
----
-
-### Crash vs Error Distinction
-
-**Scope**: Interpreting compiler failures.
-
-**Statement**: Compiler crashes (signal 11) and error messages have different implications:
+Compiler crashes and error messages carry different implications in Embedded mode:
 
 | Response | Indicates | Example |
 |----------|-----------|---------|
-| Error message | Intentional restriction | `@MainActor` → "unknown attribute" |
-| Compiler crash | Incomplete implementation | `actor` + `await` → signal 11 |
+| Error message | Intentional restriction | `@MainActor` — "unknown attribute" |
+| Compiler crash | Incomplete implementation | `actor` + `await` — SIL-generation crash |
 
-A crash during SIL generation suggests the feature is partially implemented and may work in future toolchains. Documentation SHOULD note this as "not yet implemented" rather than "crashes."
-
----
+A crash during SIL generation suggests a feature is partially implemented and may work in future toolchains. Documentation is clearer when it distinguishes "not yet implemented" from "intentionally restricted."
 
 ## Topics
 
-### Related Documents
+### Related
 
-- <doc:Swift-Embedded-compilation> - Step-by-step compilation procedures
-- <doc:API-Requirements>
-- <doc:Implementation-Patterns>
 - <doc:Five-Layer-Architecture>
-
-### Cross-References
-
-- Conditional Compilation Foresight
-- Empirical Verification as Documentation Source
+- <doc:Glossary>
+- <doc:FAQ>

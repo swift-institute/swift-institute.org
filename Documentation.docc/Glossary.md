@@ -6,34 +6,33 @@
 
 ## Overview
 
-This glossary defines the canonical meaning of terms used across Swift Institute specifications. Terms are grouped by domain and include cross-references to the specification sections where they are defined or applied.
-
-**Normative language**: Definitions in this glossary are normative. When documentation uses a term defined here, it carries the meaning specified below.
+This glossary defines the vocabulary used across Swift Institute documentation. Terms are grouped by domain. When a term defined here appears in documentation elsewhere in the ecosystem, it carries the meaning described below.
 
 ---
 
-## Architecture Layers
+## Architecture layers
 
-Terms describing the layered architecture model used in Swift Institute packages.
+Terms describing the layered architecture model used in Swift Institute packages. See <doc:Five-Layer-Architecture> for the full treatment.
 
 ---
 
 ### Primitive (Layer 1)
 
-An atomic building block; a type that is irreducible, policy-free, and not defined in terms of other types. Primitives are types that standards require but do not define. The Primitives layer is organized by semantic irreducibility.
+An atomic building block: a type that is irreducible, policy-free, and not defined in terms of other types. Primitives are types that standards require but do not define. The Primitives layer is organized by semantic irreducibility.
 
-**Characteristics**:
+Characteristics:
+
 - Zero policy, zero platform choice
 - Minimal tokens, IDs, events, handles
-- MUST be total in implementation
+- Total in implementation
 
 ---
 
 ### Standard (Layer 2)
 
-A faithful implementation of an external normative specification (RFC, ISO, IEEE). Semantics are dictated by the external specification, not by implementation convenience. Standards depend only on Primitives.
+A faithful implementation of an external normative specification (RFC, ISO, IEEE, W3C, WHATWG, etc.). Semantics are dictated by the external specification, not by implementation convenience. Standards depend only on Primitives.
 
-**Examples**: RFC 3986 (URI), ISO 32000 (PDF), IEEE 754 (floating-point)
+Examples: RFC 3986 (URI), ISO 32000 (PDF), IEEE 754 (floating-point).
 
 ---
 
@@ -41,7 +40,8 @@ A faithful implementation of an external normative specification (RFC, ISO, IEEE
 
 A composed building block constructed from Primitives and Standards. Foundations are reusable across domains with minimal defaults and no application-specific workflows. Not to be confused with Apple's Foundation framework.
 
-**Characteristics**:
+Characteristics:
+
 - Composes lower layers
 - Reusable across domains
 - Minimal policy introduction
@@ -52,7 +52,8 @@ A composed building block constructed from Primitives and Standards. Foundations
 
 A reusable, opinionated assembly built on Foundations. Components encode defaults and trade-offs but remain reusable across applications. This layer marks the policy boundary where opinions begin to be introduced.
 
-**Characteristics**:
+Characteristics:
+
 - Encodes defaults and trade-offs
 - Remains reusable
 - Introduces policy
@@ -61,48 +62,59 @@ A reusable, opinionated assembly built on Foundations. Components encode default
 
 ### Application (Layer 5)
 
-An end-user system with domain-specific workflows, branding, and UX. Applications are not intended as general infrastructure and are built upon Components and lower layers.
+An end-user system with domain-specific workflows, branding, and UX. Applications are not intended as general infrastructure and are built on Components and lower layers.
 
-**Characteristics**:
+Characteristics:
+
 - Domain-specific workflows
 - End-user facing
 - Not reusable as infrastructure
 
 ---
 
-### Policy Boundary
+### Policy boundary
 
-The point in the layer stack where defaults and opinions begin to be introduced. This occurs at the Components layer (Layer 4). Layers below the policy boundary (Primitives, Standards, Foundations) MUST NOT introduce policy.
+The point in the layer stack where defaults and opinions begin to be introduced. This occurs at the Components layer (Layer 4). Layers below the policy boundary (Primitives, Standards, Foundations) do not introduce policy.
 
 ---
 
-### Semantic Irreducibility
+### Semantic irreducibility
 
 The property of types that cannot be decomposed further into simpler constituent types without losing meaning. Semantic irreducibility is the organizing principle for the Primitives layer.
 
 ---
 
-## Type System Concepts
+## Naming conventions
+
+### Nest.Name
+
+The naming convention used across the ecosystem: types are organized by nesting rather than by compound names. Instead of `FileDirectoryWalk`, the ecosystem uses `File.Directory.Walk`; instead of `NonBlockingSelector`, `IO.NonBlocking.Selector`.
+
+The convention extends to methods and properties: nested accessors such as `instance.open.write { }` or `dir.walk.files()` replace compound method names such as `instance.openWrite { }` or `dir.walkFiles()`.
+
+Types implementing external specifications use specification-mirroring names: `RFC_4122.UUID`, `ISO_32000.Page`, `RFC_3986.URI`. The specification namespace is part of the type identity.
+
+---
+
+## Type system concepts
 
 Terms describing Swift type system features and patterns used in Swift Institute packages.
 
 ---
 
-### Noncopyable Type
+### Noncopyable type
 
 A Swift type marked `~Copyable` that cannot be implicitly copied. Noncopyable types enable move semantics and are used to model resources that must have exactly one owner (handles, tokens, capabilities).
 
-**Usage**: Noncopyable values MUST NOT be embedded in types conforming to `Error` because `Swift.Error` requires `Copyable`.
-
-> **Comprehensive guidance**: See <doc:Memory> for complete ownership patterns, linear/affine types, strict memory safety, and reference primitives.
+Noncopyable values cannot be embedded in types conforming to `Error`, because `Swift.Error` requires `Copyable`.
 
 ---
 
-### Phantom Type
+### Phantom type
 
 A type parameter that appears in a type signature but has no runtime representation. Phantom types are used for compile-time tagging, enabling type-safe distinctions without runtime overhead.
 
-**Example**: `Geometry<Double, PageSpace>` where `PageSpace` is a phantom type parameter distinguishing coordinate spaces.
+Example: `Geometry<Double, PageSpace>` where `PageSpace` is a phantom type parameter distinguishing coordinate spaces.
 
 ---
 
@@ -110,41 +122,61 @@ A type parameter that appears in a type signature but has no runtime representat
 
 A pattern where different states of an object are represented as different types. Typestate makes invalid state transitions unrepresentable at compile time.
 
-**Example**: `UnregisteredToken` and `RegisteredToken` as distinct types rather than a single `Token` with an `isRegistered` flag.
+Example: `UnregisteredToken` and `RegisteredToken` as distinct types rather than a single `Token` with an `isRegistered` flag.
 
 ---
 
-## Mathematical Foundations
+### Receipt
 
-Terms from mathematics used in Swift Institute type design.
+A runnable artifact that verifies a documentation claim. Experiments in the ecosystem are structured as receipts: each is a minimal Swift package that exercises one specific claim, so readers can reproduce the evidence rather than take the claim on faith. Blog posts and research documents link load-bearing claims directly to the experiments that substantiate them.
 
 ---
 
-### Affine Space
+### Skill
+
+A development convention captured as a structured document within the ecosystem. Skills are the canonical source for naming, error handling, memory safety, testing, modularization, and similar cross-cutting conventions. They are written primarily to be loaded by AI-assisted tooling, but they are plain Markdown and readable as reference material. Skills live in the `Skills/` directory of `swift-institute`.
+
+---
+
+## Mathematical foundations
+
+Terms from mathematics used in Swift Institute type design. See <doc:Mathematical-Foundations> for the full treatment.
+
+---
+
+### Affine space
 
 A geometric structure without a canonical origin. In an affine space, points can be subtracted (yielding vectors/displacements) but not added to each other. This models coordinate systems where absolute position is meaningful but adding positions is not.
 
-**Application**: Used in typed geometry to distinguish coordinates from displacements.
+Used in typed geometry to distinguish coordinates from displacements.
 
 ---
 
 ### Category
 
-A mathematical structure consisting of objects and morphisms (arrows) between them, with identity morphisms and composition. Category theory provides the foundation for thinking about transformations and composability.
+A mathematical structure consisting of objects and morphisms (arrows) between them, with identity morphisms and composition. Category theory provides the foundation for reasoning about transformations and composability.
 
-**Application**: Informs API design patterns like `Prism`, `Lens`, and other optics.
-
----
-
-### Lie Group
-
-A group that is also a smooth manifold. Lie groups are used to represent continuous symmetry operations such as rotations, translations, and scaling.
-
-**Application**: Used in geometric type systems for representing transformations.
+Informs API design patterns such as `Prism`, `Lens`, and related optics.
 
 ---
 
-## Platform and Runtime
+### Lie group
+
+A group that is also a smooth manifold. Lie groups represent continuous symmetry operations such as rotations, translations, and scaling.
+
+Used in geometric type systems for representing transformations.
+
+---
+
+### Dimensional analysis
+
+The practice of tracking physical dimensions (length, time, mass) through calculations to ensure correctness. In typed systems, dimensional analysis is encoded in the type system to catch errors at compile time.
+
+Used in geometry and measurement types to prevent invalid operations, for example adding a length to a time.
+
+---
+
+## Platform and runtime
 
 Terms describing platform-specific concepts and runtime behavior.
 
@@ -152,13 +184,13 @@ Terms describing platform-specific concepts and runtime behavior.
 
 ### Foundation (Apple)
 
-Apple's framework providing fundamental types (Date, URL, Data, String bridging). Foundation is unavailable in Swift Embedded environments. Swift Institute packages in swift-standards and swift-primitives MUST NOT depend on Foundation.
+Apple's framework providing fundamental types (Date, URL, Data, String bridging). Foundation is unavailable in Embedded Swift environments. Swift Institute packages at the Primitives and Standards layers do not depend on Foundation.
 
 ---
 
-### Swift Embedded
+### Embedded Swift
 
-A minimal Swift runtime for resource-constrained environments. Swift Embedded lacks Foundation and has a reduced standard library. All swift-primitives and swift-standards packages MUST be compatible with Swift Embedded.
+A minimal Swift language subset for resource-constrained environments. Embedded Swift lacks Foundation and has a reduced standard library. Packages at the Primitives and Standards layers are compatible with Embedded Swift. See <doc:Embedded-Swift> for compatibility patterns.
 
 ---
 
@@ -168,45 +200,30 @@ A programmatic request to the operating system kernel for services. Syscalls are
 
 ---
 
-## Versioning and Evolution
+## Versioning
 
-Terms describing versioning conventions.
-
----
-
-### Semantic Versioning
+### Semantic versioning
 
 A versioning scheme using MAJOR.MINOR.PATCH format where:
-- **MAJOR**: Incremented for breaking API changes
-- **MINOR**: Incremented for backward-compatible feature additions
-- **PATCH**: Incremented for backward-compatible bug fixes
 
-Swift Institute packages follow semantic versioning.
+- MAJOR is incremented for breaking API changes
+- MINOR is incremented for backward-compatible feature additions
+- PATCH is incremented for backward-compatible bug fixes
 
----
-
-## Organizational Terms
-
-Terms describing the Swift Institute itself.
+Swift Institute packages follow semantic versioning. Packages in the 0.x range explicitly signal that breaking changes may occur.
 
 ---
+
+## Organizational terms
 
 ### Swift Institute
 
 A stewarded body of layered Swift infrastructure spanning Primitives, Standards, Foundations, Components, and Applications. The Swift Institute is designed for correctness, composability, and long-term evolution.
 
-**Principles**:
-- Timeless infrastructure quality
-- Layered architecture with clear boundaries
-- No Foundation dependency in lower layers
-- Swift Embedded compatibility for Primitives and Standards
+See <doc:Identity> for the reasoning behind the name and stewardship model.
 
 ---
 
-### Dimensional Analysis
+### Five-layer architecture
 
-The practice of tracking physical dimensions (length, time, mass) through calculations to ensure correctness. In typed systems, dimensional analysis is encoded in the type system to catch errors at compile time.
-
-**Application**: Used in geometry and measurement types to prevent invalid operations (e.g., adding a length to a time).
-
-**Cross-references**: Geometry module in swift-standards
+The organizational model used by the Swift Institute: Primitives, Standards, Foundations, Components, and Applications. Each layer depends only on layers below it. See <doc:Five-Layer-Architecture>.

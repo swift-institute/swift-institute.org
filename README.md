@@ -39,10 +39,9 @@ The per-authority organizations in active preparation include [swift-ietf](https
 | [`Blog/`](Blog) | Blog posts (drafts, published), the ideas index, style guide, and series plans |
 | [`Documentation.docc/`](Documentation.docc) | Architecture documentation — the five-layer model, naming conventions, shared vocabulary |
 | [`Experiments/`](Experiments) | Minimal reproductions — each experiment is a Swift package testing one claim, used as receipts for blog posts |
-| [`References/`](References) | BibTeX files — academic and industry sources cited in research documents |
-| [`Research/`](Research) | Design rationale, trade-off analyses, and investigation notes. Non-normative |
+| [`Research/`](Research) | Design rationale, trade-off analyses, and investigation notes. Non-normative. Includes [`Research/References/`](Research/References) with BibTeX files for academic and industry citations |
 | [`Skills/`](Skills) | Development conventions — naming, errors, memory safety, testing, modularization. Each skill is the canonical source for its conventions |
-| [`SE-Pitches/`](SE-Pitches) | Draft proposals for Swift Evolution |
+| [`Swift Evolution/`](Swift%20Evolution) | Draft proposals for Swift Evolution |
 | [`Scripts/`](Scripts) | Scripts used by the institute's own processes |
 
 ## Status

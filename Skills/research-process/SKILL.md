@@ -410,7 +410,7 @@ For trade-offs: Context → Question ("How to balance A vs B?") → Concerns wit
 
 ### [RES-026] Reference Library
 
-**Statement**: `swift-institute/References/` MUST contain discipline-partitioned `.bib` files (swift-evolution.bib, programming-languages.bib, type-theory.bib, category-theory.bib, api-usability.bib, methodology.bib). Tier 2+ SHOULD reference entries; Tier 3 MUST include traceable References section.
+**Statement**: `swift-institute/Research/References/` MUST contain discipline-partitioned `.bib` files (swift-evolution.bib, programming-languages.bib, type-theory.bib, category-theory.bib, api-usability.bib, methodology.bib). Tier 2+ SHOULD reference entries; Tier 3 MUST include traceable References section.
 
 **Cross-references**: [RES-003], [RES-021]
 

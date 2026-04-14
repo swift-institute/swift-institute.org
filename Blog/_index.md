@@ -76,8 +76,8 @@ Central backlog of blog post ideas captured from Swift Institute work.
 | ID | Title | Category | Source | Captured | Blocker |
 |----|-------|----------|--------|----------|---------|
 | BLOG-IDEA-003 | BitwiseCopyable's Hidden Constraint on Lifetime Inference | Technical Deep Dive | [BitwiseCopyable Analysis.md](https://github.com/swift-primitives/Sources/blob/main/Swift Primitives/Swift Primitives.docc/Reference/BitwiseCopyable Analysis.md) | 2026-01-23 | Niche compiler internals — needs external angle |
-| BLOG-IDEA-005+008 | Ownership Overloading: Why Swift Can't and What We Learned | Lessons Learned | [SE-Pitch PITCH-0001](SE-Pitches/Draft/PITCH-0001%20Ownership-Based%20Method%20Overloading.md) | 2026-01-23 | Merged: 005 (why it fails) + 008 (6 approaches REFUTED). Needs single narrative. |
-| BLOG-IDEA-006 | The `__unchecked` Phantom Parameter Problem | Lessons Learned | [SE-Pitch PITCH-0002](SE-Pitches/Draft/PITCH-0002%20Throws-Based%20Method%20Overloading.md) | 2026-01-23 | Very internal — needs external angle |
+| BLOG-IDEA-005+008 | Ownership Overloading: Why Swift Can't and What We Learned | Lessons Learned | [SE-Pitch PITCH-0001](Swift Evolution/Drafts/PITCH-0001%20Ownership-Based%20Method%20Overloading.md) | 2026-01-23 | Merged: 005 (why it fails) + 008 (6 approaches REFUTED). Needs single narrative. |
+| BLOG-IDEA-006 | The `__unchecked` Phantom Parameter Problem | Lessons Learned | [SE-Pitch PITCH-0002](Swift Evolution/Drafts/PITCH-0002%20Throws-Based%20Method%20Overloading.md) | 2026-01-23 | Very internal — needs external angle |
 | BLOG-IDEA-009 | Dual-Track API for stdlib Integration | Pattern Documentation | [stdlib-comparison-conformance](Experiments/stdlib-comparison-conformance/) | 2026-01-23 | Niche pattern — needs broader context |
 | BLOG-IDEA-011 | State-Tracking Pattern for Consuming Accessors | Pattern Documentation | [Property Experiments](https://github.com/swift-primitives/swift-property-primitives/blob/main/Experiments/_index.md) | 2026-01-23 | Niche — needs broader applicability angle |
 | BLOG-IDEA-012 | Reference Primitives Taxonomy: 23 Ownership Patterns | Pattern Documentation | [Tier 0 Analysis](https://github.com/swift-primitives/Sources/blob/main/Swift Primitives/Swift Primitives.docc/Research/Tier%200%20Comparative%20Analysis.md) | 2026-01-23 | Niche taxonomy — needs "why should I care" angle |
@@ -113,7 +113,7 @@ Central backlog of blog post ideas captured from Swift Institute work.
 | BLOG-IDEA-013 | Typed throws in Swift, part 1: error handling from first principles | Technical Deep Dive | — | 2026-03-11 | [Draft](Draft/typed-throws-part-1.md) |
 | BLOG-IDEA-013 | Typed throws in Swift, part 2: the throwing spectrum | Technical Deep Dive | — | 2026-03-11 | [Draft](Draft/typed-throws-part-2.md) |
 | BLOG-IDEA-030 | Typed throws in Swift, part 3: typed throws in practice | Technical Deep Dive | — | 2026-03-11 | [Draft](Draft/typed-throws-part-3.md) |
-| BLOG-IDEA-031 | The associated type trap: when your protocol's Body meets SwiftUI's Body | Technical Deep Dive | — | 2026-03-13 | [Draft](Draft/associated-type-trap.md) |
+| BLOG-IDEA-031 | The associated type trap: when your protocol's Body meets SwiftUI's Body | Technical Deep Dive | — | 2026-03-13 | [Draft](Draft/associated-type-trap-final.md) |
 
 > **Note**: BLOG-IDEA-024, 025, 027 were previously listed as "In Progress" but no draft files exist. Moved back to Ready for Drafting.
 >

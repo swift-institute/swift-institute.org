@@ -4,126 +4,104 @@
     @TitleHeading("Swift Institute")
 }
 
-Type-safe dimensional analysis, category theory, algebraic structures, and trigonometry.
+Type-safe dimensional analysis, algebraic structures, and the type-system rationale behind the geometry stack.
 
-## Type-Safe Dimensional Analysis
+## Overview
 
-Swift Primitives implements **dimensional analysis at compile time** through phantom types. This technique, common in scientific computing but rare in application frameworks, prevents entire categories of errors:
+Swift's type system is strong enough to encode mathematical structure directly. The Primitives layer takes that seriously: coordinates, displacements, extents, rotations, and angles are distinct types rather than bare floating-point values, and the operations permitted between them follow the underlying algebra.
+
+The goal is not mathematical purity for its own sake. The goal is that classes of error that would otherwise appear as subtle runtime bugs — mixing spaces, subtracting an extent from a coordinate, adding two positions — are caught at compile time, with no runtime cost.
+
+## Type-safe dimensional analysis
+
+The phantom-type pattern gives the compiler enough information to distinguish values that share a representation but not a meaning.
 
 ```swift
-// Phantom type tags (zero runtime overhead)
 struct Tagged<Tag, Value> {
     var rawValue: Value
 }
 
-// Type-safe coordinates in different spaces
 typealias PageX = Tagged<Coordinate.X<PageSpace>, Double>
 typealias ScreenX = Tagged<Coordinate.X<ScreenSpace>, Double>
 
-// Compile-time error: cannot add coordinates in different spaces
-let combined = pageX + screenX  // ❌ Type error
+// Cannot add coordinates in different spaces
+let combined = pageX + screenX  // Compile error
+```
 
-// Type-safe dimensional arithmetic
+The same pattern distinguishes kinds of value within a single space:
+
+```swift
 let width: Width = 10       // Extent (unsigned)
 let dx: Dx = 5              // Displacement (signed)
 let x: X = 2                // Coordinate (position)
 
-let newX = x + dx           // ✅ Coordinate + Displacement = Coordinate
-let distance = x1 - x2      // ✅ Coordinate - Coordinate = Displacement
-let invalid = x + x         // ❌ Coordinate + Coordinate = undefined
+let newX = x + dx           // Coordinate + Displacement = Coordinate
+let distance = x1 - x2      // Coordinate - Coordinate = Displacement
+let invalid = x + x         // Does not compile
 ```
 
-This system enforces dimensional correctness without runtime overhead. The phantom types (`PageSpace`, `ScreenSpace`) exist only at compile time; the runtime representation is a bare `Double`.
+The phantom types exist only at compile time. The runtime representation is a bare `Double`, specialization eliminates any protocol overhead, and the generated machine code is equivalent to hand-written arithmetic on raw floating-point values.
 
 ---
 
-## Category-Theoretic Organization
+## Affine and vector structure
 
-The Swift Institute organizes mathematical abstractions along category-theoretic lines:
-
-**Category Vect**: Vector spaces and linear maps
-- Objects: `Vector<N>` parameterized by dimension
-- Morphisms: `Matrix<M,N>` as linear transformations
-- Identity: Identity matrix
-- Composition: Matrix multiplication
-
-**Category Aff**: Affine spaces and affine maps
-- Objects: `Affine.Point<N>` (positions without canonical origin)
-- Morphisms: `Affine.Transform` (linear + translation)
-- Key property: Points cannot be added (no origin); subtraction yields vectors
-
-**Lie Groups**: Symmetry operations on Euclidean space
-- `Rotation<N>` ∈ SO(n): Special orthogonal group
-- `Scale<N>` ∈ (ℝ⁺)ⁿ: Positive diagonal matrices
-- `Shear<N>`: Off-diagonal unipotent transformations
-- Composition generates GL⁺(n), the general linear group with positive determinant
-
-This organization is not merely aesthetic—it guides the API design:
+Position and displacement are modelled as distinct types because the operations permitted on them differ. Affine spaces have no canonical origin: you can subtract two points to get the displacement between them, you can add a displacement to a point to get another point, but you cannot add two points.
 
 ```swift
-// Affine arithmetic enforces geometric correctness
 let p1: Point<2> = ...
 let p2: Point<2> = ...
-let v: Vector<2> = p1 - p2    // ✅ Point - Point = Vector
 
-let p3 = p1 + v               // ✅ Point + Vector = Point
-let invalid = p1 + p2         // ❌ Point + Point = undefined (no origin)
+let v: Vector<2> = p1 - p2    // Point - Point = Vector
+let p3 = p1 + v               // Point + Vector = Point
+let invalid = p1 + p2         // Does not compile
 ```
 
----
+Linear transformations compose via matrix multiplication. Affine transformations extend linear maps with translation. Rotations, scalings, and shears form subgroups of the affine group and are typed accordingly: `Rotation<N>`, `Scale<N>`, and `Shear<N>` live in the symmetry primitives and compose through type-preserving operators where possible.
 
-## Algebraic Structures as Types
-
-Swift Primitives models algebraic structures as enumerated types with semantic operations:
-
-**Sign**: Three-valued sign classification {positive, negative, zero}
-- Monoid under multiplication
-- `positive × negative = negative`
-- `zero × anything = zero`
-- Models Z₃ semigroup structure
-
-**Parity**: Binary parity classification {even, odd}
-- Z₂ group under addition
-- `even + odd = odd`
-- `odd + odd = even`
-- Partitions ℤ/2ℤ
-
-**Comparison**: Three-valued ordering {lessThan, equal, greaterThan}
-- Trichotomy relation
-- Standard ordering result type
-
-These types replace stringly-typed enumerations with semantically meaningful structures. A function returning `Sign` communicates more than a function returning `Int` with values -1, 0, 1.
+The payoff is that a function signature announces its geometric contract. A `Rotation<2>` and a `Scale<2>` are different types; a function that takes one cannot silently accept the other.
 
 ---
 
-## The Trigonometry Solution
+## Algebraic structures as types
 
-Swift's `BinaryFloatingPoint` protocol lacks `sin`, `cos`, `tan`, and other transcendental operations. This historically forced duplication across Double/Float extension pairs. Swift Primitives solves this with the `Numeric.Transcendental` protocol.
+Several small but common algebraic concepts are given their own types, rather than being flattened into `Int` or a stringly-typed enum.
 
-### The Protocol
+`Sign` is a three-valued sign classification: positive, negative, zero. It forms a monoid under multiplication, with `positive * negative = negative` and `zero * anything = zero`.
 
-`Numeric.Transcendental` (defined in `Numeric Primitives`) is a **capability marker** that describes the ability to perform transcendental operations, independent of numeric representation. It provides explicit requirements:
+`Parity` is a two-valued classification: even, odd. It forms the Z₂ group under addition: `even + odd = odd`, `odd + odd = even`.
+
+`Comparison` is a three-valued ordering: lessThan, equal, greaterThan. It models the trichotomy relation that standard library comparisons return.
+
+The point is not that these structures are deep — they are not. The point is that a function returning `Sign` communicates more than a function returning `Int` with the convention that values are -1, 0, or 1, and the compiler can keep the meaning straight as the value flows through the program.
+
+---
+
+## Trigonometry across scalar types
+
+Swift's `BinaryFloatingPoint` protocol does not provide `sin`, `cos`, or other transcendental operations, which forced earlier geometry code to duplicate logic across `Double` and `Float`. The Primitives layer introduces a capability protocol, `Numeric.Transcendental`, defined in `Numeric Primitives`, that describes the ability to perform transcendental operations independently of representation.
+
+The protocol provides explicit requirements:
+
 - Trigonometric: `_sin`, `_cos`, `_tan`, `_asin`, `_acos`, `_atan`, `_atan2`
 - Hyperbolic: `_sinh`, `_cosh`, `_tanh`, `_asinh`, `_acosh`, `_atanh`
-- Exponential/Logarithmic: `_exp`, `_expm1`, `_exp2`, `_log`, `_log1p`, `_log2`, `_log10`
-- Power: `_pow`, `_sqrt`, `_cbrt`, `_hypot`
+- Exponential and logarithmic: `_exp`, `_expm1`, `_exp2`, `_log`, `_log1p`, `_log2`, `_log10`
+- Power and roots: `_pow`, `_sqrt`, `_cbrt`, `_hypot`
 
 Conformances are provided in `Real Primitives` for `Double`, `Float`, and `Float16` (platform-conditional), all marked `@inlinable` for specialization.
 
-### Principled Composition
+The separation of concerns is:
 
-The design separates concerns:
-- `BinaryFloatingPoint` describes **representation** (IEEE 754)
-- `Numeric.Transcendental` describes **capability** (transcendental operations)
+- `BinaryFloatingPoint` describes representation (IEEE 754)
+- `Numeric.Transcendental` describes capability (transcendental operations)
 
-Call sites use protocol composition: `BinaryFloatingPoint & Numeric.Transcendental`
-
-### Generic Geometry Achieved
-
-With this approach, geometric types are now fully generic:
+Call sites use protocol composition:
 
 ```swift
-extension Tagged where Tag == Angle.Radian, RawValue: BinaryFloatingPoint & Numeric.Transcendental {
+extension Tagged where
+    Tag == Angle.Radian,
+    RawValue: BinaryFloatingPoint & Numeric.Transcendental
+{
     @inlinable
     public static func sin(of angle: Self) -> Scale<1, RawValue> {
         Scale(RawValue._sin(angle.rawValue))
@@ -131,18 +109,4 @@ extension Tagged where Tag == Angle.Radian, RawValue: BinaryFloatingPoint & Nume
 }
 ```
 
-The protocol is deployed across the stack:
-- **swift-dimension-primitives**: `Radian+Trigonometry.swift` — fully generic
-- **swift-symmetry-primitives**: `Rotation.swift` — 2D rotations generic over scalar type
-- **swift-affine-primitives**: Polar coordinates, angle computation
-- **swift-algebra-linear-primitives**: Vector angles, polar coordinates
-- **swift-geometry-primitives**: Arc, Ball, Bezier, Ellipse, Path — all generic
-
-### Hybrid Approach
-
-The implementation combines two strategies:
-- Non-trigonometric operations use `BinaryFloatingPoint` constraints (standard library protocol)
-- Trigonometric operations use `BinaryFloatingPoint & Numeric.Transcendental` constraints
-
-This achieves the design goal: `Rotation<N,T>`, `Arc<T>`, `Ellipse<T>`, and other geometric types work with any conforming floating-point type, with specialization eliminating protocol overhead in optimized builds.
-
+Geometric types such as `Rotation<N, T>`, `Arc<T>`, and `Ellipse<T>` are generic over the scalar type, with the appropriate constraint where transcendental operations are needed. Non-transcendental code uses `BinaryFloatingPoint` alone. Specialization in release builds eliminates the protocol overhead.

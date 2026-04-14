@@ -218,7 +218,7 @@ no `_index.md`, a missing index MUST be flagged during meta-analysis.
 
 ### [META-010] References Directory
 
-**Statement**: Meta-analysis MUST check that `swift-institute/References/` contains
+**Statement**: Meta-analysis MUST check that `swift-institute/Research/References/` contains
 the discipline-partitioned `.bib` files required by [RES-026].
 
 **Required files** (per [RES-026]):

@@ -8,216 +8,137 @@ Organizational identity and the reasoning behind the "institute" framing.
 
 ## Overview
 
-This document establishes the organizational identity of the Swift Institute. It explains the naming decision, the requirements that drove it, and the stewardship model that follows from it.
-
-**Applies to**: All packages, documentation, and communications within the Swift Institute ecosystem.
-
-**Does not apply to**: Technical API design decisions (see <doc:API-Requirements>).
+Naming an umbrella organization for infrastructure is an architectural decision. The name constrains scope, signals intent, and ages well or poorly. This document explains why "Swift Institute" was chosen and what the name commits to.
 
 ---
 
-## The Naming Problem
-
-**Scope**: Umbrella organization naming for Swift infrastructure.
-
-Naming an umbrella organization for infrastructure is a consequential architectural decision. The name constrains scope, signals intent, invites or repels collaboration, and ages well or poorly.
+## The naming problem
 
 The Swift ecosystem presents specific constraints:
 
-- **Apple's gravity well**: Foundation, Core*, and System are semantically occupied
-- **Vendor collision risks**: Names that suggest corporate ownership create confusion
-- **Community expectations**: Swift infrastructure should feel neutral, not proprietary
+- Apple's gravity well: `Foundation`, `Core*`, and `System` are semantically occupied
+- Vendor collision risks: names that suggest corporate ownership create confusion
+- Community expectations: Swift infrastructure should read as neutral, not proprietary
 
-The name functions as the top-level namespace for all work. It appears in package names, documentation, and community discussions. A poor choice creates friction; a good choice becomes invisible infrastructure.
+The umbrella name functions as a top-level namespace for all work across the ecosystem. It appears in package names, documentation, and community discussions. A poor choice creates friction; a good choice becomes invisible.
 
 ---
 
-## Requirements for the Umbrella Name
+## Requirements for the name
 
-**Scope**: Evaluation criteria for naming candidates.
-
-The umbrella name must satisfy multiple requirements:
+The umbrella name had to satisfy several criteria at once:
 
 | Category | Requirement |
 |----------|-------------|
-| **Semantic Scope** | Represent the entire body of work, not a single layer; accommodate internal stratification |
-| **Conceptual Meaning** | Imply systematic organization, stewardship, layered knowledge, long-term continuity |
-| **Architectural Fit** | Compatible with layered architecture; support future expansion |
-| **Legal Safety** | No collision with Apple, OpenAI, or Swift core terminology |
-| **Ecosystem Signaling** | Neutral, non-corporate, academically credible |
-| **Interpretability** | Map cleanly to "place where structured work lives" |
-| **Longevity** | Still make sense in 10-20 years |
-| **Tone** | Serious but approachable; authoritative but inviting |
+| Semantic scope | Represent the entire body of work, not a single layer; accommodate internal stratification |
+| Conceptual meaning | Imply systematic organization, stewardship, layered knowledge, long-term continuity |
+| Architectural fit | Compatible with a layered architecture; support future expansion |
+| Legal safety | No collision with Apple, OpenAI, or Swift core terminology |
+| Ecosystem signaling | Neutral, non-corporate, academically credible |
+| Interpretability | Map cleanly to "place where structured work lives" |
+| Longevity | Still make sense in 10–20 years |
+| Tone | Serious but approachable; authoritative but inviting |
 
-The name must *not* imply: a framework, a product, a company, a monolithic stack, or a closed system.
+The name must not imply a framework, a product, a company, a monolithic stack, or a closed system.
 
 ---
 
-## Why "Institute" Satisfies All Requirements
+## Why "Institute" works
 
-**Scope**: Justification for the chosen name.
+The term "institute" has historical roots that align with the project's goals.
 
-The term "institute" has deep historical roots that align with the project's goals.
+The Institutes of Justinian (533 CE) systematically organized Roman law into a layered, teachable structure. The parallel is direct: the Swift Institute organizes Swift infrastructure into a layered, composable structure.
 
-### Historical Precedents
+Research institutes — MIT, Max Planck, Santa Fe — are places of rigorous, long-term work that invite collaboration while maintaining standards. Technical institutes imply foundational education and systematic knowledge transfer.
 
-**Institutes of Justinian** (533 CE): A systematic organization of Roman law into a layered, teachable structure. The parallel is direct: the Swift Institute organizes Swift infrastructure into a layered, composable structure.
+What "institute" is not:
 
-**Research Institutes**: MIT, Max Planck Institute, Santa Fe Institute. Places of rigorous, long-term work that invite collaboration while maintaining standards.
-
-**Technical Institutes**: Imply foundational education and systematic knowledge transfer.
-
-### What "Institute" Is Not
-
-| Term | Why It Does Not Apply |
+| Term | Why it does not apply |
 |------|----------------------|
-| **Framework** | Frameworks are consumed; institutes are participated in |
-| **Product** | Products are shipped; institutes evolve |
-| **Company** | Companies have customers; institutes have contributors |
-| **Platform** | Platforms lock in; institutes remain open |
+| Framework | Frameworks are consumed; institutes are participated in |
+| Product | Products are shipped; institutes evolve |
+| Company | Companies have customers; institutes have contributors |
+| Platform | Platforms lock in; institutes remain open |
 
 ---
 
-## Canonical Definition
+## Canonical definition
 
-**Scope**: The authoritative definition of the Swift Institute.
-
-> **The Swift Institute** is a stewarded body of layered Swift infrastructure, spanning primitives, standards, foundations, components, and applications, designed for correctness, composability, and long-term evolution.
+The Swift Institute is a stewarded body of layered Swift infrastructure, spanning primitives, standards, foundations, components, and applications, designed for correctness, composability, and long-term evolution.
 
 This definition establishes three core properties:
 
-1. **Stewarded**: Active curation rather than passive accumulation
-2. **Layered**: Explicit architectural stratification with clear dependencies
-3. **Long-term**: Designed for decades of evolution, not immediate convenience
+1. Stewarded — active curation rather than passive accumulation
+2. Layered — explicit architectural stratification with clear dependencies
+3. Long-term — designed for decades of evolution, not immediate convenience
 
 ---
 
-## Stewardship Model
-
-**Scope**: Governance principles for the Swift Institute.
+## Stewardship model
 
 An institute implies stewardship, not ownership. This distinction shapes how the organization operates.
 
-### Core Principles
-
 | Principle | Description |
 |-----------|-------------|
-| **Curation over control** | The institute curates what belongs at each layer; it does not control all development |
-| **Standards over mandates** | Layer boundaries are principled, not arbitrary |
-| **Invitation over gatekeeping** | Contribution is welcomed within the architectural principles |
-| **Evolution over freezing** | The structure can expand without breaking the model |
-
-### Implications
+| Curation over control | The institute curates what belongs at each layer; it does not control all development |
+| Standards over mandates | Layer boundaries are principled, not arbitrary |
+| Invitation over gatekeeping | Contribution is welcomed within the architectural principles |
+| Evolution over freezing | The structure can expand without breaking the model |
 
 Stewardship means accepting responsibility for long-term coherence while enabling independent contribution. The institute maintains architectural integrity; contributors maintain implementation quality.
 
 This model enables:
+
 - Independent package development within shared constraints
 - Clear boundaries that prevent scope creep
 - Sustainable growth without organizational bloat
 
 ---
 
-## Project Goals
+## Project goals
 
-**Applies to**: All architectural and design decisions.
+### Timeless infrastructure
 
-**Does not apply to**: Implementation details within individual packages.
+Software is designed to remain valid as compilers evolve and platforms emerge. APIs avoid coupling to specific compiler versions or platform capabilities that may change. Infrastructure code has long operational lifetimes, and designing for timelessness reduces maintenance burden and extends useful life.
 
----
+### Cross-platform correctness
 
-### Timeless Infrastructure
+Code is expected to exhibit consistent behavior across Darwin, Linux, Windows, and Embedded Swift. Platform-specific behavior is explicitly documented and isolated. Cross-platform correctness lets the ecosystem serve Swift developers regardless of target.
 
-**Scope**: Long-term design philosophy.
+### Explicit dependency direction
 
-**Statement**: Software MUST be designed to remain valid as compilers evolve and platforms emerge. APIs SHOULD avoid coupling to specific compiler versions or platform capabilities that may change.
+Each layer depends only on layers below it. Circular dependencies are prohibited. Dependency direction is documented and enforced through package structure. Explicit dependency direction enables independent testing, incremental adoption, and clear reasoning about change impact.
 
-**Rationale**: Infrastructure code has long operational lifetimes. Designing for timelessness reduces maintenance burden and extends useful life.
+### Sustainable licensing leverage
 
----
+License restrictions align with policy content. Permissive licenses cover foundational primitives and standards; more restrictive terms are reserved for higher-value, policy-laden components. Strategic licensing enables sustainable development while maximizing ecosystem adoption. See <doc:Five-Layer-Architecture>.
 
-### Cross-Platform Correctness
+### AI-assisted development
 
-**Scope**: Platform support requirements.
-
-**Statement**: Code MUST exhibit consistent behavior across Darwin, Linux, Windows, and Swift Embedded. Platform-specific behavior MUST be explicitly documented and isolated.
-
-**Rationale**: Cross-platform correctness enables the ecosystem to serve all Swift developers regardless of their target platform.
+Code includes explicit invariants and boundaries that improve automated reasoning. AI-assisted development is increasingly common, and explicit invariants help both human and machine consumers understand system behavior. The ecosystem's conventions are also captured as Skills — structured, machine-readable documents under `Skills/` that describe naming, error handling, memory safety, testing, and related practices.
 
 ---
 
-### Explicit Dependency Direction
+## Project non-goals
 
-**Scope**: Package and target architecture.
+### No convenience competition
 
-**Statement**: Each layer MUST depend only on layers below it. Circular dependencies are prohibited. Dependency direction MUST be documented and enforced through package structure.
+The stack does not compete with Apple frameworks on convenience. Correctness and composability take precedence over ergonomic shortcuts. Matching Apple's convenience APIs would require compromising on correctness guarantees and cross-platform support.
 
-**Rationale**: Explicit dependency direction enables independent testing, incremental adoption, and clear reasoning about change impact.
+### No monolithic ecosystem
 
----
+Each package is independently versioned and consumable. No package requires adoption of the entire ecosystem. Independent packages enable incremental adoption and reduce the barrier to entry for new consumers.
 
-### Sustainable Licensing Leverage
+### No premature API freezing
 
-**Scope**: License selection and management.
-
-**Statement**: License restrictions SHOULD align with policy content. Permissive licenses MAY be used for foundational primitives; restrictive licenses SHOULD be reserved for higher-value, policy-laden components.
-
-**Rationale**: Strategic licensing enables sustainable development while maximizing ecosystem adoption.
-
----
-
-### AI-Friendly Architecture
-
-**Scope**: Documentation and code structure.
-
-**Statement**: Code SHOULD include explicit invariants and boundaries that improve automated reasoning. 
-
-**Rationale**: AI-assisted development is increasingly common. Explicit invariants help both human and machine consumers understand system behavior.
-
----
-
-## Project Non-Goals
-
-**Applies to**: Scope boundary decisions.
-
-**Does not apply to**: Individual package design choices.
-
----
-
-### No Convenience Competition
-
-**Scope**: API design philosophy.
-
-**Statement**: The stack MUST NOT compete with Apple frameworks on convenience. The stack MUST prioritize correctness and composability over ergonomic shortcuts.
-
-**Rationale**: Attempting to match Apple's convenience APIs would require compromising on correctness guarantees and cross-platform support.
-
----
-
-### No Monolithic Ecosystem
-
-**Scope**: Package organization.
-
-**Statement**: Each layer MUST remain independently versioned and consumable. Packages MUST NOT require adoption of the entire ecosystem.
-
-**Rationale**: Independent packages enable incremental adoption and reduce the barrier to entry for new consumers.
-
----
-
-### No Premature API Freezing
-
-**Scope**: API stability timeline.
-
-**Statement**: APIs SHOULD NOT be marked stable (1.0.0) until they have been validated through production use. Semantic versioning MUST be used to allow controlled evolution during the pre-1.0 period.
-
-**Rationale**: Premature freezing locks in design mistakes. The 0.x version range explicitly signals that breaking changes may occur.
+APIs are not marked stable (1.0.0) until they have been validated through production use. The 0.x version range explicitly signals that breaking changes may still occur. Premature freezing locks in design mistakes.
 
 ---
 
 ## Topics
 
-### Related Documents
+### Related
 
 - <doc:Five-Layer-Architecture>
-- <doc:Quality-Assurance>
-- <doc:API-Requirements>
+- <doc:Glossary>
+- <doc:FAQ>

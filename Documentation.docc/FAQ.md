@@ -4,55 +4,68 @@
     @TitleHeading("Swift Institute")
 }
 
-Frequently asked questions about Swift Institute architecture and usage.
+Frequently asked questions about Swift Institute architecture, packaging, and usage.
 
-## Why can't I use Foundation?
+## How do I depend on one of these packages?
 
-Foundation (`Date`, `URL`, `Data`, `String` bridging) introduces dependencies that prevent deployment in constrained environments:
+Each repository in the ecosystem is a standalone Swift package. Add it as a dependency directly in your `Package.swift`:
 
-- **Swift Embedded**: No Foundation runtime available
-- **Kernel extensions**: Foundation adds unacceptable overhead
-- **Cross-platform consistency**: Foundation behavior differs between Darwin and Linux
+```swift
+dependencies: [
+    .package(url: "https://github.com/swift-primitives/swift-geometry-primitives", from: "0.1.0"),
+    .package(url: "https://github.com/swift-foundations/swift-json", from: "0.1.0"),
+]
+```
 
-By maintaining Foundation independence, primitives deploy across the entire Swift ecosystem without modification. If you need Foundation conveniences, use them in the **foundations** layer or above, where policy decisions are appropriate.
-
-See <doc:Identity> for more on the reasoning behind this constraint.
-
----
-
-## Why 61 packages instead of fewer?
-
-Fine-grained packages provide:
-
-1. **Minimal dependencies**: A package needing only affine transforms doesn't pull in temporal primitives
-2. **Faster builds**: Smaller dependency graphs compile faster
-3. **Clearer semantics**: Each package answers one question well
-4. **Independent versioning**: Breaking changes propagate only to actual dependents
-
-The alternative—a monolithic `SwiftPrimitives` package—would force all consumers to accept all types, even those irrelevant to their domain. This contradicts the principle of minimal coupling.
-
-See the Primitives Tiers document in swift-primitives for the tier dependency hierarchy.
+There is no umbrella package to import. The super-repositories (`swift-primitives`, `swift-standards`, `swift-foundations`) are git submodule aggregators for browsing the ecosystem. They are not meant to be consumed as dependencies.
 
 ---
 
-## What's the difference between atomic and infrastructure tiers?
+## What's the license?
 
-**Atomic tiers** (1-4) contain types with no dependencies beyond the Swift standard library:
-- Tier 1: Kernel (identity, ordering, validation)
-- Tier 2: Mathematical (parity, sign, comparison)
-- Tier 3: Numeric (transcendentals, integers)
-- Tier 4: Structural (algebra, tagged types)
+Primitives and Standards packages are released under Apache 2.0 without exception. Foundations packages are Apache 2.0 by default, with selective commercial terms reserved for specific packages where appropriate. Components and Applications use more flexible licensing, since that is where policy and opinion accumulate. See the Licensing strategy section of <doc:Five-Layer-Architecture>.
 
-**Infrastructure tiers** (5-9) compose atomic types into domain primitives:
-- Tier 5: Dimensional (coordinates, angles, extents)
-- Tier 6: Geometric (points, vectors, matrices)
-- Tier 7: Spatial (transforms, symmetries)
-- Tier 8: Memory (buffers, binary parsing)
-- Tier 9: Platform (Darwin, Linux, Windows abstractions)
+Every repository carries its own `LICENSE.md` file. When in doubt, check the repository.
 
-The distinction matters for dependency management: atomic types are universally reusable; infrastructure types serve specific domains.
+---
 
-See <doc:Five-Layer-Architecture> for more detail.
+## What's the current state of the ecosystem?
+
+As of this release:
+
+- 127 repositories at the Primitives layer
+- 19 packages in `swift-standards` plus roughly 83 packages across per-authority organizations (swift-ietf, swift-iso, swift-w3c, swift-whatwg, and single-package organizations for other standards bodies)
+- 136 repositories at the Foundations layer
+- Components and Applications are planned; no packages at those layers have been released yet
+
+This is an early public release. Documentation, research, experiments, and the blog workflow are all available now. The Swift packages themselves are being released repository by repository; some links in the documentation may resolve only as release tags land.
+
+---
+
+## Why can I not use Apple's Foundation framework?
+
+Foundation (`Date`, `URL`, `Data`, `String` bridging) introduces dependencies that prevent deployment in several environments:
+
+- Embedded Swift has no Foundation runtime
+- Kernel extensions cannot afford the overhead
+- Behavior drifts between Darwin and swift-corelibs-foundation on Linux
+
+Keeping Foundation out of the Primitives and Standards layers lets those packages deploy across the entire Swift ecosystem without modification. At the Foundations layer and above, Foundation is a legitimate dependency if a package genuinely needs it — the constraint applies to the lower layers, not everywhere.
+
+See <doc:Identity> for the reasoning behind this choice.
+
+---
+
+## Why so many small packages?
+
+Fine-grained packaging provides:
+
+1. Minimal dependencies — a package needing only affine transforms does not pull in temporal primitives
+2. Faster builds — smaller dependency graphs compile faster
+3. Clearer semantics — each package answers one question well
+4. Independent versioning — breaking changes propagate only to actual dependents
+
+The alternative, a monolithic `SwiftPrimitives` package, would force every consumer to accept every type, including those irrelevant to their domain. This contradicts the principle of minimal coupling.
 
 ---
 
@@ -60,30 +73,13 @@ See <doc:Five-Layer-Architecture> for more detail.
 
 Ask these questions in order:
 
-1. **Does a standard define it?** If implementing ISO, RFC, IEEE, or similar → **swift-standards**
-2. **Do standards need it but not define it?** If it's a prerequisite for standards → **swift-primitives**
-3. **Does it compose standards into a domain?** If building on standards → **swift-foundations**
-4. **Is it an opinionated component?** If it includes UI or policy → **swift-components**
-5. **Is it an end-user product?** → **swift-applications**
+1. Does an external specification define it? If implementing an ISO, RFC, IEEE, W3C, or similar standard, the package belongs in the appropriate per-authority organization or in `swift-standards` as a convergence package.
+2. Do standards need it but not define it? If it is a prerequisite for standards, it belongs in `swift-primitives`.
+3. Does it compose standards and primitives into a reusable domain abstraction? It belongs in `swift-foundations`.
+4. Is it an opinionated assembly with defaults? It belongs in `swift-components`.
+5. Is it an end-user product? It belongs in `swift-applications`.
 
-See <doc:Contributor-Guidelines> for a detailed decision tree.
-
----
-
-## Why "Institute" and not "Framework"?
-
-The naming signals intent:
-
-- **Framework** implies consumption—you use it as provided
-- **Institute** implies stewardship—a body that maintains standards over time
-
-The Swift Institute doesn't ship a framework; it maintains a **body of layered infrastructure**. The "institute" framing communicates:
-
-1. Long-term stability over rapid iteration
-2. Stewardship over ownership
-3. Principled evolution over feature accumulation
-
-See <doc:Identity> for the full explanation of organizational identity.
+See <doc:Five-Layer-Architecture> for the full decision model.
 
 ---
 
@@ -93,29 +89,46 @@ Yes. Many packages expose multiple library products for fine-grained dependencie
 
 ```swift
 // Depend on all numeric primitives
-.product(name: "Numeric Primitives", package: "swift-numeric-primitives")
+.product(name: "Numeric Primitives", package: "swift-numeric-primitives"),
 
 // Or depend only on what you need
-.product(name: "Integer Primitives", package: "swift-numeric-primitives")
-.product(name: "Real Primitives", package: "swift-numeric-primitives")
+.product(name: "Integer Primitives", package: "swift-numeric-primitives"),
+.product(name: "Real Primitives", package: "swift-numeric-primitives"),
 ```
 
 This reduces compile times and binary sizes. Check each package's `Package.swift` for available products.
 
-See <doc:Implementation-Patterns> for more on multi-library products.
+---
+
+## Why "Institute" and not "Framework"?
+
+The naming signals intent:
+
+- Framework implies consumption — you use it as provided
+- Institute implies stewardship — a body that maintains standards over time
+
+The Swift Institute does not ship a framework; it maintains a body of layered infrastructure. The "institute" framing communicates long-term stability, stewardship over ownership, and principled evolution over feature accumulation.
+
+See <doc:Identity> for the full explanation.
+
+---
+
+## When will the Components and Applications layers be released?
+
+No date is committed. The Primitives, Standards, and Foundations layers are being published first, because Components and Applications depend on them. Once those lower layers are stable and the releases have settled, work on Components will begin in public.
 
 ---
 
 ## Where do I report issues or ask questions?
 
-- **GitHub Issues**: For bugs and feature requests, file issues on the relevant package repository
-- **GitHub Discussions**: For architectural questions and design discussions
-- **Pull Requests**: For contributions (see <doc:Contributor-Guidelines>)
+- GitHub Issues — for bugs and feature requests, file on the relevant package repository
+- GitHub Discussions — for architectural questions and design discussions on the `swift-institute` repository
+- Pull Requests — for contributions, see the `Contributing.md` document in `swift-institute`
 
 ## Topics
 
 ### Related
 
-- <doc:Identity>
-- <doc:Contributor-Guidelines>
 - <doc:Five-Layer-Architecture>
+- <doc:Identity>
+- <doc:Glossary>

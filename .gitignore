@@ -61,12 +61,13 @@ Thumbs.db
 # Package-specific rules below (managed by sync-gitignore.sh)
 
 # Institute directories
+!/Blog/
 !/Documentation.docc/
-!/Implementation/
-!/SE-Pitches/
 !/Scripts/
+!/Swift Evolution/
 
 # Additional markdown whitelists
-!**/Implementation/**/*.md
-!**/SE-Pitches/**/*.md
+!**/Blog/**/*.md
+!**/Documentation.docc/**/*.md
+!**/Swift Evolution/**/*.md
 

@@ -33,7 +33,7 @@ Workflow for drafting and submitting Swift Evolution pitches to gather community
 
 ```text
 swift-institute/Sources/Swift Institute/Swift Institute.docc/
-└── SE-Pitches/
+└── Swift Evolution/
     ├── Draft/                    # Internal pitch drafts
     │   └── PITCH-XXXX {Title}.md
     └── Submitted/                # Posted to Swift Forums
@@ -52,10 +52,10 @@ swift-institute/Sources/Swift Institute/Swift Institute.docc/
 <doc:SE-Pitch-Identification-Process>
         │ (candidate identified)
         ▼
-SE-Pitches/Draft/PITCH-XXXX       ─┐
+Swift Evolution/Drafts/PITCH-XXXX       ─┐
         │                          │  Phase 1: Pitch
         ▼ (post to Swift Forums)   │
-SE-Pitches/Submitted/PITCH-XXXX   ─┘
+Swift Evolution/Pitches/PITCH-XXXX   ─┘
         │
         ▼ (pitch converges)
 <doc:SE-Proposal-Process>         ─── Phase 2: Proposal
@@ -64,9 +64,9 @@ SE-Pitches/Submitted/PITCH-XXXX   ─┘
 | Status | Location | Meaning |
 |--------|----------|---------|
 | `IDENTIFIED` | Pitch Identification Report | Candidate found via DFS/BFS |
-| `PITCH-DRAFT` | SE-Pitches/Draft/ | Internal pitch draft |
-| `PITCH-SUBMITTED` | SE-Pitches/Submitted/ | Posted to forums, gathering feedback |
-| `CONVERGED` | SE-Pitches/Submitted/ | Ready for proposal development |
+| `PITCH-DRAFT` | Swift Evolution/Drafts/ | Internal pitch draft |
+| `PITCH-SUBMITTED` | Swift Evolution/Pitches/ | Posted to forums, gathering feedback |
+| `CONVERGED` | Swift Evolution/Pitches/ | Ready for proposal development |
 
 **Cross-references**: [PITCH-PROC-001], [PITCH-PROC-005]
 
@@ -195,12 +195,12 @@ depends_on: PITCH-XXXX
 
 **Scope**: Creating internal pitch drafts before forum submission.
 
-**Statement**: Pitches MUST be drafted in `SE-Pitches/Draft/` before posting to Swift Forums.
+**Statement**: Pitches MUST be drafted in `Swift Evolution/Drafts/` before posting to Swift Forums.
 
 ### Pitch File Location
 
 ```text
-SE-Pitches/Draft/PITCH-XXXX {Title}.md
+Swift Evolution/Drafts/PITCH-XXXX {Title}.md
 ```
 
 ### Pitch Naming Convention
@@ -281,13 +281,13 @@ Before proceeding to submission:
 
 **Scope**: Posting pitches to Swift Forums and tracking discussion.
 
-**Statement**: When a pitch draft is ready for community feedback, it MUST be posted to Swift Forums and moved to `SE-Pitches/Submitted/`.
+**Statement**: When a pitch draft is ready for community feedback, it MUST be posted to Swift Forums and moved to `Swift Evolution/Pitches/`.
 
 ### Submission Process
 
 1. **Post to Forums**: Create thread in Evolution > Pitches
 2. **Update file**: Add forum link to metadata
-3. **Move file**: `SE-Pitches/Draft/` → `SE-Pitches/Submitted/`
+3. **Move file**: `Swift Evolution/Drafts/` → `Swift Evolution/Pitches/`
 4. **Engage**: Respond to feedback, iterate on pitch
 
 ### Forum Post Format
@@ -395,7 +395,7 @@ This identification led to:
 
 1. **Receive feedback** on forums
 2. **Evaluate** the feedback objectively
-3. **Update pitch** in `SE-Pitches/Submitted/`
+3. **Update pitch** in `Swift Evolution/Pitches/`
 4. **Post update** to forum thread
 5. **Record revision** in metadata
 
@@ -469,7 +469,7 @@ withdrawal_reason: |
                     ▼
 4. DRAFT PITCH [PITCH-PROC-004]
    │
-   ├─ Create SE-Pitches/Draft/PITCH-XXXX
+   ├─ Create Swift Evolution/Drafts/PITCH-XXXX
    ├─ Problem + Direction + Evidence + Questions
    └─ Quality checklist
                     │
@@ -477,7 +477,7 @@ withdrawal_reason: |
 5. SUBMIT PITCH [PITCH-PROC-005]
    │
    ├─ Post to Swift Forums > Evolution > Pitches
-   ├─ Move to SE-Pitches/Submitted/
+   ├─ Move to Swift Evolution/Pitches/
    └─ Engage with feedback
                     │
                     ▼
