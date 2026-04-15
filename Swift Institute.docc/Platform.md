@@ -89,6 +89,4 @@ See <doc:Embedded-Swift> for the patterns and constraints involved.
 
 ## Windows
 
-Coming soon.
-
-The Windows kernel surface — I/O Completion Ports (IOCP), WinSock, Windows loader, Windows-specific memory and thread APIs — will be modelled at the standards layer, following the same pattern as Darwin and Linux.
+Coming soon. Windows support will follow the same pattern as Darwin and Linux.

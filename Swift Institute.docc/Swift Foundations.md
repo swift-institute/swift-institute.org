@@ -32,7 +32,7 @@ Foundations inherit the discipline of lower layers:
 
 - **Typed throws.** Fallible operations declare their concrete error type. Consumers get exhaustive switches, not catch-all blocks.
 - **No Foundation import.** Timestamps, paths, data buffers, and string processing come from primitives and standards, not `Foundation.Date`/`URL`/`Data`.
-- **Cross-platform by default.** Code is designed for Darwin, Linux, Embedded Swift, and Windows. Platform-specific behaviour is isolated. See <doc:Platform>.
+- **Cross-platform by default.** Code is designed to be portable; platform-specific behaviour is isolated. See <doc:Platform> for current support.
 - **Granular packaging.** Each package answers one question well. Consumers depend on what they need.
 
 ---

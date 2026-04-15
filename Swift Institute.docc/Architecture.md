@@ -24,7 +24,7 @@ Three layers carry released packages as of this alpha:
 
 ### Primitives
 
-Irreducible, policy-free substrate. Types that standards require but do not define — memory abstractions, atomics, async primitives, kernel and OS shims, buffers, geometric types, algebraic structures. Minimal surface area, no defaults, designed to be timeless.
+Irreducible, policy-free substrate. Types that standards require but do not define — algebra, geometry, memory, collections, concurrency, parsing, time, and kernel abstractions. Minimal surface area, no defaults, designed to be timeless.
 
 Released at the [swift-primitives](https://github.com/swift-primitives) organization. See <doc:Swift-Primitives> for details.
 
