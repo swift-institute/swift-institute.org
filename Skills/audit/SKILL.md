@@ -57,22 +57,22 @@ not an audit.
 
 ### [AUDIT-001] Single Output File
 
-**Statement**: Per-package and superrepo-wide audit output MUST be written to `Research/audit.md` within that package or superrepo. No other filenames are permitted for per-scope audit output.
+**Statement**: All audit output for a given scope MUST be written to `Audits/audit.md` within that package or superrepo. No other filenames are permitted for per-scope audit output.
 
 **Correct**:
 ```
-swift-buffer-primitives/Research/audit.md
-swift-primitives/Research/audit.md
+swift-buffer-primitives/Audits/audit.md
+swift-primitives/Audits/audit.md
 ```
 
 **Incorrect**:
 ```
-swift-buffer-primitives/Research/implementation-audit.md      // ❌ Named file
-swift-institute/Research/modularization-audit-v2.md           // ❌ Versioned file
-swift-institute/Research/prompts/naming-audit.md              // ❌ Prompt file
+swift-buffer-primitives/Research/audit.md                     // ❌ Research/ is public; audits are private
+swift-buffer-primitives/Research/implementation-audit.md      // ❌ Named file in wrong directory
+swift-institute/Research/modularization-audit-v2.md           // ❌ Versioned file in wrong directory
 ```
 
-**Rationale**: One predictable location per scope eliminates orphan files, naming chaos, and discoverability problems. 82 existing audit files across 7 naming patterns demonstrate the cost of uncontrolled output.
+**Rationale**: Audit findings contain compliance violations, gaps, and remediation plans that should not be published until addressed. `Research/` is public-facing; `Audits/` is gitignored across the ecosystem so findings stay local until the author decides to publish. One predictable location per scope eliminates orphan files.
 
 **Cross-references**: [AUDIT-002], [AUDIT-007], [AUDIT-008]
 
@@ -80,17 +80,19 @@ swift-institute/Research/prompts/naming-audit.md              // ❌ Prompt file
 
 ### [AUDIT-002] Location Triage
 
-**Statement**: Audit location MUST follow [RES-002] triage for per-package and superrepo scope. Ecosystem-wide audits go to the `Audits/` directory in `swift-institute`.
+**Statement**: All audit output goes to `Audits/` — per-package, superrepo-wide, or ecosystem-wide.
 
 | Scope | Location |
 |-------|----------|
-| Single package | `{package}/Research/audit.md` |
-| Superrepo-wide | `{superrepo}/Research/audit.md` |
+| Single package | `{package}/Audits/audit.md` |
+| Superrepo-wide | `{superrepo}/Audits/audit.md` |
 | Ecosystem-wide | `swift-institute/Audits/{descriptive-slug}.md` |
 
-Ecosystem-wide audits are standalone reports (release readiness, cross-package compliance sweeps) that span multiple packages and do not fit the single-file-per-scope model. They live flat in `Audits/` with an `_index.md` grouping them by topic. See `Audits/_index.md` for the current inventory.
+Per-package and superrepo audits use the single-file model (`audit.md` with sections per skill). Ecosystem-wide audits are standalone reports (release readiness, cross-package sweeps) with descriptive filenames. All live flat in `Audits/` with an `_index.md` grouping them by topic where the directory contains multiple files.
 
-**Rationale**: Per-package audits are appendable sections in one file (predictable from scope alone). Ecosystem-wide audits are self-contained reports with their own lifecycle — readiness checks, multi-pass verification sweeps — and benefit from individual files with descriptive names.
+`Audits/` SHOULD be gitignored in the ecosystem's canonical `.gitignore` so findings are not published to GitHub until explicitly whitelisted. `swift-institute/Audits/` is the exception — its audit reports are public records of the meta-repo's own quality process.
+
+**Rationale**: Separating audits from research keeps compliance findings private during remediation. The single directory with a predictable name (`Audits/`) is discoverable from scope alone.
 
 **Cross-references**: [RES-002], [AUDIT-001], [AUDIT-014]
 
