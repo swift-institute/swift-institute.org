@@ -8,7 +8,7 @@ The atomic building blocks of the ecosystem — types that standards require but
 
 ## Overview
 
-Primitives are the irreducible substrate of the Swift Institute. They are Foundation-free, policy-free, and designed to be timeless. The layer covers the concepts that higher layers compose: algebra, geometry, memory, numerics, bits, collections, parsing, concurrency, time, text, and kernel abstractions.
+Primitives are the irreducible substrate of the Swift Institute. They are Foundation-free, policy-free, and designed to be timeless. The layer covers the foundational concepts that higher layers compose: algebra, geometry, memory, collections, concurrency, parsing, time, and kernel abstractions.
 
 Packages at this layer are published under the [swift-primitives](https://github.com/swift-primitives) organization. Every package follows the naming pattern `swift-{concept}-primitives` and publishes one or more Swift products under the same concept name.
 
@@ -16,7 +16,7 @@ Packages at this layer are published under the [swift-primitives](https://github
 
 ## Type-system patterns
 
-Primitives make extensive use of Swift 6 language features. Three patterns recur across the layer.
+Primitives make extensive use of Swift 6 language features. Two patterns recur across the layer.
 
 ### Phantom types
 
@@ -36,13 +36,11 @@ timer == session  // Compile error — different phantom tags.
 
 The tags exist only at compile time. Runtime representation and code generation are identical to the raw type.
 
-### ~Copyable resources
+### Latest Swift language features
 
-Types with unique ownership that the compiler tracks. Copies are prevented at the type level; transfer is explicit via `consume`; borrowing is scoped. The layer uses this extensively for resources that must have exactly one owner — file descriptors, kernel handles, connection state, channel endpoints.
+The layer strives to adopt the latest Swift language features — `~Copyable` and `~Escapable` for ownership and lifetime, `consume`/`borrowing`/`sending` for transfer semantics, region isolation and `nonisolated(nonsending)` for concurrency, typed throws for error domains, coroutine accessors (`_read`, `_modify`, `nonmutating _modify`) for interior mutability, and strict memory safety — so invariants are enforced by the compiler rather than deferred to runtime checks.
 
-### Typed throws
-
-Throwing functions declare their concrete error type. Callers get exhaustive switches rather than catch-all blocks, and the error type becomes part of the API contract.
+Every invariant expressible in the type system is expressed there: a resource with exactly-once lifecycle uses `~Copyable`; a view that must not outlive its source uses `~Escapable`; a value crossing an isolation boundary uses `sending`; a throwing function declares its concrete error type so callers get exhaustive switches.
 
 ---
 

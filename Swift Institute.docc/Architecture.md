@@ -104,7 +104,7 @@ The ecosystem comprises multiple GitHub organizations. Each organization has a s
 | [swift-foundations](https://github.com/swift-foundations) | Foundations layer | `swift-*` (clean names) |
 | [swift-institute](https://github.com/swift-institute) | Documentation home | Not a package publisher |
 
-The `swift-institute` organization itself is the documentation home, not a package publisher. This separation between identity and packaging delivers clear layer boundaries, independent versioning, and focused governance.
+The `swift-institute` organization itself is the documentation home, not a package publisher. This separation between identity and packaging delivers clear layer boundaries and independent versioning.
 
 ### Per-domain layering
 
