@@ -85,7 +85,7 @@ The standards layer has two sub-layers:
 
 Both sub-layers are policy-free. Domain-concept packages do not add opinion or ecosystem integration — they faithfully compose externally-defined concepts. The distinction is granularity (individual spec vs. unified domain concept), not layer.
 
-The Standards layer currently comprises 19 packages in `swift-standards` plus roughly 83 packages across the per-authority organizations (swift-ietf has 54, swift-iso has 9, swift-w3c has 6, swift-whatwg has 2, and single-package organizations exist for IEEE, IEC, ECMA, INCITS, ARM, Intel, RISC-V, and Microsoft).
+The Standards layer is split across `swift-standards` itself (for cross-body or historical packages) and per-authority organizations (swift-ietf for RFCs, swift-iso, swift-w3c, swift-whatwg, and single-package organizations for IEEE, IEC, ECMA, INCITS, ARM, Intel, RISC-V, and Microsoft).
 
 ### Foundations
 

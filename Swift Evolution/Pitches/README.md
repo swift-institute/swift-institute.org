@@ -4,4 +4,4 @@ Pitches posted on the Swift Forums in the Evolution > Pitches category. The file
 
 A pitch graduates to [`../Proposals/`](../Proposals/) once a formal proposal is drafted and submitted for review.
 
-See [`../Pitch Process.md`](../Pitch%20Process.md) for the pitch workflow.
+See [`../../Skills/swift-evolution/SKILL.md`](../../Skills/swift-evolution/SKILL.md) for the pitch workflow.

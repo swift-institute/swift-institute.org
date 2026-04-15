@@ -18,7 +18,7 @@ migrated_from:
   - Research/Research Investigation.md
   - Research/Research Discovery.md
 migration_date: 2026-01-28
-last_reviewed: 2026-03-20
+last_reviewed: 2026-04-15
 ---
 
 # Research Process
@@ -125,6 +125,27 @@ superrepo root, not inside individual target directories. Research about a speci
 target (e.g., `Buffer_Primitives`) still goes in the superrepo's `Research/`
 directory — the filename identifies the target (e.g.,
 `buffer-primitives-architectural-review.md`).
+
+**Forbidden subdirectories**: `Research/` MUST NOT contain `_work/`,
+`_scratch/`, `prompts/`, or any other underscore-prefixed subdirectory.
+These paths historically accumulated session-internal artifacts — phase
+notes from process runs, investigation brief templates, scratch drafts —
+that do not belong in a public research corpus. Process skills that
+previously staged intermediate output there MUST instead emit their
+output to the conversation (per [META-013] for corpus-meta-analysis) or
+to a skill-specific local staging area outside of `Research/`. The
+repository `.gitignore` actively ignores these paths.
+
+Allowed subdirectories of `Research/`:
+
+| Subdirectory | Purpose |
+|--------------|---------|
+| `Reflections/` | Session reflections per **reflect-session** |
+| `References/` | BibTeX citation files per [RES-026] |
+| `_archived/` | Archived SUPERSEDED research per [META-005] |
+
+Any other subdirectory structure MUST be proposed via skill update, not
+created ad hoc.
 
 **Cross-references**: [RES-002a], [RES-008]
 
@@ -408,9 +429,9 @@ For trade-offs: Context → Question ("How to balance A vs B?") → Concerns wit
 
 ---
 
-### [RES-026] Reference Library
+### [RES-026] Citations
 
-**Statement**: `swift-institute/Research/References/` MUST contain discipline-partitioned `.bib` files (swift-evolution.bib, programming-languages.bib, type-theory.bib, category-theory.bib, api-usability.bib, methodology.bib). Tier 2+ SHOULD reference entries; Tier 3 MUST include traceable References section.
+**Statement**: Tier 2+ research SHOULD cite its sources; Tier 3 research MUST include a References section with traceable links to Swift Evolution proposals, Swift Forums threads, academic papers, upstream compiler source, or other primary material. Citations are plain Markdown links — there is no BibTeX or formal citation machinery.
 
 **Cross-references**: [RES-003], [RES-021]
 

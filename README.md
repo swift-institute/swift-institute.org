@@ -4,11 +4,9 @@ Documentation, conventions, and research for a layered Swift package ecosystem.
 
 ## Overview
 
-Infrastructure compounds when its building blocks compose, and composition requires shared discipline across every layer. Type-safe packages that each solve one problem beautifully will, without a unifying convention, pile up incompatible abstractions until nothing fits together. We believe infrastructure deserves to be treated as a coherent whole — where every layer has a clear responsibility, every package a clear place, and the conventions that keep them coherent are themselves a first-class asset.
+Shared conventions turn a collection of Swift packages into a composable ecosystem. Without them, type-safe libraries accumulate incompatible abstractions and compose badly. With them, compile-time guarantees hold across layers.
 
-Swift's type system makes that discipline practical at scale. Layered packages with well-defined dependency rules, nested namespaces that mirror real-world domains, and rigorous conventions for error handling, memory ownership, and API shape together turn a collection of libraries into something closer to a platform. Compile-time guarantees that hold across a whole ecosystem are stronger than the sum of the guarantees of its individual parts.
-
-Swift Institute is the umbrella that holds that discipline together. It hosts the conventions that keep the Primitives, Standards, and Foundations layers coherent, the research that grounds architectural decisions, the experiments that verify claims before those claims become conventions, and the writing that explains the result. What lives here is the connective tissue of the ecosystem — the part that turns independent packages into a composable whole.
+Swift Institute hosts those conventions — rules for naming, error handling, memory ownership, and API shape — along with the research that grounds them, the experiments that verify them, and the writing that explains them. It is the connective tissue for a set of layered Swift packages organized into Primitives, Standards, Foundations, Components, and Applications.
 
 ## Technical Approach
 
@@ -39,7 +37,7 @@ The per-authority organizations in active preparation include [swift-ietf](https
 | [`Blog/`](Blog) | Blog posts (drafts, published), the ideas index, style guide, and series plans |
 | [`Documentation.docc/`](Documentation.docc) | Architecture documentation — the five-layer model, naming conventions, shared vocabulary |
 | [`Experiments/`](Experiments) | Minimal reproductions — each experiment is a Swift package testing one claim, used as receipts for blog posts |
-| [`Research/`](Research) | Design rationale, trade-off analyses, and investigation notes. Non-normative. Includes [`Research/References/`](Research/References) with BibTeX files for academic and industry citations |
+| [`Research/`](Research) | Design rationale, trade-off analyses, and investigation notes. Non-normative |
 | [`Skills/`](Skills) | Development conventions — naming, errors, memory safety, testing, modularization. Each skill is the canonical source for its conventions |
 | [`Swift Evolution/`](Swift%20Evolution) | Draft proposals for Swift Evolution |
 | [`Scripts/`](Scripts) | Scripts used by the institute's own processes |

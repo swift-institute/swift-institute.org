@@ -1,43 +1,58 @@
-# SE-Pitch Process
+---
+name: swift-evolution
+description: |
+  Drafting and submitting Swift Evolution pitches to gather community feedback
+  before formal proposal development. Covers the pitch phase of the Swift
+  Evolution workflow: triggers, evidence requirements, scope analysis, drafting,
+  submission, iteration, and convergence. Later phases (formal proposal, review,
+  decision, implementation) will be added as content develops.
 
-@Metadata {
-    @TitleHeading("Swift Institute")
-}
+layer: process
 
-Workflow for drafting and submitting Swift Evolution pitches to gather community feedback before formal proposal development.
+requires:
+  - swift-institute-core
 
-## Overview
+applies_to:
+  - swift-evolution
+  - swift-primitives
+  - swift-standards
+  - swift-foundations
+  - swift-institute
+last_reviewed: 2026-04-14
+---
 
-**Scope**: This document defines the pitch phase (Phase 1) of the Swift Evolution workflow—from trigger identification through forum submission and feedback iteration.
+# Swift Evolution
 
-**Prerequisite**: For systematic discovery of pitch candidates, see <doc:SE-Pitch-Identification-Process>.
+Drafting and submitting Swift Evolution pitches to gather community feedback before formal proposal development.
 
-**Next step**: After pitch converges with positive reception, proceed to <doc:SE-Proposal-Process> for formal proposal drafting.
+**Scope**: This skill currently defines the pitch phase of the Swift Evolution workflow — from trigger identification through forum submission and feedback iteration. Subsequent phases (formal proposal, review, decision, implementation) use the official Swift Evolution process without additional institute-level convention.
 
 **Applies to**: Language changes, standard library evolution, compiler behavior modifications identified through package development.
 
-**Does not apply to**: Bug reports (use <doc:Issue-Submission>), feature requests without implementation evidence, or changes achievable through library code.
+**Does not apply to**: Bug reports, feature requests without implementation evidence, or changes achievable through library code.
 
 **Official resources**:
 - [Swift Evolution Process](https://github.com/swiftlang/swift-evolution/blob/main/process.md)
 - [Commonly Proposed Changes](https://github.com/swiftlang/swift-evolution/blob/main/commonly_proposed.md)
 - [Swift Forums: Evolution > Pitches](https://forums.swift.org/c/evolution/pitches/18)
 
-**Normative language**: This document uses RFC 2119 conventions (MUST, SHOULD, MAY).
-
 ---
 
 ## Quick Reference: Directory Structure
 
-**Scope**: File organization for tracking pitch lifecycle.
+File organization for tracking pitch lifecycle lives in the meta-repository:
 
 ```text
-swift-institute/Sources/Swift Institute/Swift Institute.docc/
-└── Swift Evolution/
-    ├── Draft/                    # Internal pitch drafts
-    │   └── PITCH-XXXX {Title}.md
-    └── Submitted/                # Posted to Swift Forums
-        └── PITCH-XXXX {Title}.md # Contains forum link
+swift-institute/Swift Evolution/
+├── Pitch Process.md         # Directory layout and pointers to this skill
+├── Drafts/                  # Internal, pre-pitch drafts
+│   └── PITCH-XXXX {Title}.md
+├── Pitches/                 # Posted to Swift Forums
+│   └── PITCH-XXXX {Title}.md
+├── Proposals/               # Formal SE-NNNN proposals in review pipeline
+├── Accepted/                # Accepted, awaiting or in implementation
+├── Implemented/             # Shipped in a Swift release
+└── Declined/                # Rejected, withdrawn, or returned-never-resubmitted
 ```
 
 **Cross-references**: [PITCH-PROC-004], [PITCH-PROC-005]
@@ -46,27 +61,26 @@ swift-institute/Sources/Swift Institute/Swift Institute.docc/
 
 ## Quick Reference: Pitch Lifecycle
 
-**Scope**: Status progression from identification to proposal transition.
+Status progression from identification to proposal transition:
 
 ```text
-<doc:SE-Pitch-Identification-Process>
-        │ (candidate identified)
+Candidate identified (implementation work, experiment, package dev)
+        │
         ▼
-Swift Evolution/Drafts/PITCH-XXXX       ─┐
-        │                          │  Phase 1: Pitch
-        ▼ (post to Swift Forums)   │
-Swift Evolution/Pitches/PITCH-XXXX   ─┘
+Swift Evolution/Drafts/PITCH-XXXX        ─┐
+        │                                 │  Phase 1: Pitch
+        ▼ (post to Swift Forums)          │
+Swift Evolution/Pitches/PITCH-XXXX        ─┘
         │
         ▼ (pitch converges)
-<doc:SE-Proposal-Process>         ─── Phase 2: Proposal
+Swift Evolution/Proposals/                ─── Phase 2: Proposal
 ```
 
 | Status | Location | Meaning |
 |--------|----------|---------|
-| `IDENTIFIED` | Pitch Identification Report | Candidate found via DFS/BFS |
-| `PITCH-DRAFT` | Swift Evolution/Drafts/ | Internal pitch draft |
-| `PITCH-SUBMITTED` | Swift Evolution/Pitches/ | Posted to forums, gathering feedback |
-| `CONVERGED` | Swift Evolution/Pitches/ | Ready for proposal development |
+| `PITCH-DRAFT` | `Swift Evolution/Drafts/` | Internal pitch draft |
+| `PITCH-SUBMITTED` | `Swift Evolution/Pitches/` | Posted to forums, gathering feedback |
+| `CONVERGED` | `Swift Evolution/Pitches/` | Ready for proposal development |
 
 **Cross-references**: [PITCH-PROC-001], [PITCH-PROC-005]
 
@@ -78,7 +92,7 @@ Swift Evolution/Pitches/PITCH-XXXX   ─┘
 
 **Statement**: A pitch SHOULD be drafted when a language or standard library limitation is identified through concrete implementation work, and the limitation cannot be reasonably addressed through library-level workarounds.
 
-### Trigger Categories
+### Trigger categories
 
 | Category | Description | Priority |
 |----------|-------------|----------|
@@ -89,22 +103,13 @@ Swift Evolution/Pitches/PITCH-XXXX   ─┘
 | Performance limitation | Language prevents optimal implementation | Medium |
 | Consistency gap | Related features behave differently without justification | Low |
 
-### When NOT to Pitch
+### When NOT to pitch
 
-Before drafting, verify the idea is NOT in the [Commonly Proposed Changes](https://github.com/swiftlang/swift-evolution/blob/main/commonly_proposed.md) list:
-
-| Rejected Idea | Reason |
-|---------------|--------|
-| Python-style indentation | Swift maintains C-family heritage |
-| Array subscript returning Optional | Out-of-bounds is logic error, not runtime failure |
-| Remove force-unwrap operator | Legitimately useful language feature |
-| Garbage collection over ARC | Unsuitable for systems programming |
-| Union types (`Int \| String`) | Type system cannot support |
-| Replace ternary operator | C-family precedent, important use cases |
+Before drafting, verify the idea is NOT in the [Commonly Proposed Changes](https://github.com/swiftlang/swift-evolution/blob/main/commonly_proposed.md) list. These have been extensively debated and revisiting them requires substantial new evidence.
 
 **Rationale**: Commonly proposed changes have been extensively debated. Pitches revisiting them require substantial new evidence.
 
-**Cross-references**: [PITCH-PROC-002], [PITCH-PROC-003], [PITCH-ID-003]
+**Cross-references**: [PITCH-PROC-002], [PITCH-PROC-003]
 
 ---
 
@@ -114,16 +119,16 @@ Before drafting, verify the idea is NOT in the [Commonly Proposed Changes](https
 
 **Statement**: Pitches MUST include concrete evidence from implementation work, experiments, or production usage demonstrating the limitation.
 
-### Evidence Categories
+### Evidence categories
 
-| Category | Description | How to Obtain |
-|----------|-------------|---------------|
-| Experiment results | Verified behavior through isolated tests | <doc:Experiment-Discovery>, <doc:Experiment-Investigation> |
-| Implementation attempts | Code that would work with proposed change | Package implementation |
-| Workaround analysis | Documented alternatives and their costs | Design exploration |
-| Ecosystem impact | Other packages/users affected | Survey, issue tracking |
+| Category | Description |
+|----------|-------------|
+| Experiment results | Verified behavior through isolated tests |
+| Implementation attempts | Code that would work with proposed change |
+| Workaround analysis | Documented alternatives and their costs |
+| Ecosystem impact | Other packages/users affected |
 
-### Evidence Quality Criteria
+### Evidence quality criteria
 
 | Criterion | Required | Description |
 |-----------|----------|-------------|
@@ -132,18 +137,9 @@ Before drafting, verify the idea is NOT in the [Commonly Proposed Changes](https
 | Referenced | MUST | Links to experiment packages or implementations |
 | Cross-version | SHOULD | Tested on multiple Swift versions |
 
-### Evidence Gathered During Identification
-
-If you followed <doc:SE-Pitch-Identification-Process>, your evidence package should include:
-
-- Related experiments from BFS
-- Affected packages/APIs
-- Workaround inventory
-- Prior community discussions
-
 **Rationale**: Swift Evolution requires concrete motivation. Implementation experience provides compelling evidence that theoretical arguments cannot.
 
-**Cross-references**: [PITCH-PROC-001], [PITCH-ID-002], <doc:Experiment>
+**Cross-references**: [PITCH-PROC-001]
 
 ---
 
@@ -153,31 +149,14 @@ If you followed <doc:SE-Pitch-Identification-Process>, your evidence package sho
 
 **Statement**: Before drafting, the scope MUST be analyzed to determine if the solution requires one pitch or a sequence of dependent pitches.
 
-### Dependency Analysis Process
+### Dependency analysis process
 
 1. **List all changes** needed for the complete solution
 2. **Identify dependencies** between changes
 3. **Determine minimal independent units** that provide value alone
 4. **Order by dependency** — foundational changes first
 
-**Correct**:
-```text
-Complete solution: ~Copyable support for Comparable
-
-Changes identified:
-1. Witness matching relaxation (compiler change)
-2. Comparable protocol definition (stdlib change)
-
-Dependency analysis:
-- (2) depends on (1) for source compatibility
-- (1) is independently useful beyond (2)
-
-Decision: Two pitches
-- PITCH-XXXX: Borrowing Parameter Witness Relaxation
-- PITCH-YYYY: ~Copyable Equatable and Comparable (depends on XXXX)
-```
-
-### Dependency Tracking
+### Dependency tracking
 
 When pitches have dependencies, document them in metadata:
 
@@ -197,13 +176,13 @@ depends_on: PITCH-XXXX
 
 **Statement**: Pitches MUST be drafted in `Swift Evolution/Drafts/` before posting to Swift Forums.
 
-### Pitch File Location
+### Pitch file location
 
 ```text
 Swift Evolution/Drafts/PITCH-XXXX {Title}.md
 ```
 
-### Pitch Naming Convention
+### Pitch naming convention
 
 | Placeholder | Meaning |
 |-------------|---------|
@@ -211,7 +190,7 @@ Swift Evolution/Drafts/PITCH-XXXX {Title}.md
 | PITCH-YYYY | Dependent on PITCH-XXXX |
 | PITCH-AAAA | Independent pitch |
 
-### Pitch Content Structure
+### Pitch content structure
 
 A pitch draft MUST include:
 
@@ -226,7 +205,6 @@ status: DRAFT
 depends_on: PITCH-XXXX (if applicable)
 related_experiments:
   - path/to/experiment
-identification_report: path/to/report (if applicable)
 ---
 -->
 
@@ -249,7 +227,7 @@ identification_report: path/to/report (if applicable)
 {Relevant SE proposals}
 ```
 
-### Pitch vs. Proposal Content
+### Pitch vs proposal content
 
 | Aspect | Pitch | Proposal |
 |--------|-------|----------|
@@ -260,7 +238,7 @@ identification_report: path/to/report (if applicable)
 | Implementation | Not required | Required for language changes |
 | Length | ~500-1000 words | ~2000-5000 words |
 
-### Quality Checklist
+### Quality checklist
 
 Before proceeding to submission:
 
@@ -283,14 +261,14 @@ Before proceeding to submission:
 
 **Statement**: When a pitch draft is ready for community feedback, it MUST be posted to Swift Forums and moved to `Swift Evolution/Pitches/`.
 
-### Submission Process
+### Submission process
 
 1. **Post to Forums**: Create thread in Evolution > Pitches
 2. **Update file**: Add forum link to metadata
 3. **Move file**: `Swift Evolution/Drafts/` → `Swift Evolution/Pitches/`
 4. **Engage**: Respond to feedback, iterate on pitch
 
-### Forum Post Format
+### Forum post format
 
 **Title**: `[Pitch] {Pitch Title}`
 
@@ -298,7 +276,7 @@ Before proceeding to submission:
 
 **Tags**: Add relevant tags (e.g., `concurrency`, `ownership`, `generics`)
 
-### Updated Metadata After Submission
+### Updated metadata after submission
 
 ```yaml
 <!--
@@ -312,7 +290,7 @@ submitted_date: 2026-01-25
 -->
 ```
 
-### Tracking Pitch Progress
+### Tracking pitch progress
 
 | Signal | Meaning | Action |
 |--------|---------|--------|
@@ -322,7 +300,7 @@ submitted_date: 2026-01-25
 | Negative reception | Fundamental concerns | Address or reconsider |
 | Core team feedback | Official guidance | Incorporate direction |
 
-### Convergence Criteria
+### Convergence criteria
 
 A pitch has converged when:
 
@@ -341,7 +319,7 @@ converged_date: 2026-02-01
 
 **Rationale**: The pitch phase surfaces design issues early and builds community support before formal proposal development.
 
-**Cross-references**: [PITCH-PROC-004], <doc:SE-Proposal-Process>
+**Cross-references**: [PITCH-PROC-004]
 
 ---
 
@@ -351,7 +329,7 @@ converged_date: 2026-02-01
 
 **Statement**: Pitches MUST maintain bidirectional links to experiments and implementations.
 
-### In Pitch
+### In pitch
 
 ```markdown
 **Related experiments**:
@@ -359,7 +337,7 @@ converged_date: 2026-02-01
 - [noncopyable-accessor-pattern](link) — Shows workaround costs
 ```
 
-### In Experiment
+### In experiment
 
 ```markdown
 ## Related Pitches
@@ -368,20 +346,9 @@ This experiment motivated:
 - [PITCH-XXXX Borrowing Witness Relaxation](link)
 ```
 
-### In Identification Report
-
-If you used <doc:SE-Pitch-Identification-Process>:
-
-```markdown
-## Resulting Pitch
-
-This identification led to:
-- [PITCH-XXXX {Title}](link)
-```
-
 **Rationale**: Bidirectional links enable traceability from pitches to evidence.
 
-**Cross-references**: [PITCH-PROC-002], <doc:Experiment>
+**Cross-references**: [PITCH-PROC-002]
 
 ---
 
@@ -391,7 +358,7 @@ This identification led to:
 
 **Statement**: Pitches SHOULD be iterated based on community feedback. Significant changes MUST be documented in the pitch file.
 
-### Iteration Process
+### Iteration process
 
 1. **Receive feedback** on forums
 2. **Evaluate** the feedback objectively
@@ -399,7 +366,7 @@ This identification led to:
 4. **Post update** to forum thread
 5. **Record revision** in metadata
 
-### Revision Tracking
+### Revision tracking
 
 ```yaml
 <!--
@@ -415,7 +382,7 @@ revisions:
 -->
 ```
 
-### When to Withdraw
+### When to withdraw
 
 A pitch SHOULD be withdrawn if:
 
@@ -440,90 +407,23 @@ withdrawal_reason: |
 
 ---
 
-## Workflow Summary
+## Cross-References
 
-```text
-┌─────────────────────────────────────────────────────────────┐
-│                    SE-PITCH WORKFLOW                         │
-└─────────────────────────────────────────────────────────────┘
+See also:
+- **experiment-process** skill for the experiment packages that generate pitch evidence
+- **research-process** skill for the research documents that frame design questions
+- **blog-process** skill for communicating pitch outcomes externally
+- **issue-investigation** skill for compiler-bug pitches
+- [Swift Evolution Process](https://github.com/swiftlang/swift-evolution/blob/main/process.md) — canonical workflow
 
-1. TRIGGER [PITCH-PROC-001]
-   │
-   ├─ From <doc:SE-Pitch-Identification-Process>
-   ├─ Implementation blocked?
-   ├─ Ecosystem fragmentation?
-   └─ NOT in commonly_proposed.md?
-                    │
-                    ▼
-2. EVIDENCE [PITCH-PROC-002]
-   │
-   ├─ Gather from identification BFS
-   ├─ Run additional experiments if needed
-   └─ Document findings
-                    │
-                    ▼
-3. SCOPE [PITCH-PROC-003]
-   │
-   └─ One pitch or sequence?
-                    │
-                    ▼
-4. DRAFT PITCH [PITCH-PROC-004]
-   │
-   ├─ Create Swift Evolution/Drafts/PITCH-XXXX
-   ├─ Problem + Direction + Evidence + Questions
-   └─ Quality checklist
-                    │
-                    ▼
-5. SUBMIT PITCH [PITCH-PROC-005]
-   │
-   ├─ Post to Swift Forums > Evolution > Pitches
-   ├─ Move to Swift Evolution/Pitches/
-   └─ Engage with feedback
-                    │
-                    ▼
-6. ITERATE [PITCH-PROC-007]
-   │
-   ├─ Respond to feedback
-   ├─ Update pitch as needed
-   └─ Track revisions
-                    │
-                    ▼
-7. CONVERGENCE CHECK [PITCH-PROC-005]
-   │
-   ├─▶ Converged    → Proceed to <doc:SE-Proposal-Process>
-   ├─▶ Withdrawn    → Document reasoning, archive
-   └─▶ Ongoing      → Continue iteration
-```
-
----
-
-## Topics
-
-### Related Processes
-
-- <doc:SE-Pitch-Identification-Process> — Discovering pitch candidates (upstream)
-- <doc:SE-Proposal-Process> — Formal proposal development (downstream)
-
-### Evidence Infrastructure
-
-- <doc:Experiment> — Experiment infrastructure
-- <doc:Experiment-Discovery> — Proactive verification
-- <doc:Experiment-Investigation> — Debugging failures
-
-### Official Resources
-
-- [Swift Evolution Process](https://github.com/swiftlang/swift-evolution/blob/main/process.md)
-- [Commonly Proposed Changes](https://github.com/swiftlang/swift-evolution/blob/main/commonly_proposed.md)
-- [Swift Forums: Evolution > Pitches](https://forums.swift.org/c/evolution/pitches/18)
-
-### Cross-Reference Index
+## Cross-reference index
 
 | ID | Title | Focus |
 |----|-------|-------|
-| PITCH-PROC-001 | Pitch Triggers | When to draft pitches |
-| PITCH-PROC-002 | Evidence Requirements | Supporting documentation |
-| PITCH-PROC-003 | Scope Analysis | One vs. multiple pitches |
-| PITCH-PROC-004 | Pitch Drafting | Creating internal drafts |
-| PITCH-PROC-005 | Pitch Submission | Forum posting and tracking |
-| PITCH-PROC-006 | Linking Evidence | Bidirectional traceability |
-| PITCH-PROC-007 | Pitch Iteration | Updating based on feedback |
+| [PITCH-PROC-001] | Pitch Triggers | When to draft pitches |
+| [PITCH-PROC-002] | Evidence Requirements | Supporting documentation |
+| [PITCH-PROC-003] | Scope Analysis | One vs. multiple pitches |
+| [PITCH-PROC-004] | Pitch Drafting | Creating internal drafts |
+| [PITCH-PROC-005] | Pitch Submission | Forum posting and tracking |
+| [PITCH-PROC-006] | Linking Evidence | Bidirectional traceability |
+| [PITCH-PROC-007] | Pitch Iteration | Updating based on feedback |

@@ -61,13 +61,24 @@ Thumbs.db
 # Package-specific rules below (managed by sync-gitignore.sh)
 
 # Institute directories
+!/Audits/
 !/Blog/
 !/Documentation.docc/
 !/Scripts/
 !/Swift Evolution/
 
 # Additional markdown whitelists
+!**/Audits/**/*.md
 !**/Blog/**/*.md
 !**/Documentation.docc/**/*.md
 !**/Swift Evolution/**/*.md
+
+# Research working-artifact prevention (internal, not for public release)
+# Underscore-prefixed directories and session-prompt directories are
+# non-canonical and must not ship. Keeping these rules here means that
+# even if an agent accidentally creates Research/_work/, Research/_scratch/,
+# or Research/prompts/, git will silently ignore the directory and its
+# contents.
+/Research/_*/
+/Research/prompts/
 

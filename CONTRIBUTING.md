@@ -1,0 +1,63 @@
+# Contributing
+
+Thank you for your interest in contributing to the Swift Institute ecosystem.
+
+## Maintainer
+
+Swift Institute is currently maintained by Coen ten Thije Boonkkamp as a
+sole-contributor project. Contributions via pull request are welcome; all PRs are
+reviewed by the maintainer before merging.
+
+## Where the rules live
+
+Development conventions — naming, errors, memory safety, testing, modularization,
+documentation, and more — are defined in the [`Skills/`](Skills/) directory of
+this repository. Each skill is the canonical source for its area. When you write
+code inside the ecosystem, the skills are the reference.
+
+Skills are written to be loaded by AI agents as normative references during
+development. Humans can read them directly as specifications.
+
+## Swift Evolution proposals
+
+Language-level changes that need to go through the Swift Evolution process are
+tracked in [`Swift Evolution/`](Swift%20Evolution/). The directory follows the
+phases of the process — Drafts, Pitches, Proposals, Accepted, Implemented,
+Declined. See the [`swift-evolution`](Skills/swift-evolution/SKILL.md) skill
+for the pitch workflow.
+
+## Research and experiments
+
+Non-normative design rationale lives in [`Research/`](Research/). Minimal
+reproductions and technical-claim evidence live in
+[`Experiments/`](Experiments/). Every load-bearing technical claim in a blog
+post links to the experiment that backs it — readers can clone the package,
+build it, and verify the behavior.
+
+## Before opening a pull request
+
+- Follow the conventions in the relevant skill. If a convention seems wrong,
+  open a Swift Evolution pitch rather than an exception.
+- Every new type needs a test. Every bug fix needs a regression test.
+- No Foundation imports in Primitives or Standards. Foundation is a
+  Foundations-layer concern.
+- If your change affects cross-cutting behavior (adds a requirement, changes a
+  default), flag it in the PR description so the maintainer can confirm the
+  skill is updated.
+
+## Code of Conduct
+
+All participation in the Swift Institute ecosystem is governed by the
+[Code of Conduct](CODE_OF_CONDUCT.md). By contributing, you agree to abide by
+its terms.
+
+## Security
+
+Do not report security vulnerabilities through public channels. Follow the
+[Security Policy](SECURITY.md) for private reporting.
+
+## License
+
+By submitting a contribution, you agree that it will be licensed under the
+[Apache License 2.0](LICENSE.md), the license used by all packages in the
+ecosystem.

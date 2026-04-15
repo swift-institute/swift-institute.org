@@ -19,7 +19,7 @@ applies_to:
   - swift-primitives
   - swift-standards
   - swift-foundations
-last_reviewed: 2026-04-01
+last_reviewed: 2026-04-15
 ---
 
 # Corpus Meta-Analysis
@@ -215,26 +215,6 @@ no `_index.md`, a missing index MUST be flagged during meta-analysis.
 ---
 
 ## Infrastructure Compliance
-
-### [META-010] References Directory
-
-**Statement**: Meta-analysis MUST check that `swift-institute/Research/References/` contains
-the discipline-partitioned `.bib` files required by [RES-026].
-
-**Required files** (per [RES-026]):
-- `swift-evolution.bib`
-- `programming-languages.bib`
-- `type-theory.bib`
-- `category-theory.bib`
-- `api-usability.bib`
-- `methodology.bib`
-
-If missing, flag as infrastructure gap with priority based on how many Tier 2+
-research documents exist without traceable references.
-
-**Cross-references**: [RES-026]
-
----
 
 ### [META-011] Reflections Triage Status
 
@@ -470,7 +450,7 @@ maintenance.
 | 8. Discovery coverage | Check milestone packages for discovery experiments | [META-025] | All repos |
 | 9. Claim/assumption audit | Check [CLAIM-*]/[ASSUMP-*] inventory | [META-026] | All repos |
 | 10. Index freshness | Audit all `_index.md` files | [META-008], [META-009] | All repos |
-| 11. Infrastructure | References, Reflections, Blog pipeline | [META-010]–[META-012] | swift-institute |
+| 11. Infrastructure | Reflections, Blog pipeline | [META-011], [META-012] | swift-institute |
 | 12. Skill + audit health | Skill review cadence, audit section staleness | [META-020], [META-021] | All repos |
 | 13. Report | Produce corpus health report | [META-013] | Conversation output |
 
