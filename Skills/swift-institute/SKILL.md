@@ -85,7 +85,7 @@ For full rules, see `Documentation.docc/Semantic Dependencies.md`.
 Child skills:
 - **code-surface** - Naming, error handling, and file structure rules
 - **memory-safety** - Ownership, safety isolation, and copyability rules
-- **design** - API design, layering, semantic dependencies
+- **implementation** - API design, layering, semantic dependencies, expression-first style (absorbs former `design` and `anti-patterns` skills)
 
 Repository-specific:
 - **primitives** (in swift-primitives) - Primitives layer conventions

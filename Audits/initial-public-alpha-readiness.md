@@ -2,13 +2,20 @@
 
 <!--
 ---
-version: 1.0.0
-last_updated: 2026-04-14
+version: 1.1.0
+last_updated: 2026-04-15
 status: RECOMMENDATION
 tier: 2
 scope: ecosystem-wide
 ---
 -->
+
+> **Update (2026-04-15)**: Most readiness gaps identified in this audit have
+> since been addressed through Phases 1–3 of the perfection-check cycle.
+> The "Root-level files" and ".github/ infrastructure" tables below are
+> revised to reflect current state. The rest of the document — analysis,
+> recommendations, timelines — is preserved as the original snapshot that
+> triggered the fix cycle.
 
 ## Context
 
@@ -34,32 +41,31 @@ Everything currently in the repository, grouped by category.
 
 #### Root-level files
 
-| File | Status | Notes |
-|------|--------|-------|
+| File | Status (2026-04-15) | Notes |
+|------|---------------------|-------|
 | `README.md` | Present | Refreshed, matches swift-standards family convention |
-| `LICENSE.md` | Present | Apache 2.0, 190 lines |
-| `.gitignore` | Present | Fixed to whitelist `Blog/`, `Swift Evolution/`, `Documentation.docc/`, `Scripts/` |
-| `.swift-format` | Present | Tooling config |
-| `.swiftlint.yml` | Present | Tooling config |
-| `.swift-version` | Present | Swift version pin |
-| `CHANGELOG.md` | **Absent** | No versioned change history |
-| `CONTRIBUTING.md` | **Absent at root** | Exists at `CONTRIBUTING.md` at root but GitHub's standard location is root |
-| `CODE_OF_CONDUCT.md` | **Absent** | Standard for open-source; GitHub surfaces this |
-| `SECURITY.md` | **Absent** | Standard for open-source; GitHub surfaces this |
+| `LICENSE.md` | Present | Apache 2.0 |
+| `.gitignore` | Present | Whitelists `Blog/`, `Swift Evolution/`, `Documentation.docc/`, `Scripts/`, `Audits/` |
+| `.swift-format` | Absent | Formatter config never added; stripped from whitelist or deferred |
+| `.swiftlint.yml` | Absent | Lint config removed; workflow similarly absent |
+| `.swift-version` | Present | Pins `6.3` |
+| `CHANGELOG.md` | Present | Added during Phase 2 cleanup |
+| `CONTRIBUTING.md` | Present | At repository root |
+| `CODE_OF_CONDUCT.md` | Present | Added during Phase 2 cleanup |
+| `SECURITY.md` | Present | Added during Phase 2 cleanup |
 
 #### .github/ infrastructure
 
-| Item | Status | Notes |
-|------|--------|-------|
+| Item | Status (2026-04-15) | Notes |
+|------|---------------------|-------|
 | `FUNDING.yml` | Present | Points to GitHub Sponsors for `coenttb` |
-| `dependabot.yml` | Present | Monthly Swift + GitHub Actions updates |
-| `workflows/ci.yml` | Present | CI workflow |
-| `workflows/swift-format.yml` | Present | Formatting check |
-| `workflows/swiftlint.yml` | Present | Lint check |
-| `profile/README.md` | Present, **near-empty** | Single line `# Swift Institute` — this is the org profile shown at github.com/swift-institute |
-| `Swift Ecosystem Architecture/` | Empty directory | Likely stale placeholder |
-| Issue templates | **Absent** | No `.github/ISSUE_TEMPLATE/` |
-| Pull request template | **Absent** | No `.github/pull_request_template.md` |
+| `dependabot.yml` | Present | Monthly GitHub Actions updates |
+| `workflows/ci.yml` | Present | Structure validation for `Experiments/*/Package.swift` |
+| `workflows/swift-format.yml` | Absent | Formatting workflow not retained |
+| `workflows/swiftlint.yml` | Absent | Lint workflow not retained |
+| `profile/README.md` | Present, expanded | Org-profile content describing the five-layer ecosystem |
+| `ISSUE_TEMPLATE/` | Present | Bug report, documentation, and config |
+| `pull_request_template.md` | Present | Type-checklist template |
 
 #### Content directories
 

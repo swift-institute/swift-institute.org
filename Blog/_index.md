@@ -114,7 +114,7 @@ Central backlog of blog post ideas captured from Swift Institute work.
 | BLOG-IDEA-013 | Typed throws in Swift, part 1: error handling from first principles | Technical Deep Dive | — | 2026-03-11 | [Draft](Draft/typed-throws-part-1.md) |
 | BLOG-IDEA-013 | Typed throws in Swift, part 2: the throwing spectrum | Technical Deep Dive | — | 2026-03-11 | [Draft](Draft/typed-throws-part-2.md) |
 | BLOG-IDEA-030 | Typed throws in Swift, part 3: typed throws in practice | Technical Deep Dive | — | 2026-03-11 | [Draft](Draft/typed-throws-part-3.md) |
-| BLOG-IDEA-031 | The associated type trap: when your protocol's Body meets SwiftUI's Body | Technical Deep Dive | — | 2026-03-13 | [Draft](Draft/associated-type-trap-final.md) |
+| BLOG-IDEA-031 | The associated type trap: when your protocol's Body meets SwiftUI's Body | Lessons Learned | Coen ten Thije Boonkkamp | 2026-03-13 | [Draft](Draft/associated-type-trap-final.md) |
 
 > **Note**: BLOG-IDEA-024, 025, 027 were previously listed as "In Progress" but no draft files exist. Moved back to Ready for Drafting.
 >

@@ -128,7 +128,7 @@ Example: `UnregisteredToken` and `RegisteredToken` as distinct types rather than
 
 ### Receipt
 
-A runnable artifact that verifies a documentation claim. Experiments in the ecosystem are structured as receipts: each is a minimal Swift package that exercises one specific claim, so readers can reproduce the evidence rather than take the claim on faith. Blog posts and research documents link load-bearing claims directly to the experiments that substantiate them.
+A runnable artifact that verifies a documentation claim. Experiments in the ecosystem are structured as receipts: each is a Swift package that exercises one investigation, so readers can reproduce the evidence rather than take the claim on faith. Multi-variant packages encode related claims as separate targets — a receipt link may point at the package as a whole or at a specific variant. Blog posts and research documents link load-bearing claims directly to the experiments that substantiate them.
 
 ---
 

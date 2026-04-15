@@ -54,7 +54,7 @@ The per-authority organizations in active preparation include [swift-ietf](https
 | Evaluating whether this is worth your time | [FAQ](Documentation.docc/FAQ.md) |
 | Trying to understand the architecture | [Five Layer Architecture](Documentation.docc/Five%20Layer%20Architecture.md) |
 | Looking for conventions to adopt | [Skills/](Skills) — start with [`code-surface`](Skills/code-surface/), [`implementation`](Skills/implementation/), [`memory-safety`](Skills/memory-safety/) |
-| Here from a blog post's receipt link | [Experiments/](Experiments) — each subdirectory is a standalone Swift package reproducing one claim |
+| Here from a blog post's receipt link | [Experiments/](Experiments) — each subdirectory is a standalone Swift package exercising one investigation; multi-variant packages address related claims through separate targets |
 | Curious why a decision was made a particular way | [Research/](Research) — design rationale and trade-off analyses |
 
 This repository has no root `Package.swift`. Each Experiment is an independent Swift package and can be cloned and built with `swift build` on Swift 6.3 or newer; there is nothing to build at the top level.

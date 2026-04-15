@@ -103,7 +103,7 @@ Software is designed to remain valid as compilers evolve and platforms emerge. A
 
 ### Cross-platform correctness
 
-Code is expected to exhibit consistent behavior across Darwin, Linux, Windows, and Embedded Swift. Platform-specific behavior is explicitly documented and isolated. Cross-platform correctness lets the ecosystem serve Swift developers regardless of target.
+Code is expected to exhibit consistent behavior across Darwin, Linux, and Embedded Swift. Platform-specific behavior is explicitly documented and isolated. Cross-platform correctness lets the ecosystem serve Swift developers regardless of target.
 
 ### Explicit dependency direction
 

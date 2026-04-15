@@ -23,11 +23,11 @@ tags:
 
 **You named your protocol's associated type `Body`. SwiftUI does too. The compiler now refuses to let your type be both — and no import trick, module selector, or experimental flag can save you.**
 
-If you've ever built a `View`-shaped protocol — an HTML DSL, a PDF composition layer, a terminal UI, any tree-structured renderer — you probably copied SwiftUI's shape. An `associatedtype Body`, a `var body: Body { get }`, a trailing-closure builder. It reads naturally, it teaches easily, and it plays well with result builders. This post walks through the failure that shape produces when it meets `SwiftUI.View`, the wrong theories we tested before finding the real cause, and the rename that resolves it.
+If you've ever built a `View`-shaped protocol — an HTML DSL, a PDF composition layer, a terminal UI, any tree-structured renderer — you probably copied SwiftUI's shape. An `associatedtype Body`, a `var body: Body { get }`, a trailing-closure builder. It reads naturally, it teaches easily, and it plays well with result builders. This post walks through the failure that shape produces when it meets `SwiftUI.View`, the wrong theories I tested before finding the real cause, and the rename that resolves it.
 
 The cause is structural. The fix is a single rename — once you know which name to change.
 
-## What we tried
+## What I tried
 
 Here is the running example. A rendering framework with a `View` protocol, and an HTML document type that conforms to it:
 
@@ -90,13 +90,13 @@ note: possibly intended match 'HTML.Document<Body, Head>.Body' (aka 'Body')
 note: protocol requires nested type 'Body'
 ```
 
-Read that twice. The compiler is saying `HTML.Document.Body` — our generic parameter, bounded by `HTML.View` — does not conform to `View`. But which `View`? Our protocol, or SwiftUI's? The diagnostic doesn't say. Both protocols are in scope. Both declare an associated type called `Body`. Both declare a property called `body`.
+Read that twice. The compiler is saying `HTML.Document.Body` — the generic parameter, bounded by `HTML.View` — does not conform to `View`. But which `View`? The local protocol, or SwiftUI's? The diagnostic doesn't say. Both protocols are in scope. Both declare an associated type called `Body`. Both declare a property called `body`.
 
 This is where the investigation stalls.
 
 ### Wrong theory 1: MemberImportVisibility is leaking SwiftUI
 
-The package opts in to SE-0409. Under `MemberImportVisibility`, a `public import SwiftUI` in one file makes SwiftUI's members visible across the module. So the first hypothesis: `SwiftUI.View` is bleeding into the file where `HTML.Document` is declared, and the compiler is mistakenly trying to satisfy `SwiftUI.View.Body` with our generic parameter.
+The package opts in to SE-0409. Under `MemberImportVisibility`, a `public import SwiftUI` in one file makes SwiftUI's members visible across the module. So the first hypothesis: `SwiftUI.View` is bleeding into the file where `HTML.Document` is declared, and the compiler is mistakenly trying to satisfy `SwiftUI.View.Body` with the generic parameter.
 
 This hypothesis is testable. Move the `NSViewRepresentable` extension into a separate file. Tighten the import. Turn `MemberImportVisibility` off entirely. If any of those makes the error go away, the theory is right.
 
@@ -120,7 +120,7 @@ Swift 6 introduced `@retroactive` for cross-module protocol conformance. Maybe t
 extension HTML.Document: @retroactive NSViewRepresentable { /* ... */ }
 ```
 
-The compiler rejects this with a different error: `@retroactive` is only for conformances declared outside the module that owns either the protocol or the conforming type. `HTML.Document` lives in our module, as does the conformance. `@retroactive` doesn't apply. ([V7_Retroactive](https://github.com/swift-institute/swift-institute/tree/main/Experiments/member-import-visibility-body-conflict/Sources/V7_Retroactive))
+The compiler rejects this with a different error: `@retroactive` is only for conformances declared outside the module that owns either the protocol or the conforming type. `HTML.Document` lives in the same module as the conformance. `@retroactive` doesn't apply. ([V7_Retroactive](https://github.com/swift-institute/swift-institute/tree/main/Experiments/member-import-visibility-body-conflict/Sources/V7_Retroactive))
 
 Wrong tool.
 
@@ -163,9 +163,9 @@ This compiles. It's also unacceptable. Every preview call site grows a ceremonia
 
 Back to the compiler source.
 
-## What we learned
+## What I learned
 
-The cause is a deliberate property of Swift's protocol system. To see it, we have to look at three things in sequence: how associated types resolve across multiple conformances, why module selectors can't disambiguate them, and where the diagnostic actually originates.
+The cause is a deliberate property of Swift's protocol system. To see it, I have to look at three things in sequence: how associated types resolve across multiple conformances, why module selectors can't disambiguate them, and where the diagnostic actually originates.
 
 ### Same-named associated types are unified, not shadowed
 
@@ -201,7 +201,7 @@ The anchor is computed by walking the overridden-declarations chain. The output 
 
 This anchoring is what makes refinements like `Collection: Sequence` work. Both protocols declare `associatedtype Element`. The anchor lookup folds them into a single requirement, so a type conforming to `Collection` provides exactly one `Element`, not two. Without anchors, every refinement chain would have to repeat its associated type bindings.
 
-The same mechanism is what wedges us. `Rendering.View` declares `associatedtype Body: Rendering.View`. `SwiftUI.View` declares `associatedtype Body: SwiftUI.View`. There is no override relationship between them — neither protocol refines the other. But the anchor lookup runs *per associated type name on the conforming type*, and when both protocols' `Body`-named anchors land on the same type, the conformance solver tries to satisfy both with a single binding.
+The same mechanism is what wedges this design. `Rendering.View` declares `associatedtype Body: Rendering.View`. `SwiftUI.View` declares `associatedtype Body: SwiftUI.View`. There is no override relationship between them — neither protocol refines the other. But the anchor lookup runs *per associated type name on the conforming type*, and when both protocols' `Body`-named anchors land on the same type, the conformance solver tries to satisfy both with a single binding.
 
 Then the constraints fight:
 
@@ -214,7 +214,7 @@ Then the constraints fight:
 
 ### No `@_implements`, no `@_nonoverride`, no Features.def flag
 
-Before accepting this, we checked the experimental and underscored attribute surface for an escape hatch.
+Before accepting this, I checked the experimental and underscored attribute surface for an escape hatch.
 
 `@_implements(Protocol, name)` exists, but it operates on *value witnesses* — it lets one method implement a requirement from a specific protocol when names collide. It does nothing for type-level requirements like associated types. `@_nonoverride` is for explicit override-chain breaks at the value level. Also doesn't apply. `Features.def` defines feature flags; the associated-type-related ones (`SuppressedAssociatedTypes`, `SuppressedAssociatedTypesWithDefaults`) relate to inverse generics on associated types, not to splitting unified requirements.
 
@@ -281,7 +281,7 @@ Different simple identifiers. No unification. No collision. The `#Preview` compi
 
 ### The blast radius is smaller than you think
 
-We worried this would touch every HTML element. It didn't.
+I worried this would touch every HTML element. It didn't.
 
 | File group | Count | Touched? |
 |------------|-------|----------|
@@ -296,11 +296,11 @@ Twenty files of edits across two repositories. Zero changes at every call site t
 
 The investigation had three phases and only the last one produced the fix.
 
-The first phase — *it must be MemberImportVisibility* — anchored on a recent feature we had adopted. A new feature is always a tempting suspect. Five experiment variants ruled it out in under an hour. The time wasn't wasted, because it narrowed the search space, but the hypothesis was never going to pan out.
+The first phase — *it must be MemberImportVisibility* — anchored on a recent feature I had adopted. A new feature is always a tempting suspect. Five experiment variants ruled it out in under an hour. The time wasn't wasted, because it narrowed the search space, but the hypothesis was never going to pan out.
 
-The second phase — *there must be some compiler annotation* — burned through `@retroactive`, module selectors, and every experimental feature flag we could find that mentioned "associated" or "suppressed." Each candidate produced a different error. Read together, those errors pointed at the real answer.
+The second phase — *there must be some compiler annotation* — burned through `@retroactive`, module selectors, and every experimental feature flag I could find that mentioned "associated" or "suppressed." Each candidate produced a different error. Read together, those errors pointed at the real answer.
 
-The third phase was reading the compiler source. Associated type anchor resolution is not subtle once you see it: same-named associated types are unified unconditionally by the merge algorithm. The SE-0491 diagnostic had already said the same thing in plain English; we just didn't believe it until we saw the code.
+The third phase was reading the compiler source. Associated type anchor resolution is not subtle once you see it: same-named associated types are unified unconditionally by the merge algorithm. The SE-0491 diagnostic had already said the same thing in plain English; I just didn't believe it until I saw the code.
 
 The practical rule that falls out:
 
