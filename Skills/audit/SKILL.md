@@ -57,13 +57,12 @@ not an audit.
 
 ### [AUDIT-001] Single Output File
 
-**Statement**: All audit output for a given scope MUST be written to `Research/audit.md`. No other filenames are permitted for audit output.
+**Statement**: Per-package and superrepo-wide audit output MUST be written to `Research/audit.md` within that package or superrepo. No other filenames are permitted for per-scope audit output.
 
 **Correct**:
 ```
 swift-buffer-primitives/Research/audit.md
 swift-primitives/Research/audit.md
-swift-institute/Research/audit.md
 ```
 
 **Incorrect**:
@@ -81,15 +80,17 @@ swift-institute/Research/prompts/naming-audit.md              // ❌ Prompt file
 
 ### [AUDIT-002] Location Triage
 
-**Statement**: Audit location MUST follow [RES-002] triage:
+**Statement**: Audit location MUST follow [RES-002] triage for per-package and superrepo scope. Ecosystem-wide audits go to the `Audits/` directory in `swift-institute`.
 
 | Scope | Location |
 |-------|----------|
 | Single package | `{package}/Research/audit.md` |
 | Superrepo-wide | `{superrepo}/Research/audit.md` |
-| Ecosystem-wide | `swift-institute/Research/audit.md` |
+| Ecosystem-wide | `swift-institute/Audits/{descriptive-slug}.md` |
 
-**Rationale**: Mirrors the established research location convention. Predictable from scope alone.
+Ecosystem-wide audits are standalone reports (release readiness, cross-package compliance sweeps) that span multiple packages and do not fit the single-file-per-scope model. They live flat in `Audits/` with an `_index.md` grouping them by topic. See `Audits/_index.md` for the current inventory.
+
+**Rationale**: Per-package audits are appendable sections in one file (predictable from scope alone). Ecosystem-wide audits are self-contained reports with their own lifecycle — readiness checks, multi-pass verification sweeps — and benefit from individual files with descriptive names.
 
 **Cross-references**: [RES-002], [AUDIT-001], [AUDIT-014]
 
