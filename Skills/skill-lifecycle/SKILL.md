@@ -313,6 +313,10 @@ applies_to:
 
 ## Phase 5: Skill Updates
 
+**Numbering convention**: `[SKILL-LIFE-*]` IDs are organized into clusters with reserved gaps for future expansion within each phase: `001–009` Updates (Phase 5), `010–019` Review (Phase 6), `020–029` Deprecation (Phase 7). Gaps inside a cluster are reserved, not stale. The companion `[SKILL-CREATE-*]` block uses sequential numbering 001–011 across three phases without clusters; the inconsistency is historical (SKILL-CREATE was authored first as a single phase block) and has not been worth renumbering.
+
+**Workflow-skill self-reference**: action items that update the workflow skills themselves (`/reflect-session`, `/skill-lifecycle`, `/handoff`, `/supervise`) SHOULD be queued and applied outside the session that surfaced them. Modifying a skill during the process that invokes it creates a recursive composition that is hard to reason about — the in-session edit may change the rules the session is operating under. Exception: when the audit or reflection that surfaces the change is *itself* about the workflow skill in question (as the 2026-04-15 supervise-creation reflection was about the agent-workflow cluster), in-session application is acceptable because the recursion is explicit and the session's purpose is the change.
+
 ### [SKILL-LIFE-001] Minimal Revision Principle
 
 **Statement**: Skill updates MUST apply the smallest edit that addresses the identified gap. Do not rewrite surrounding context unless it is factually wrong.

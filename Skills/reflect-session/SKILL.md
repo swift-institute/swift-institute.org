@@ -159,13 +159,13 @@ into genuine analysis. Ask "what pattern does this instance belong to?"}
 - [ ] **[skill]** **[doc]** naming: Update naming  // ❌ Multiple tags
 ```
 
-**Pre-edit checkpoint**: When a session directly modifies a skill (not via `/reflections_processing`), the skill-lifecycle skill MUST be loaded first. The checklist catches integration gaps (index entries, update classification, consistency checks) that content-focused sessions routinely miss. If the session only creates `[skill]` action items for later processing, this checkpoint is not needed — `/reflections_processing` handles it.
+**Pre-edit checkpoint**: When a session directly modifies a skill (not via `/reflections_processing`), the skill-lifecycle skill MUST be loaded first per [SKILL-LIFE-001] (Minimal Revision Principle) and [SKILL-LIFE-002] (Update Provenance). The checklist catches integration gaps (index entries, update classification, consistency checks) that content-focused sessions routinely miss. If the session only creates `[skill]` action items for later processing, this checkpoint is not needed — `/reflections_processing` handles it.
 
 **Rationale**: Specific targets enable deterministic routing. Vague items decay into inaction (Derby & Larsen 2006).
 
 **Provenance**: 2026-03-31-issue-investigation-literature-study.md
 
-**Cross-references**: [REFL-002], [REFL-PROC-001]
+**Cross-references**: [REFL-002], [REFL-PROC-001], [SKILL-LIFE-001], [SKILL-LIFE-002]
 
 ---
 
@@ -267,11 +267,12 @@ We added a clamping initializer but then changed to typed parameters instead.
 | Artifact Type | Cleanup Action | Why Session Context Matters |
 |---------------|---------------|---------------------------|
 | Handoff files | Triage, status-update, delete when complete | Only this session knows which described work finished |
+| Supervisor ground-rules block (in HANDOFF.md Constraints, per [SUPER-014]) | Annotate verification status per [SUPER-011]; never delete a handoff file with unverified entries | Only this session knows which constraints were verified end-to-end |
 | Audit findings | Update statuses for findings addressed in-session | Only this session knows which fixes correspond to which findings |
 
 **Rationale**: Session context is perishable. The agent that did the work is the cheapest and most accurate evaluator of artifact completion. Deferring cleanup to a future session forces re-investigation from cold state — expensive, error-prone, and often never done (witness: stale HANDOFF files accumulating across sessions).
 
-**Cross-references**: [REFL-009], [REFL-010], [HANDOFF-001], [AUDIT-005]
+**Cross-references**: [REFL-009], [REFL-010], [HANDOFF-001], [SUPER-011], [SUPER-014], [AUDIT-005]
 
 ---
 
@@ -290,6 +291,7 @@ We added a clamping initializer but then changed to typed parameters instead.
 | Code compiles? | Session knowledge (did we build successfully?) |
 | Work completed? | Compare Next Steps against git log, current code state |
 | Investigation concluded? | Check Findings Destination for results (branching) |
+| Ground-rules verified? | Inspect Constraints section for the literal sub-heading `### Supervisor Ground Rules` (per [HANDOFF-004]); read its typed entries (MUST / MUST NOT / `fact:` / `ask:` per [SUPER-002]); count unverified entries per the [SUPER-011] notation pattern (`Supervisor constraints #1–#N: all verified` vs `#1, #2 verified; #3 blocked`) |
 
 3. **Status-update the file** — annotate each Next Step or investigation item with its current status:
 
@@ -304,19 +306,27 @@ We added a clamping initializer but then changed to typed parameters instead.
 
 | Triage Result | Action |
 |--------------|--------|
-| All items completed | Delete the file |
-| Some items remain | Leave the updated file (status annotations help the next session) |
+| All items completed AND all ground-rules entries verified (or no ground-rules block present) AND no pending escalation | Delete the file |
+| Some items remain, OR any ground-rules entry unverified, OR escalation pending unresolved | Leave the updated file (status annotations help the next session) |
+| Block present with entries but NO `[SUPER-011]` verification line yet (fresh dispatch, work not yet started) | Leave the file; annotate as `pending verification — fresh dispatch, no work yet` |
+| `### Supervisor Ground Rules` sub-heading present but the block is empty (zero entries) | Report as a `[HANDOFF-012]` SHOULD-NOT violation in the reflection entry under "What Worked and What Didn't"; remove the empty sub-heading from the file before the standard disposition rule fires |
+| Escalation pending per [SUPER-012] (the file's `## Open Questions` carries an `[ESCALATED to user, awaiting answer]` prefix, or the file is a `HANDOFF-escalation-{slug}.md`) | Leave the file unchanged; do NOT annotate as "complete" — the user has not answered |
+| Escalation resolved (the prefix has been replaced with the user's answer, or the escalation file's Findings section is filled) | Annotate the resolution in-place; if resolution also completes all Next Steps and ground-rules entries are verified, delete per the standard rule |
 | Status unclear for any item | Leave the file, note the ambiguity in annotations |
 
 5. **Report** in the reflection entry under "What Happened": which handoff files were triaged, what was deleted, what remains and why
 
-**Statement**: Handoff files where all work is complete MUST be deleted. Git preserves history. Stale handoff files actively mislead future agents into resuming completed work.
+**Statement**: Handoff files where all work is complete AND all ground-rules entries (if any) are verified MUST be deleted. Git preserves history. Stale handoff files actively mislead future agents into resuming completed work.
 
-**Statement**: Status-updating before deletion is mandatory even for this-session handoffs. The triage step serves as a verification gate — it catches cases where the agent *thinks* work is complete but a Next Step was actually missed.
+**Statement**: Status-updating before deletion is mandatory even for this-session handoffs. The triage step serves as a verification gate — it catches cases where the agent *thinks* work is complete but a Next Step was actually missed, or a supervisor ground-rules entry was never verified.
 
-**Rationale**: Handoff files are ephemeral task state ([HANDOFF cross-references] explicitly contrast them with durable reflections). Without session-end triage, handoff files accumulate indefinitely — each one a context trap for future agents that must re-investigate whether the work described is still relevant.
+**Statement**: A handoff file containing an unverified supervisor ground-rules entry MUST NOT be deleted, even if all Next Steps are complete. Deleting drops the supervisor's accountability trail per [SUPER-011]; the unverified entry signals that supervision did not terminate cleanly.
 
-**Cross-references**: [REFL-008], [HANDOFF-001], [HANDOFF-009], [HANDOFF-010]
+**Rationale**: Handoff files are ephemeral task state ([HANDOFF cross-references] explicitly contrast them with durable reflections). Without session-end triage, handoff files accumulate indefinitely — each one a context trap for future agents that must re-investigate whether the work described is still relevant. The ground-rules check is additive: handoffs without supervisor blocks behave exactly as before; handoffs *with* supervisor blocks gain a verification gate.
+
+**Provenance**: 2026-04-15-supervise-skill-creation-from-handoff.md (gap surfaced when the new `/supervise` skill placed ground-rules blocks in HANDOFF.md Constraints, which `[REFL-009]` did not previously enumerate).
+
+**Cross-references**: [REFL-008], [HANDOFF-001], [HANDOFF-009], [HANDOFF-010], [SUPER-011], [SUPER-014]
 
 ---
 
