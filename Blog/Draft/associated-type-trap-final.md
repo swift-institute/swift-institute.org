@@ -269,7 +269,7 @@ With `Rendered` as the associated type identifier and `Render.Body` as its const
 | `Render.View` (via `HTML.View`) | `Rendered` (constrained by `Render.Body`) | the generic parameter `Body` |
 | `SwiftUI.View` (via `NSViewRepresentable`) | `Body` | `Never` |
 
-Different simple identifiers. No unification. No collision. The `#Preview` compiles. ([V6_Content_AssocType](https://github.com/swift-institute/swift-institute/tree/main/Experiments/member-import-visibility-body-conflict/Sources/V6_Content_AssocType))
+Different simple identifiers. No unification. No collision. The `#Preview` compiles. ([V10_Rendered_Namespace](https://github.com/swift-institute/swift-institute/tree/main/Experiments/member-import-visibility-body-conflict/Sources/V10_Rendered_Namespace) demonstrates the `Render` / `Rendered` shape; [V6_Content_AssocType](https://github.com/swift-institute/swift-institute/tree/main/Experiments/member-import-visibility-body-conflict/Sources/V6_Content_AssocType) proves the underlying mechanism with a different name)
 
 ```swift
 #Preview {
@@ -319,4 +319,4 @@ The meta-lesson: when the compiler tells you something is "not allowed because X
 - Swift compiler: [`lib/AST/Decl.cpp`](https://github.com/swiftlang/swift/blob/main/lib/AST/Decl.cpp) — `AssociatedTypeDecl::getAssociatedTypeAnchor`
 - Swift compiler: [`lib/Sema/TypeCheckType.cpp`](https://github.com/swiftlang/swift/blob/main/lib/Sema/TypeCheckType.cpp) — `resolveDependentMemberType` rejects module selectors on dependent member types
 - Swift compiler: [`include/swift/AST/DiagnosticsSema.def`](https://github.com/swiftlang/swift/blob/main/include/swift/AST/DiagnosticsSema.def) — `module_selector_dependent_member_type_not_allowed`
-- Experiment: [`member-import-visibility-body-conflict`](https://github.com/swift-institute/swift-institute/tree/main/Experiments/member-import-visibility-body-conflict) — nine variants. V1–V5 prove `MemberImportVisibility` is innocent; V6 demonstrates the rename fix; V7–V9 cover `@retroactive`, SE-0491 module selectors, and the wrapper escape hatch
+- Experiment: [`member-import-visibility-body-conflict`](https://github.com/swift-institute/swift-institute/tree/main/Experiments/member-import-visibility-body-conflict) — ten variants. V1–V5 prove `MemberImportVisibility` is innocent; V6 establishes the rename mechanism with `Content`; V10 exercises the specific `Render` / `Rendered` shape recommended here; V7–V9 cover `@retroactive`, SE-0491 module selectors, and the wrapper escape hatch
