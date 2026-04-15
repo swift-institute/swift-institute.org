@@ -1,7 +1,5 @@
 # Swift Institute
 
-[![CI](https://github.com/swift-institute/swift-institute/actions/workflows/ci.yml/badge.svg)](https://github.com/swift-institute/swift-institute/actions/workflows/ci.yml)
-
 Documentation, conventions, and research for a layered Swift package ecosystem.
 
 ## Overview
