@@ -12,7 +12,7 @@ This glossary defines the vocabulary used across Swift Institute documentation. 
 
 ## Architecture layers
 
-Terms describing the layered architecture model used in Swift Institute packages. See <doc:Five-Layer-Architecture> for the full treatment.
+Terms describing the layered architecture model used in Swift Institute packages. See [Five Layer Architecture](Five%20Layer%20Architecture.md) for the full treatment.
 
 ---
 
@@ -140,7 +140,7 @@ A development convention captured as a structured document within the ecosystem.
 
 ## Mathematical foundations
 
-Terms from mathematics used in Swift Institute type design. See <doc:Mathematical-Foundations> for the full treatment.
+Terms from mathematics used in Swift Institute type design. See [Mathematical Foundations](Mathematical%20Foundations.md) for the full treatment.
 
 ---
 
@@ -190,7 +190,7 @@ Apple's framework providing fundamental types (Date, URL, Data, String bridging)
 
 ### Embedded Swift
 
-A minimal Swift language subset for resource-constrained environments. Embedded Swift lacks Foundation and has a reduced standard library. Packages at the Primitives and Standards layers are compatible with Embedded Swift. See <doc:Embedded-Swift> for compatibility patterns.
+A minimal Swift language subset for resource-constrained environments. Embedded Swift lacks Foundation and has a reduced standard library. Packages at the Primitives and Standards layers are compatible with Embedded Swift. See [Embedded Swift](Embedded%20Swift.md) for compatibility patterns.
 
 ---
 
@@ -220,10 +220,10 @@ Swift Institute packages follow semantic versioning. Packages in the 0.x range e
 
 A stewarded body of layered Swift infrastructure spanning Primitives, Standards, Foundations, Components, and Applications. The Swift Institute is designed for correctness, composability, and long-term evolution.
 
-See <doc:Identity> for the reasoning behind the name and stewardship model.
+See [Identity](Identity.md) for the reasoning behind the name and stewardship model.
 
 ---
 
 ### Five-layer architecture
 
-The organizational model used by the Swift Institute: Primitives, Standards, Foundations, Components, and Applications. Each layer depends only on layers below it. See <doc:Five-Layer-Architecture>.
+The organizational model used by the Swift Institute: Primitives, Standards, Foundations, Components, and Applications. Each layer depends only on layers below it. See [Five Layer Architecture](Five%20Layer%20Architecture.md).

@@ -9,7 +9,7 @@ series_part: 3
 series_title: Typed throws in Swift
 date_drafted: 2026-03-11
 date_published:
-author:
+author: Coen ten Thije Boonkkamp
 source_artifacts:
   - swift-institute/Research/typed-throws-standards-inventory.md
   - swift-standards/Experiments/typed-throws-protocol-conformance/

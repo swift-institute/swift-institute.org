@@ -14,11 +14,11 @@ For the repository overview and the ecosystem map, see the [repository README](.
 
 | Document | Topic |
 |----------|-------|
-| <doc:Five-Layer-Architecture> | The core organizational model — Primitives, Standards, Foundations, Components, Applications |
-| <doc:Identity> | Why this is called the Swift Institute, and what that name commits to |
-| <doc:Glossary> | Canonical vocabulary used across the ecosystem |
-| <doc:Mathematical-Foundations> | Type-safe dimensional analysis, algebraic structures, category-theoretic organization |
-| <doc:Embedded-Swift> | Writing packages compatible with Embedded Swift compilation |
-| <doc:FAQ> | Common questions about the architecture and how to use it |
+| [Five Layer Architecture](Five%20Layer%20Architecture.md) | The core organizational model — Primitives, Standards, Foundations, Components, Applications |
+| [Identity](Identity.md) | Why this is called the Swift Institute, and what that name commits to |
+| [Glossary](Glossary.md) | Canonical vocabulary used across the ecosystem |
+| [Mathematical Foundations](Mathematical%20Foundations.md) | Type-safe dimensional analysis, algebraic structures, category-theoretic organization |
+| [Embedded Swift](Embedded%20Swift.md) | Writing packages compatible with Embedded Swift compilation |
+| [FAQ](FAQ.md) | Common questions about the architecture and how to use it |
 
 For contribution workflow, see [`CONTRIBUTING.md`](../CONTRIBUTING.md) at the repository root.

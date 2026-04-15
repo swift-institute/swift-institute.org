@@ -190,6 +190,6 @@ This alignment avoids two failure modes:
 
 ### Related
 
-- <doc:Glossary>
-- <doc:Identity>
-- <doc:FAQ>
+- [Glossary](Glossary.md)
+- [Identity](Identity.md)
+- [FAQ](FAQ.md)

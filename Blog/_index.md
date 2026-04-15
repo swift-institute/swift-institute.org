@@ -10,7 +10,7 @@ Central backlog of blog post ideas captured from Swift Institute work.
 
 **Scope**: This index tracks all blog post ideas from capture through publication.
 
-**Workflow**: See <doc:Blog-Post-Process> for the complete two-phase workflow.
+**Workflow**: See the [blog-process skill](../Skills/blog-process/SKILL.md) for the complete two-phase workflow.
 
 **Adding ideas**: When a trigger event occurs per [BLOG-001], add an entry to "Ready for Drafting" or "Needs More Context" as appropriate.
 
@@ -110,6 +110,7 @@ Central backlog of blog post ideas captured from Swift Institute work.
 
 | ID | Title | Category | Writer | Started | Draft |
 |----|-------|----------|--------|---------|-------|
+| BLOG-IDEA-INTRO | Restarting the blog: layered Swift, receipts, and what's next | Announcement | Coen ten Thije Boonkkamp | 2026-04-14 | [Draft](Draft/restarting-the-blog-final.md) |
 | BLOG-IDEA-013 | Typed throws in Swift, part 1: error handling from first principles | Technical Deep Dive | — | 2026-03-11 | [Draft](Draft/typed-throws-part-1.md) |
 | BLOG-IDEA-013 | Typed throws in Swift, part 2: the throwing spectrum | Technical Deep Dive | — | 2026-03-11 | [Draft](Draft/typed-throws-part-2.md) |
 | BLOG-IDEA-030 | Typed throws in Swift, part 3: typed throws in practice | Technical Deep Dive | — | 2026-03-11 | [Draft](Draft/typed-throws-part-3.md) |
@@ -118,6 +119,8 @@ Central backlog of blog post ideas captured from Swift Institute work.
 > **Note**: BLOG-IDEA-024, 025, 027 were previously listed as "In Progress" but no draft files exist. Moved back to Ready for Drafting.
 >
 > **Series**: BLOG-IDEA-013 and BLOG-IDEA-030 combined into the [typed-throws series](Series/typed-throws.md) (3 parts).
+>
+> **Publication gate — typed-throws series**: Drafts reference `swift-standards/Experiments/typed-throws-protocol-conformance/` as a receipt artifact. Publication is gated on `swift-standards` being world-readable so the receipt link resolves.
 
 ---
 

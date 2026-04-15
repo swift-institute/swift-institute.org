@@ -111,7 +111,7 @@ Each layer depends only on layers below it. Circular dependencies are prohibited
 
 ### Sustainable licensing leverage
 
-License restrictions align with policy content. Permissive licenses cover foundational primitives and standards; more restrictive terms are reserved for higher-value, policy-laden components. Strategic licensing enables sustainable development while maximizing ecosystem adoption. See <doc:Five-Layer-Architecture>.
+License restrictions align with policy content. Permissive licenses cover foundational primitives and standards; more restrictive terms are reserved for higher-value, policy-laden components. Strategic licensing enables sustainable development while maximizing ecosystem adoption. See [Five Layer Architecture](Five%20Layer%20Architecture.md).
 
 ### AI-assisted development
 
@@ -139,6 +139,6 @@ APIs are not marked stable (1.0.0) until they have been validated through produc
 
 ### Related
 
-- <doc:Five-Layer-Architecture>
-- <doc:Glossary>
-- <doc:FAQ>
+- [Five Layer Architecture](Five%20Layer%20Architecture.md)
+- [Glossary](Glossary.md)
+- [FAQ](FAQ.md)

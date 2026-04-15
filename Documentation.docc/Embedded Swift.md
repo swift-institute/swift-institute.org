@@ -229,6 +229,6 @@ A crash during SIL generation suggests a feature is partially implemented and ma
 
 ### Related
 
-- <doc:Five-Layer-Architecture>
-- <doc:Glossary>
-- <doc:FAQ>
+- [Five Layer Architecture](Five%20Layer%20Architecture.md)
+- [Glossary](Glossary.md)
+- [FAQ](FAQ.md)

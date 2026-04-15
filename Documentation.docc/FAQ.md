@@ -17,13 +17,15 @@ dependencies: [
 ]
 ```
 
+> The specific packages shown above are illustrative. Individual packages are being released over the coming weeks; `swift package resolve` against a not-yet-public repository returns a 404 until its release tag lands.
+
 There is no umbrella package to import. The super-repositories (`swift-primitives`, `swift-standards`, `swift-foundations`) are git submodule aggregators for browsing the ecosystem. They are not meant to be consumed as dependencies.
 
 ---
 
 ## What's the license?
 
-Primitives and Standards packages are released under Apache 2.0 without exception. Foundations packages are Apache 2.0 by default, with selective commercial terms reserved for specific packages where appropriate. Components and Applications use more flexible licensing, since that is where policy and opinion accumulate. See the Licensing strategy section of <doc:Five-Layer-Architecture>.
+Primitives and Standards packages are released under Apache 2.0 without exception. Foundations packages are Apache 2.0 by default, with selective commercial terms reserved for specific packages where appropriate. Components and Applications use more flexible licensing, since that is where policy and opinion accumulate. See the Licensing strategy section of [Five Layer Architecture](Five%20Layer%20Architecture.md).
 
 Every repository carries its own `LICENSE.md` file. When in doubt, check the repository.
 
@@ -52,7 +54,7 @@ Foundation (`Date`, `URL`, `Data`, `String` bridging) introduces dependencies th
 
 Keeping Foundation out of the Primitives and Standards layers lets those packages deploy across the entire Swift ecosystem without modification. At the Foundations layer and above, Foundation is a legitimate dependency if a package genuinely needs it — the constraint applies to the lower layers, not everywhere.
 
-See <doc:Identity> for the reasoning behind this choice.
+See [Identity](Identity.md) for the reasoning behind this choice.
 
 ---
 
@@ -79,7 +81,7 @@ Ask these questions in order:
 4. Is it an opinionated assembly with defaults? It belongs in `swift-components`.
 5. Is it an end-user product? It belongs in `swift-applications`.
 
-See <doc:Five-Layer-Architecture> for the full decision model.
+See [Five Layer Architecture](Five%20Layer%20Architecture.md) for the full decision model.
 
 ---
 
@@ -109,7 +111,7 @@ The naming signals intent:
 
 The Swift Institute does not ship a framework; it maintains a body of layered infrastructure. The "institute" framing communicates long-term stability, stewardship over ownership, and principled evolution over feature accumulation.
 
-See <doc:Identity> for the full explanation.
+See [Identity](Identity.md) for the full explanation.
 
 ---
 
@@ -129,6 +131,6 @@ No date is committed. The Primitives, Standards, and Foundations layers are bein
 
 ### Related
 
-- <doc:Five-Layer-Architecture>
-- <doc:Identity>
-- <doc:Glossary>
+- [Five Layer Architecture](Five%20Layer%20Architecture.md)
+- [Identity](Identity.md)
+- [Glossary](Glossary.md)

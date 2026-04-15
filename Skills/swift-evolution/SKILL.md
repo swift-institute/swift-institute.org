@@ -44,7 +44,7 @@ File organization for tracking pitch lifecycle lives in the meta-repository:
 
 ```text
 swift-institute/Swift Evolution/
-├── Pitch Process.md         # Directory layout and pointers to this skill
+├── README.md                # Directory layout and pointers to this skill
 ├── Drafts/                  # Internal, pre-pitch drafts
 │   └── PITCH-XXXX {Title}.md
 ├── Pitches/                 # Posted to Swift Forums

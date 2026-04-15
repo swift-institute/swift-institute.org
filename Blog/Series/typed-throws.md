@@ -80,5 +80,5 @@ Leaf error types that model a single domain are preferred over "god" error types
 
 - [SE-0413: Typed throws](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0413-typed-throws.md)
 - [Research: Typed throws standards inventory](../Research/typed-throws-standards-inventory.md)
-- [Experiment: Typed throws protocol conformance](../../swift-standards/Experiments/typed-throws-protocol-conformance/)
+- [Experiment: Typed throws protocol conformance](https://github.com/swift-standards/swift-standards/tree/main/Experiments/typed-throws-protocol-conformance)
 - [FullTypedThrows feature flag](https://github.com/swiftlang/swift/blob/main/include/swift/Basic/Features.def)
