@@ -905,11 +905,11 @@ This breaks the cycle: `swift-testing` depends on primitives, but primitives' te
 
 ### [PATTERN-005] Swift 6 Language Mode
 
-**Statement**: All packages MUST require Swift 6.2+ and use Swift 6 language mode.
+**Statement**: All packages MUST require Swift 6.3+ and use Swift 6 language mode.
 
 ```swift
 // Package.swift
-// swift-tools-version: 6.2
+// swift-tools-version: 6.3
 platforms: [.macOS(.v26), .iOS(.v26), .tvOS(.v26), .watchOS(.v26), .visionOS(.v26)]
 swiftLanguageModes: [.v6]
 ```

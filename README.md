@@ -28,6 +28,8 @@ Shared conventions live in this repository as Skills — the canonical source fo
 | 4 | Components | Opinionated assemblies — planned |
 | 5 | Applications | End-user systems — planned |
 
+> **Release in progress.** The organization links above point to GitHub organizations that are being made world-readable over the coming weeks. Some may currently return 404; they resolve as each layer's release lands.
+
 The per-authority organizations in active preparation include [swift-ietf](https://github.com/swift-ietf) (RFCs), [swift-iso](https://github.com/swift-iso), [swift-w3c](https://github.com/swift-w3c), [swift-whatwg](https://github.com/swift-whatwg), plus single-package organizations for IEEE, IEC, ECMA, INCITS, ARM, Intel, RISC-V, and Microsoft. `swift-standards` itself retains the cross-body and historical packages.
 
 ## Repository Contents

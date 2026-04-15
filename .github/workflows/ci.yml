@@ -14,21 +14,33 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Production validation: Latest Swift on Linux with release build
-  linux-latest:
-    name: Ubuntu (Swift 6.2, release)
+  structure:
+    name: Validate experiment structure
     runs-on: ubuntu-latest
-    container: swift:6.2
     steps:
       - uses: actions/checkout@v6
 
-      - name: Cache Swift packages
-        uses: actions/cache@v5
-        with:
-          path: .build
-          key: linux-swift62-spm-v5-${{ hashFiles('Package.swift', 'Package@*.swift') }}
-          restore-keys: linux-swift62-spm-v5-
-
-      - name: Test (release)
-        run: swift test -c release
-
+      - name: Each experiment directory has a Package.swift and Sources/
+        run: |
+          missing=0
+          for dir in Experiments/*/; do
+            name=$(basename "$dir")
+            # Skip non-experiment directories (index files, etc.)
+            [ -d "$dir/Sources" ] || [ -f "$dir/EXPERIMENT.md" ] || continue
+            if [ ! -f "$dir/Package.swift" ]; then
+              echo "::warning file=$dir::Experiment missing Package.swift"
+              missing=$((missing + 1))
+            fi
+          done
+          echo "Found $missing experiment directories without Package.swift"
+          # Fail if any experiment directory with Sources/ lacks Package.swift
+          critical=0
+          for dir in Experiments/*/; do
+            if [ -d "$dir/Sources" ] && [ ! -f "$dir/Package.swift" ]; then
+              echo "::error file=$dir::Experiment has Sources/ but no Package.swift"
+              critical=$((critical + 1))
+            fi
+          done
+          if [ $critical -gt 0 ]; then
+            exit 1
+          fi

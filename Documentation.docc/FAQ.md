@@ -34,7 +34,7 @@ Every repository carries its own `LICENSE.md` file. When in doubt, check the rep
 As of this release:
 
 - 127 repositories at the Primitives layer
--  itself plus per-authority organizations (swift-ietf, swift-iso, swift-w3c, swift-whatwg, and single-package organizations for other standards bodies)
+- Standards distributed across `swift-standards` itself plus per-authority organizations (swift-ietf, swift-iso, swift-w3c, swift-whatwg, and single-package organizations for other standards bodies)
 - 136 repositories at the Foundations layer
 - Components and Applications are planned; no packages at those layers have been released yet
 

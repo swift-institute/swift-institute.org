@@ -18,6 +18,8 @@ package boundaries.
 | 4 | Components | Opinionated assemblies — planned |
 | 5 | Applications | End-user systems — planned |
 
+> **Release in progress.** The organization links above are being made world-readable over the coming weeks. Some may currently 404; they resolve as each layer's release lands.
+
 Layer 2 is an organization of organizations. Each standards authority has its
 own GitHub organization hosting the packages it governs:
 [swift-ietf](https://github.com/swift-ietf) (RFCs),

@@ -199,10 +199,10 @@ Experiments/sendable-closure-test/
 
 ### [EXP-003a] Package.swift Template
 
-**Statement**: Package.swift MUST specify minimum configuration. Experiments MUST use Swift 6.2 and v26 platforms. Only include Swift settings being tested.
+**Statement**: Package.swift MUST specify minimum configuration. Experiments MUST use Swift 6.3 and v26 platforms. Only include Swift settings being tested.
 
 ```swift
-// swift-tools-version: 6.2
+// swift-tools-version: 6.3
 import PackageDescription
 
 let package = Package(
