@@ -37,7 +37,9 @@ build it, and verify the behavior.
 ## Before opening a pull request
 
 - Follow the conventions in the relevant skill. If a convention seems wrong,
-  open a Swift Evolution pitch rather than an exception.
+  open a PR against the relevant skill under `Skills/` with a research
+  document in `Research/` justifying the change. For language-level changes
+  that require upstream Swift Evolution, see `Swift Evolution/`.
 - Every new type needs a test. Every bug fix needs a regression test.
 - No Foundation imports in Primitives or Standards. Foundation is a
   Foundations-layer concern.

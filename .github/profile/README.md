@@ -48,6 +48,9 @@ Initial public alpha. The meta-repository
 is public. The package layers it describes are being released repository by
 repository over the coming weeks.
 
+Maintained by [Coen ten Thije Boonkkamp](https://github.com/coenttb) —
+contributions welcome via pull request.
+
 ## License
 
 All packages use the Apache License 2.0.

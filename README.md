@@ -59,7 +59,7 @@ This repository has no root `Package.swift`. Each Experiment is an independent S
 
 ## Status
 
-This is an early public release. The documentation, research, experiments, and blog workflow in this repository are available now. The Swift package layers they describe are being released repository by repository over the coming weeks. Some links from blog posts and research documents point to repositories that are not yet world-readable; those links resolve as the release tags land.
+This is an early public release, maintained by [Coen ten Thije Boonkkamp](https://github.com/coenttb). The documentation, research, experiments, and blog workflow in this repository are available now. The Swift package layers they describe are being released repository by repository over the coming weeks. Some links from blog posts and research documents point to repositories that are not yet world-readable; those links resolve as the release tags land.
 
 If you arrived here from a blog post's receipt link, you're looking at the minimal Swift package that backs a specific technical claim. The relevant experiment lives in [`Experiments/`](Experiments) and can be cloned and built with `swift build` on Swift 6.3 or newer.
 
