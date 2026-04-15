@@ -30,17 +30,17 @@ This is the root meta-skill for the Swift Institute ecosystem.
 - **swift-institute-core** (this skill) - System manifest
 
 ### Architecture Layer
-- **swift-institute** - Five-layer architecture, semantic dependencies
+- **swift-institute** - [ARCH-LAYER-*] Five-layer architecture, semantic dependencies
 - **primitives** - Primitives-specific conventions (in swift-primitives repo)
 
 ### Implementation Layer
 - **code-surface** - [API-NAME-*], [API-ERR-*], [API-IMPL-*] Naming, error handling, file structure (absorbs naming, errors, code-organization)
-- **implementation** - [IMPL-*], [PATTERN-009–053], [API-LAYER-*], [SEM-DEP-*] Call-site-first patterns, typed arithmetic, boundary overloads, dependency strategy (absorbs anti-patterns, design)
+- **implementation** - [IMPL-*], [IMPL-EXPR-*], [COPY-FIX-*], [COPY-REM-*], [PATTERN-009–053], [API-LAYER-*], [SEM-DEP-*] Call-site-first patterns, typed arithmetic, boundary overloads, dependency strategy, ~Copyable remediation (absorbs anti-patterns, design)
 - **conversions** - [IDX-*], [CONV-*] Index<T> patterns, conversion APIs, rawValue access rules (absorbs primitives-conversions)
 - **memory-arithmetic** - [MEM-ARITH-*] Memory.Address typed arithmetic (in swift-memory-primitives)
 - **platform** - [PLAT-ARCH-*], [PATTERN-001–008] Platform code layering (L1–L3), compilation mechanics, Swift 6, C shims
-- **modularization** - [MOD-*] Intra-package target decomposition, constraint isolation
-- **memory-safety** - [MEM-COPY-*], [MEM-OWN-*], [MEM-LINEAR-*], [MEM-SAFE-*], [MEM-SEND-*], [MEM-REF-*], [MEM-LIFE-*] Ownership, copyability, strict safety, reference primitives (absorbs advanced-patterns)
+- **modularization** - [MOD-*], [MOD-EXCEPT-*] Intra-package target decomposition, constraint isolation, layering exceptions
+- **memory-safety** - [MEM-COPY-*], [MEM-OWN-*], [MEM-LINEAR-*], [MEM-SAFE-*], [MEM-SEND-*], [MEM-REF-*], [MEM-LIFE-*], [MEM-SPAN-*], [MEM-UNSAFE-*] Ownership, copyability, strict safety, reference primitives, span access, unsafe operation tracking (absorbs advanced-patterns)
 - **existing-infrastructure** - [INFRA-*] Catalog of typed boundary overloads, Standard Library Integration modules, Tagged functors, Ratio scaling
 - **ecosystem-data-structures** - [DS-*] Complete catalog of data structures (Memory, Storage, Buffer, Collections) with selection guidance
 - **testing** - [TEST-*] Umbrella: routing, test support infrastructure, file naming, suite categories
@@ -66,6 +66,7 @@ This is the root meta-skill for the Swift Institute ecosystem.
 - **issue-investigation** - [ISSUE-*] Systematic compiler/toolchain issue investigation: reproduce, reduce, verify, resolve
 - **swift-pull-request** - [SWIFT-PR-*] Submit PRs to swiftlang/swift: fork, branch, commit, test, CI, reviewers
 - **handoff** - [HANDOFF-*] Structured agent-to-agent handoff: sequential (HANDOFF.md) and branching (HANDOFF-{topic}.md)
+- **supervise** - [SUPER-*] Ongoing principal-agent oversight of subordinate work: ground-rules block (typed MUST/MUST NOT/scope fact/ask), question-answering protocol, drift detection, acceptance criteria, three-way termination, escalation triggers
 - **swift-evolution** - [PITCH-PROC-*] Pitch phase: triggers, evidence, scope, drafting, submission, iteration, bidirectional evidence
 
 ### Requirement ID convention
@@ -75,7 +76,7 @@ Requirement IDs follow `[PREFIX-NNN]` with a zero-padded integer. Exception: fou
 ### Absorption History
 - **naming**, **errors**, **code-organization** → absorbed into **code-surface**
 - **primitives-conversions** → absorbed into **conversions**
-- **design**, **anti-patterns** → absorbed into **implementation**
+- **design** (carried `[API-DESIGN-*]`), **anti-patterns** → absorbed into **implementation**; current rules use `[IMPL-*]` / `[API-LAYER-*]` / `[PATTERN-*]`
 - **skill-creation** → absorbed into **skill-lifecycle**
 
 ---
@@ -98,9 +99,9 @@ Skills are loaded based on their `requires:` DAG. The order is:
 12. `testing-institute` (requires: swift-institute-core, testing, platform)
 13. `benchmark` (requires: testing)
 14. `documentation` (requires: swift-institute, code-surface)
-16. `readme` (requires: swift-institute)
-17. Process skills (requires: swift-institute)
-18. `corpus-meta-analysis` (requires: research-process, experiment-process, reflect-session)
+15. `readme` (requires: swift-institute)
+16. Process skills (requires: swift-institute)
+17. `corpus-meta-analysis` (requires: research-process, experiment-process, reflect-session)
 
 ---
 

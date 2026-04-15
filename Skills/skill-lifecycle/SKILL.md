@@ -58,15 +58,7 @@ Full lifecycle management for Swift Institute skills. Covers planning, authoring
 
 **Statement**: Each skill MUST use a unique requirement ID prefix. IDs MUST follow the format `[PREFIX-NUMBER]` or `[PREFIX-SECTION-NUMBER]`.
 
-**Existing prefixes** (DO NOT reuse):
-- `API-NAME`, `API-ERR`, `API-IMPL`, `API-LAYER`, `API-DESIGN`
-- `PATTERN-001–050`
-- `MEM-COPY`, `MEM-OWN`, `MEM-LINEAR`, `MEM-SAFE`, `MEM-SEND`, `MEM-REF`, `MEM-LIFE`
-- `PRIM-*`
-- `COPY-FIX`, `COPY-REM`
-- `ARCH-LAYER`
-- `RES-*`, `EXP-*`, `BLOG-*`
-- `SKILL-CREATE`, `SKILL-LIFE`
+**Existing prefixes** (DO NOT reuse): the canonical list of in-use prefixes is the **swift-institute-core Skill Index** at `/Users/coen/Developer/swift-institute/Skills/swift-institute-core/SKILL.md`. Consult that file before picking a new prefix; an inline mirror in this skill goes stale every time a new skill ships.
 
 **Rationale**: Unique prefixes enable cross-references and prevent ID collisions.
 
@@ -209,31 +201,31 @@ migration_date: YYYY-MM-DD        # Optional
 
 ---
 
-### [SKILL-CREATE-008] CLAUDE.md Updates
+### [SKILL-CREATE-008] Registry and Repo-CLAUDE.md Updates
 
-**Statement**: After creating a skill, you MUST update relevant CLAUDE.md files to reference it.
+**Statement**: After creating a skill, you MUST add it to the canonical registry; you SHOULD also update any repo-level routing files that pin mandatory skills.
 
-**Files to update**:
+**Required — canonical registry**:
 
-1. **Workspace CLAUDE.md**:
-   - Add row to Skill Routing table:
-   ```markdown
-   | {Task description} | **{skill-name}** | [{ID-PREFIX}-*] |
-   ```
+Add a row to the Skill Index in [`Skills/swift-institute-core/SKILL.md`](../swift-institute-core/SKILL.md) under the appropriate layer (Architecture / Implementation / Process):
 
-2. **Repo CLAUDE.md files** (if skill is mandatory for that repo):
-   - Add to "Before Writing Code" section:
-   ```markdown
-   N. `{skill-name}` — {brief purpose}
-   ```
+```markdown
+- **{skill-name}** - [{ID-PREFIX}-*] {brief purpose}
+```
 
-**Which repos to update**:
-- `swift-institute/CLAUDE.md` — if skill applies to documentation/research
-- `swift-primitives/CLAUDE.md` — if skill applies to primitives development
-- `swift-standards/CLAUDE.md` — if skill applies to standards development
-- `swift-foundations/CLAUDE.md` — if skill applies to foundations development
+This is the public, in-repo registry that every consumer can see.
 
-**Rationale**: CLAUDE.md files drive mandatory skill invocation. Unlisted skills won't be automatically invoked.
+**Optional — repo-level CLAUDE.md (where one exists)**:
+
+Some superrepos maintain a `CLAUDE.md` at their root for repo-internal routing (mandatory-skill checklist, repo-specific conventions). If the new skill is mandatory for one of these repos, add it there too:
+
+- `swift-primitives/CLAUDE.md` — for primitives development
+- `swift-standards/CLAUDE.md` — for standards development
+- `swift-foundations/CLAUDE.md` — for foundations development
+
+`swift-institute` itself does not ship a `CLAUDE.md`; the public registry in `swift-institute-core` plays that role for this repo.
+
+**Rationale**: The Skill Index is the public source of truth for what skills exist and which IDs they own. Repo-level CLAUDE.md files exist for in-repo agent routing where present, but they are not the canonical registry — they are downstream consumers.
 
 ---
 
@@ -276,8 +268,8 @@ git commit -m "Add {skill-name} skill"
 - [ ] Symlink exists at `.claude/skills/{skill-name}`
 - [ ] Symlink resolves: `ls .claude/skills/{skill-name}/SKILL.md`
 - [ ] YAML is valid: no syntax errors when skill is loaded
-- [ ] Skill appears in swift-institute-core Skill Index
-- [ ] Skill Routing table updated in workspace CLAUDE.md
+- [ ] Skill appears in `Skills/swift-institute-core/SKILL.md` Skill Index
+- [ ] Repo-level CLAUDE.md updated where present (optional, repo-internal)
 
 **Test invocation**:
 ```
@@ -386,6 +378,8 @@ applies_to:
 | Architecture | 180 days | Foundational, rarely changes |
 | Meta | On demand | Changes only when ecosystem structure changes |
 
+**Statement**: For newly created skills, `last_reviewed` MUST be set to the creation date. Creation counts as review-zero — the author is implicitly asserting current correctness on the day of authoring. Skills MAY also include a separate `created:` field in the frontmatter when the distinction is useful (e.g., to compute time-since-creation independently of review cadence).
+
 ---
 
 ## Phase 7: Skill Deprecation
@@ -422,8 +416,8 @@ applies_to:
 
 1. Verify all A's rule IDs appear in B
 2. Update all skills that referenced A to reference B instead
-3. Update CLAUDE.md routing table
-4. Update swift-institute-core skill index
+3. Update the Skill Index in `Skills/swift-institute-core/SKILL.md` (remove A, ensure B's prefixes are listed)
+4. Update repo-level CLAUDE.md routing where present (optional, repo-internal)
 5. Run the sync script to update symlinks
 
 ---
@@ -435,13 +429,12 @@ applies_to:
 - [ ] **Plan**: Determine purpose, layer, ID prefix, dependencies
 - [ ] **Create directory**: `mkdir Skills/{skill-name}`
 - [ ] **Author SKILL.md**: YAML frontmatter + Markdown content
-- [ ] **Update swift-institute-core**: Add to Skill Index
-- [ ] **Update workspace CLAUDE.md**: Add to Skill Routing table
-- [ ] **Update repo CLAUDE.md files**: If skill is mandatory for any repo
+- [ ] **Update swift-institute-core**: Add to Skill Index (canonical, public)
+- [ ] **Update repo-level CLAUDE.md** (optional): If skill is mandatory for a repo that has its own CLAUDE.md
 - [ ] **Run sync**: `./Scripts/sync-skills.sh`
 - [ ] **Commit symlink**: `git add .claude/skills/{skill-name}`
 - [ ] **Verify**: Symlink resolves, skill invocable, index updated
-- [ ] **Commit all changes**: Research, skill, CLAUDE.md updates
+- [ ] **Commit all changes**: Research, skill, registry updates
 
 ### Creating a Repo-Specific Skill
 
@@ -449,7 +442,7 @@ applies_to:
 - [ ] **Create in repo**: `mkdir {repo}/Skills/{skill-name}`
 - [ ] **Author SKILL.md**: Same structure, `applies_to` targets specific repo
 - [ ] **Update swift-institute-core**: Add to Skill Index (even for repo-specific skills)
-- [ ] **Update repo CLAUDE.md**: Add to that repo's "Before Writing Code"
+- [ ] **Update repo CLAUDE.md** (where present): Add to that repo's "Before Writing Code"
 - [ ] **Run sync**: Creates symlink automatically
 - [ ] **Verify**: Symlink resolves
 
@@ -473,7 +466,7 @@ applies_to:
 - [ ] **Verify absorption**: All rule IDs present in target skill ([SKILL-LIFE-022])
 - [ ] **Add `superseded_by`**: In YAML frontmatter ([SKILL-LIFE-020])
 - [ ] **Replace body**: Redirect notice
-- [ ] **Update references**: CLAUDE.md routing, swift-institute-core index, dependent skills
+- [ ] **Update references**: `Skills/swift-institute-core/SKILL.md` index, dependent skills, repo-level CLAUDE.md where present
 - [ ] **Schedule removal**: 90 days from deprecation date
 
 ---

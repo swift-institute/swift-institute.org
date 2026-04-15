@@ -524,7 +524,7 @@ For bounded type structure and operations, see [INFRA-105].
 
 ## Absorbed Patterns
 
-Rules absorbed from former `anti-patterns` and `design` skills. Rules whose canonical home is another skill have been removed — see that skill directly via the routing table in CLAUDE.md.
+Rules absorbed from former `anti-patterns` and `design` skills. Rules whose canonical home is another skill have been removed — see the Skill Index in [`swift-institute-core`](../swift-institute-core/SKILL.md) for the routing table.
 
 ### Anti-Pattern Reference
 
