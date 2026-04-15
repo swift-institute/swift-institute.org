@@ -51,7 +51,7 @@ extension HTML {
 }
 ```
 
-This compiles. `HTML.Document` conforms to `HTML.View`, the generic parameter `Body` satisfies the associated type requirement, and the stored property fulfils the `body` accessor. Standard protocol resolution.
+This compiles. `HTML.Document` conforms to `HTML.View`, the generic parameter `Body` satisfies the associated type requirement, and the stored property fulfills the `body` accessor. Standard protocol resolution.
 
 Now the goal: make `HTML.Document` work in a SwiftUI `#Preview`.
 
@@ -236,6 +236,8 @@ The compiler unifies by simple identifier inside the protocol, so the name canno
 
 A nested namespace supplies the right shape. The body type is exposed as `Render.Body` — a nested protocol on the `Render` namespace, which avoids the concatenated form entirely and puts the rendered-body type at a name no existing Apple framework protocol uses. Inside the protocol declaration, the associated type gets a short fresh simple identifier; its constraint points at `Render.Body`, which is the name every other file in the codebase sees.
 
+The fix is a twofold rename: the protocol namespace itself moves from `Rendering` to `Render`, and the associated type is renamed from `Body` to `Rendered`.
+
 ```swift
 extension Render {
     public protocol Body: Render.View {}
@@ -249,7 +251,7 @@ extension Render {
 }
 ```
 
-The rename is twofold. The protocol moves from `Rendering.View` to `Render.View`. Its associated type is renamed from `Body` to `Rendered` — a simple identifier the compiler will not unify with `SwiftUI.View.Body`. The constraint on `Rendered` is `Render.Body`, the nested protocol that replaces the old `Rendering.View` self-refinement. Every time the codebase needs to talk about the associated type in API surface, it uses the nested form `Render.Body`.
+`Rendered` is a simple identifier the compiler will not unify with `SwiftUI.View.Body`. Its constraint is `Render.Body`, the nested protocol that replaces the old `Rendering.View` self-refinement. Every time the codebase needs to talk about the associated type in API surface, it uses the nested form `Render.Body`.
 
 Leaf conformers set the associated type with a single-line typealias:
 

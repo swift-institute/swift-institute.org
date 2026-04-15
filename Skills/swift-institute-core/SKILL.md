@@ -66,6 +66,11 @@ This is the root meta-skill for the Swift Institute ecosystem.
 - **issue-investigation** - [ISSUE-*] Systematic compiler/toolchain issue investigation: reproduce, reduce, verify, resolve
 - **swift-pull-request** - [SWIFT-PR-*] Submit PRs to swiftlang/swift: fork, branch, commit, test, CI, reviewers
 - **handoff** - [HANDOFF-*] Structured agent-to-agent handoff: sequential (HANDOFF.md) and branching (HANDOFF-{topic}.md)
+- **swift-evolution** - [PITCH-PROC-*] Pitch phase: triggers, evidence, scope, drafting, submission, iteration, bidirectional evidence
+
+### Requirement ID convention
+
+Requirement IDs follow `[PREFIX-NNN]` with a zero-padded integer. Exception: foundational axioms that name themselves semantically MAY use `[PREFIX-WORD]` (for example `[IMPL-INTENT]`, `[IMPL-COMPILE]`, `[MOD-DOMAIN]`). These are declared axioms, not numbered rules — the word is the axiom's identity. Tools that pattern-match IDs should accept both `[A-Z]+(-[A-Z]+)+` and `[A-Z]+-\d+`.
 
 ### Absorption History
 - **naming**, **errors**, **code-organization** → absorbed into **code-surface**

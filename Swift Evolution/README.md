@@ -13,6 +13,10 @@ Work-in-progress tracking for the Swift Evolution process — drafts, pitches, p
 | [`Implemented/`](Implemented/) | Shipped in a specific Swift release |
 | [`Declined/`](Declined/) | Rejected, Withdrawn, Returned for Revision (never resubmitted) |
 
+## Current status
+
+One draft pitch exists today (`Drafts/PITCH-AAAA Allow Protocols Nested in Generic Types Without Capture.md`). The `Pitches/`, `Proposals/`, `Accepted/`, `Implemented/`, and `Declined/` directories are empty until the first draft progresses through the lifecycle.
+
 ## Process
 
 The pitch phase is documented in the [`swift-evolution`](../Skills/swift-evolution/) skill, which defines triggers ([PITCH-PROC-001]), evidence requirements ([PITCH-PROC-002]), scope analysis ([PITCH-PROC-003]), drafting ([PITCH-PROC-004]), submission ([PITCH-PROC-005]), iteration ([PITCH-PROC-007]), and bidirectional evidence links ([PITCH-PROC-006]).

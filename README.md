@@ -1,5 +1,7 @@
 # Swift Institute
 
+[![CI](https://github.com/swift-institute/swift-institute/actions/workflows/ci.yml/badge.svg)](https://github.com/swift-institute/swift-institute/actions/workflows/ci.yml)
+
 Documentation, conventions, and research for a layered Swift package ecosystem.
 
 ## Overview
@@ -12,7 +14,7 @@ Swift Institute hosts those conventions — rules for naming, error handling, me
 
 The ecosystem is organized into five layers, each with its own GitHub organization. Packages in each layer may depend on packages in their own layer and in layers below, never above. `swift-primitives` is the bottom layer and depends only on itself. `swift-standards` may depend on `swift-primitives`. `swift-foundations` may depend on both. Components and Applications build on top.
 
-Every repository in the ecosystem is a standalone Swift package with its own version history, release tags, and `Package.swift`. Consumers depend on individual packages directly — a `.package(url: ...)` line per dependency — rather than on umbrella imports. The super-repositories (`swift-primitives`, `swift-standards`, `swift-foundations`) are git submodule aggregators that exist for browsing, not for consumption.
+Every repository in the ecosystem is a standalone Swift package with its own version history, release tags, and `Package.swift`. Consumers depend on individual packages directly — a `.package(url: ...)` line per dependency — rather than on umbrella imports. The superrepos (`swift-primitives`, `swift-standards`, `swift-foundations`) are git submodule aggregators that exist for browsing, not for consumption.
 
 `swift-standards` is primarily an organization of organizations. Each standards body has its own GitHub organization hosting its specifications, so governance, release cadence, and audience align with real-world specification authority. The question each organization name answers is "who standardized this?"
 
@@ -40,10 +42,22 @@ The per-authority organizations in active preparation include [swift-ietf](https
 | [`Blog/`](Blog) | Blog posts (drafts, published), the ideas index, style guide, and series plans |
 | [`Documentation.docc/`](Documentation.docc) | Architecture documentation — the five-layer model, naming conventions, shared vocabulary |
 | [`Experiments/`](Experiments) | Minimal reproductions — each experiment is a Swift package testing one claim, used as receipts for blog posts |
-| [`Research/`](Research) | Design rationale, trade-off analyses, and investigation notes. Non-normative |
+| [`Research/`](Research) | Design rationale, trade-off analyses, and investigation notes (includes [`Research/Reflections/`](Research/Reflections) for post-session reflections). Non-normative |
 | [`Skills/`](Skills) | Development conventions — naming, errors, memory safety, testing, modularization. Each skill is the canonical source for its conventions |
 | [`Swift Evolution/`](Swift%20Evolution) | Draft proposals for Swift Evolution |
-| [`Scripts/`](Scripts) | Scripts used by the institute's own processes |
+| [`Scripts/`](Scripts) | Scripts used by the institute's own processes (see [Scripts/README.md](Scripts/README.md)) |
+
+## Where to start
+
+| If you are... | Read |
+|---------------|------|
+| Evaluating whether this is worth your time | [FAQ](Documentation.docc/FAQ.md) |
+| Trying to understand the architecture | [Five Layer Architecture](Documentation.docc/Five%20Layer%20Architecture.md) |
+| Looking for conventions to adopt | [Skills/](Skills) — start with [`code-surface`](Skills/code-surface/), [`implementation`](Skills/implementation/), [`memory-safety`](Skills/memory-safety/) |
+| Here from a blog post's receipt link | [Experiments/](Experiments) — each subdirectory is a standalone Swift package reproducing one claim |
+| Curious why a decision was made a particular way | [Research/](Research) — design rationale and trade-off analyses |
+
+This repository has no root `Package.swift`. Each Experiment is an independent Swift package and can be cloned and built with `swift build` on Swift 6.3 or newer; there is nothing to build at the top level.
 
 ## Status
 

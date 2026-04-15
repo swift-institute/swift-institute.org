@@ -19,7 +19,7 @@ dependencies: [
 
 > The specific packages shown above are illustrative. Individual packages are being released over the coming weeks; `swift package resolve` against a not-yet-public repository returns a 404 until its release tag lands.
 
-There is no umbrella package to import. The super-repositories (`swift-primitives`, `swift-standards`, `swift-foundations`) are git submodule aggregators for browsing the ecosystem. They are not meant to be consumed as dependencies.
+There is no umbrella package to import. The superrepos (`swift-primitives`, `swift-standards`, `swift-foundations`) are git submodule aggregators for browsing the ecosystem. They are not meant to be consumed as dependencies.
 
 ---
 

@@ -33,7 +33,7 @@ Every repository in the ecosystem is a standalone Swift package. It has its own 
 
 What the layers share is a dependency rule: packages in each layer may depend on packages in their own layer and layers below, never above. Primitives depend only on each other. Standards may depend on primitives. Foundations may depend on both.
 
-Each layer also has a super-repository — `swift-primitives`, `swift-standards`, `swift-foundations` — whose only content is git submodule pointers to every package in that layer. The super-repos exist for browsing convenience: clone one, and you have the whole layer on disk to explore with a single IDE or `grep`. The code itself lives in the individual package repositories; the super-repo just aggregates the pointers.
+Each layer also has a superrepo — `swift-primitives`, `swift-standards`, `swift-foundations` — whose only content is git submodule pointers to every package in that layer. The superrepos exist for browsing convenience: clone one, and you have the whole layer on disk to explore with a single IDE or `grep`. The code itself lives in the individual package repositories; the superrepo just aggregates the pointers.
 
 An umbrella organization, swift-institute, holds cross-cutting documentation, development conventions, and the blog workflow that produced this post.
 

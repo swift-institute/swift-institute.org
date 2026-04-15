@@ -49,7 +49,7 @@ The Swift Institute is organized as a five-layer architecture along two orthogon
 └─────────────────────────────────────────────────────────┘
 ```
 
-Every repository in the ecosystem is a standalone Swift package with its own version history, release tags, and `Package.swift`. Consumers depend on individual packages directly — a `.package(url: ...)` entry per dependency — rather than on an umbrella import. The three super-repositories (`swift-primitives`, `swift-standards`, `swift-foundations`) are git submodule aggregators that exist for browsing, not for consumption.
+Every repository in the ecosystem is a standalone Swift package with its own version history, release tags, and `Package.swift`. Consumers depend on individual packages directly — a `.package(url: ...)` entry per dependency — rather than on an umbrella import. The three superrepos (`swift-primitives`, `swift-standards`, `swift-foundations`) are git submodule aggregators that exist for browsing, not for consumption.
 
 ---
 

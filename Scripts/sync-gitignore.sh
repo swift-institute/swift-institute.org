@@ -75,6 +75,7 @@ CANONICAL_LINES=(
     '!**/Research/**/*.md'
     '!**/Experiments/**/*.md'
     '!**/Skills/**/*.md'
+    '!**/.github/**/*.md'
     ''
     '# Package insights are non-normative working logs accumulating through'
     '# reflections-processing. They stay on disk for the author but do not ship.'
