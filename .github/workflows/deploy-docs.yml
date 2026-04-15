@@ -1,0 +1,79 @@
+name: Deploy DocC
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build DocC
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Show toolchain
+        run: |
+          swift --version
+          xcrun docc --version || true
+
+      - name: Build symbol graphs
+        run: |
+          swift build --target "Swift Institute" \
+            -Xswiftc -emit-symbol-graph \
+            -Xswiftc -emit-symbol-graph-dir \
+            -Xswiftc "$(pwd)/.build/symbol-graphs"
+
+      - name: Convert DocC catalog
+        run: |
+          xcrun docc convert "Swift Institute.docc" \
+            --additional-symbol-graph-dir .build/symbol-graphs \
+            --transform-for-static-hosting \
+            --output-path ./docc-output
+
+      - name: Add root redirect + CNAME
+        run: |
+          cat > ./docc-output/index.html <<'HTML'
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="UTF-8">
+            <meta http-equiv="refresh" content="0; url=/documentation/swift_institute/">
+            <link rel="canonical" href="https://swift-institute.org/documentation/swift_institute/">
+            <title>Swift Institute</title>
+          </head>
+          <body>
+            <p>Redirecting to <a href="/documentation/swift_institute/">Swift Institute documentation</a>…</p>
+          </body>
+          </html>
+          HTML
+          echo "swift-institute.org" > ./docc-output/CNAME
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./docc-output
+
+  deploy:
+    name: Deploy to Pages
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
