@@ -90,6 +90,11 @@ The ecosystem spans three layers — [primitives, standards, and foundations](<d
 - <doc:Swift-Standards>
 - <doc:Swift-Foundations>
 
+### How we work
+
+- <doc:Research>
+- <doc:Experiments>
+
 ### Deep dives
 
 - <doc:Embedded-Swift>

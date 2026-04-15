@@ -94,18 +94,6 @@ Yes. Many packages expose multiple library products for fine-grained dependencie
 
 ---
 
-## What are the Research, Experiments, and Skills directories?
-
-Each repository contains three artifact directories alongside the packages:
-
-- **Research/** — design rationale and trade-off analysis. When a decision has non-obvious alternatives, the reasoning is recorded here rather than lost in commit history.
-- **Experiments/** — Swift packages that verify compiler and runtime behaviour. Each experiment isolates one hypothesis with a runnable build, so claims about the type system, language features, or platform behaviour can be reproduced.
-- **Skills/** — canonical conventions for naming, error handling, memory safety, testing, and related practices. Written to be read by AI-assisted tooling, but readable as reference material.
-
-Blog posts link to experiments that back load-bearing claims, so readers can verify by running the code.
-
----
-
 ## Where do I report issues or ask questions?
 
 - GitHub Issues — file on the relevant package repository
