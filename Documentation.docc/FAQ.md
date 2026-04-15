@@ -124,7 +124,7 @@ No date is committed. The Primitives, Standards, and Foundations layers are bein
 ## Where do I report issues or ask questions?
 
 - GitHub Issues — for bugs and feature requests, file on the relevant package repository
-- GitHub Discussions — for architectural questions and design discussions on the `swift-institute` repository (ensure [Discussions is enabled](https://docs.github.com/en/discussions/quickstart) on the repo)
+- GitHub Discussions — for architectural questions and design discussions on the [`swift-institute`](https://github.com/swift-institute/swift-institute/discussions) repository
 - Pull Requests — for contributions, see [`CONTRIBUTING.md`](../CONTRIBUTING.md)
 
 ## Topics
