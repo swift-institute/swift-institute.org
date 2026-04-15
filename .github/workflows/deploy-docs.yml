@@ -21,6 +21,11 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - name: Install Swift 6.3
+        uses: swift-actions/setup-swift@v3
+        with:
+          swift-version: "6.3"
+
       - name: Show toolchain
         run: |
           swift --version
@@ -59,10 +64,10 @@ jobs:
           echo "swift-institute.org" > ./docc-output/CNAME
 
       - name: Configure Pages
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@v6
 
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: ./docc-output
 
@@ -76,4 +81,4 @@ jobs:
     steps:
       - name: Deploy
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
