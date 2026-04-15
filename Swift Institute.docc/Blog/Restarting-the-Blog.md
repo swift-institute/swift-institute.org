@@ -58,7 +58,7 @@ swift-standards itself retains 19 cross-body or historical packages. The questio
 
 Two things are worth reading out of that table. January 2026 produced 237 new repositories in a single month — this is when the primitives and foundations layers were created wholesale and every atomic concept got its own package. It is not a sustainable rate, and I do not want it to be. After that, the pace drops to the tens of new repos per month, and the activity shifts inside existing packages — typed throws conversions, audits, architectural tightening, the 6.3 migration.
 
-Most of the ecosystem is currently private. It releases publicly over the coming weeks. Some links in this post and the next few will point to repositories that are not yet world-readable — they will be, one by one, as I cut the release tags.
+Most of the ecosystem is currently private. It is being released publicly on a rolling basis. Some links in this post and the next few will point to repositories that are not yet world-readable — they will be, one by one, as I cut the release tags.
 
 ## Why I stopped writing
 
