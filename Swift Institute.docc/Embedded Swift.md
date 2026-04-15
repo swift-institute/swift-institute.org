@@ -225,10 +225,3 @@ Compiler crashes and error messages carry different implications in Embedded mod
 
 A crash during SIL generation suggests a feature is partially implemented and may work in future toolchains. Documentation is clearer when it distinguishes "not yet implemented" from "intentionally restricted."
 
-## Topics
-
-### Related
-
-- [Five Layer Architecture](Five%20Layer%20Architecture.md)
-- [Glossary](Glossary.md)
-- [FAQ](FAQ.md)

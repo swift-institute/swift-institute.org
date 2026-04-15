@@ -25,7 +25,7 @@ There is no umbrella package to import. The superrepos (`swift-primitives`, `swi
 
 ## What's the license?
 
-Primitives and Standards packages are released under Apache 2.0 without exception. Foundations packages are Apache 2.0 by default, with selective commercial terms reserved for specific packages where appropriate. Components and Applications use more flexible licensing, since that is where policy and opinion accumulate. See the Licensing strategy section of [Five Layer Architecture](Five%20Layer%20Architecture.md).
+Primitives and Standards packages are released under Apache 2.0 without exception. Foundations packages are Apache 2.0 by default, with selective commercial terms reserved for specific packages where appropriate. Components and Applications use more flexible licensing, since that is where policy and opinion accumulate. See the Licensing strategy section of <doc:Architecture>.
 
 Every repository carries its own `LICENSE.md` file. When in doubt, check the repository.
 
@@ -35,12 +35,25 @@ Every repository carries its own `LICENSE.md` file. When in doubt, check the rep
 
 As of this release:
 
-- 127 repositories at the Primitives layer
-- Standards distributed across `swift-standards` itself plus per-authority organizations (swift-ietf, swift-iso, swift-w3c, swift-whatwg, and single-package organizations for other standards bodies)
+- 130 repositories at the Primitives layer
+- 20 repositories at the Standards layer, distributed across `swift-standards` itself plus per-authority organizations (swift-ietf, swift-iso, swift-w3c, swift-whatwg, and single-package organizations for other standards bodies)
 - 136 repositories at the Foundations layer
 - Components and Applications are planned; no packages at those layers have been released yet
 
 This is an early public release. Documentation, research, experiments, and the blog workflow are all available now. The Swift packages themselves are being released repository by repository; some links in the documentation may resolve only as release tags land.
+
+---
+
+## What platforms are supported?
+
+| Platform | Status |
+|----------|--------|
+| Darwin (macOS, iOS, tvOS, watchOS, visionOS) | Supported |
+| Linux | Supported |
+| Embedded Swift | Coming soon |
+| Windows | Coming soon |
+
+All layers are Foundation-independent by design, which makes the entire ecosystem portable across the full Swift target matrix.
 
 ---
 
@@ -52,9 +65,9 @@ Foundation (`Date`, `URL`, `Data`, `String` bridging) introduces dependencies th
 - Kernel extensions cannot afford the overhead
 - Behavior drifts between Darwin and swift-corelibs-foundation on Linux
 
-Keeping Foundation out of the Primitives and Standards layers lets those packages deploy across the entire Swift ecosystem without modification. At the Foundations layer and above, Foundation is a legitimate dependency if a package genuinely needs it — the constraint applies to the lower layers, not everywhere.
+Keeping Foundation out of every layer lets the whole ecosystem deploy across the Swift target matrix without modification. The ecosystem provides its own timestamps, paths, data buffers, and string processing — all Foundation-free.
 
-See [Identity](Identity.md) for the reasoning behind this choice.
+See <doc:Architecture> for the reasoning behind this choice.
 
 ---
 
@@ -81,7 +94,7 @@ Ask these questions in order:
 4. Is it an opinionated assembly with defaults? It belongs in `swift-components`.
 5. Is it an end-user product? It belongs in `swift-applications`.
 
-See [Five Layer Architecture](Five%20Layer%20Architecture.md) for the full decision model.
+See <doc:Architecture> for the full decision model.
 
 ---
 
@@ -111,7 +124,7 @@ The naming signals intent:
 
 The Swift Institute does not ship a framework; it maintains a body of layered infrastructure. The "institute" framing communicates long-term stability, stewardship over ownership, and principled evolution over feature accumulation.
 
-See [Identity](Identity.md) for the full explanation.
+See <doc:Architecture> for the full explanation.
 
 ---
 
@@ -127,10 +140,3 @@ No date is committed. The Primitives, Standards, and Foundations layers are bein
 - GitHub Discussions — for architectural questions and design discussions on the [`swift-institute`](https://github.com/swift-institute/swift-institute/discussions) repository
 - Pull Requests — for contributions, see [`CONTRIBUTING.md`](../CONTRIBUTING.md)
 
-## Topics
-
-### Related
-
-- [Five Layer Architecture](Five%20Layer%20Architecture.md)
-- [Identity](Identity.md)
-- [Glossary](Glossary.md)
