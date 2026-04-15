@@ -445,6 +445,67 @@ swiftc -O "$1" 2>&1 | grep -q "Found ownership error"
 
 ---
 
+## Known Recurring Workarounds
+
+### [ISSUE-021] Reference Indirection for SIL Verifier Crashes
+
+**Statement**: When the SIL verifier (MoveOnlyAddressChecker, CopyPropagation) crashes
+on a `~Copyable` pattern involving complex generic or pack types, wrap the problematic
+payload in a reference-counted class. The class reference is a simple pointer in SIL,
+sidestepping the verifier's value-tracking logic.
+
+**Applies when**:
+- A `CheckedContinuation` with a complex `Result<T, E>` type appears as an associated
+  value in a `~Copyable` enum
+- A generic pack or tuple is pattern-matched via `consuming switch` on a `~Copyable` type
+- The SIL dump shows `load [take]` on a sibling value being flagged as a lifetime leak
+
+**Procedure**:
+```swift
+// BEFORE (triggers verifier crash)
+enum Request: ~Copyable {
+    case register(CheckedContinuation<Result<Payload, IO.Event.Error>, Never>, Interest)
+}
+
+// AFTER (reference indirection sidesteps crash)
+final class IO.Event.Registration.Continuation: Sendable {
+    let continuation: CheckedContinuation<Result<Payload, IO.Event.Error>, Never>
+    init(_ c: CheckedContinuation<Result<Payload, IO.Event.Error>, Never>) {
+        self.continuation = c
+    }
+}
+enum Request: ~Copyable {
+    case register(IO.Event.Registration.Continuation, Interest)
+}
+```
+
+**Complementary workarounds at the same abstraction level** (prefer when applicable):
+- `@_optimize(none)` on the enclosing function
+- `while let dequeue` instead of closure-based `drain { }` on shutdown paths
+- Static helper functions instead of inline closures
+
+**Workaround documentation** per [ISSUE-008]:
+```swift
+// WORKAROUND: Wrap continuation in class to sidestep MoveOnlyAddressChecker
+// WHY: Swift 6.3 SIL verifier incorrectly flags sibling `load [take]` as leak
+//      when CheckedContinuation<Result<...>, Never> is in a ~Copyable enum
+// TRACKING: revisit on Swift 6.4+ (per feedback_toolchain_versions.md)
+// WHEN TO REMOVE: when the verifier handles the pattern directly
+```
+
+**Rationale**: Reference indirection reduces the type complexity the SIL verifier
+tracks. This is the lowest-cost workaround when the crash is in value-tracking logic
+and the affected payload can tolerate a heap allocation. Three instances in swift-io
+(Unbounded channel, Registration.Continuation, shutdown drain helpers) share the
+same root cause — the verifier cannot track value lifetimes through complex
+~Copyable patterns.
+
+**Provenance**: 2026-04-03-selector-direct-continuation.md
+
+**Cross-references**: [ISSUE-008] Resolution Paths, [ISSUE-005] SIL Dump Analysis
+
+---
+
 ## Extended Debugging Toolkit
 
 ### [ISSUE-018] Diagnostic Investigation Tools
