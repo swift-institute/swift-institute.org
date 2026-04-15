@@ -23,6 +23,7 @@ Thumbs.db
 /*
 !/Sources/
 !/Tests/
+!/Benchmarks/
 !/Experiments/
 !/Research/
 !/Skills/
@@ -46,6 +47,17 @@ Thumbs.db
 !**/Experiments/**/*.md
 !**/Skills/**/*.md
 
+# Package insights are non-normative working logs accumulating through
+# reflections-processing. They stay on disk for the author but do not ship.
+**/_Package-Insights.md
+
+# Research working-artifact prevention: underscore-prefixed and prompt dirs
+# are non-canonical and must not ship. _archived/ is the one allowed
+# exception (holds SUPERSEDED research per [META-005]).
+/Research/_*/
+!/Research/_archived/
+/Research/prompts/
+
 *.pdf
 
 # SwiftLint
@@ -54,6 +66,7 @@ Thumbs.db
 # Swift Package Manager
 .build/
 .swiftpm/
+.benchmarks/
 
 # ========== END CANONICAL ==========
 
@@ -72,13 +85,4 @@ Thumbs.db
 !**/Blog/**/*.md
 !**/Documentation.docc/**/*.md
 !**/Swift Evolution/**/*.md
-
-# Research working-artifact prevention (internal, not for public release)
-# Underscore-prefixed directories and session-prompt directories are
-# non-canonical and must not ship. Keeping these rules here means that
-# even if an agent accidentally creates Research/_work/, Research/_scratch/,
-# or Research/prompts/, git will silently ignore the directory and its
-# contents.
-/Research/_*/
-/Research/prompts/
 

@@ -76,6 +76,17 @@ CANONICAL_LINES=(
     '!**/Experiments/**/*.md'
     '!**/Skills/**/*.md'
     ''
+    '# Package insights are non-normative working logs accumulating through'
+    '# reflections-processing. They stay on disk for the author but do not ship.'
+    '**/_Package-Insights.md'
+    ''
+    '# Research working-artifact prevention: underscore-prefixed and prompt dirs'
+    '# are non-canonical and must not ship. _archived/ is the one allowed'
+    '# exception (holds SUPERSEDED research per [META-005]).'
+    '/Research/_*/'
+    '!/Research/_archived/'
+    '/Research/prompts/'
+    ''
     '*.pdf'
     ''
     '# SwiftLint'
@@ -134,14 +145,17 @@ OVERRIDES
                 cat <<'OVERRIDES'
 
 # Institute directories
+!/Audits/
+!/Blog/
 !/Documentation.docc/
-!/Implementation/
-!/SE-Pitches/
 !/Scripts/
+!/Swift Evolution/
 
 # Additional markdown whitelists
-!**/Implementation/**/*.md
-!**/SE-Pitches/**/*.md
+!**/Audits/**/*.md
+!**/Blog/**/*.md
+!**/Documentation.docc/**/*.md
+!**/Swift Evolution/**/*.md
 OVERRIDES
                 ;;
         esac
