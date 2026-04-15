@@ -4,62 +4,60 @@ Documentation, conventions, and research for a layered Swift package ecosystem.
 
 ## Overview
 
-Shared conventions turn a collection of Swift packages into a composable ecosystem. Without them, type-safe libraries accumulate incompatible abstractions and compose badly. With them, compile-time guarantees hold across layers.
-
-Swift Institute hosts those conventions — rules for naming, error handling, memory ownership, and API shape — along with the research that grounds them, the experiments that verify them, and the writing that explains them. It is the connective tissue for a set of layered Swift packages organized into Primitives, Standards, Foundations, Components, and Applications.
+Swift Institute is a layered Swift package ecosystem — primitives, standards implementations, and composed foundations — aimed at correctness, composability, and long-term evolution. Shared conventions across layers let compile-time guarantees hold across the stack rather than stopping at package boundaries.
 
 ## Technical Approach
 
-The ecosystem is organized into five layers, each with its own GitHub organization. Packages in each layer may depend on packages in their own layer and in layers below, never above. `swift-primitives` is the bottom layer and depends only on itself. `swift-standards` may depend on `swift-primitives`. `swift-foundations` may depend on both. Components and Applications build on top.
+The ecosystem is organized into layers, each with its own GitHub organization. Packages in each layer may depend on packages in their own layer and in layers below, never above. `swift-primitives` depends only on itself. `swift-standards` may depend on `swift-primitives`. `swift-foundations` may depend on both.
 
-Every repository in the ecosystem is a standalone Swift package with its own version history, release tags, and `Package.swift`. Consumers depend on individual packages directly — a `.package(url: ...)` line per dependency — rather than on umbrella imports. The superrepos (`swift-primitives`, `swift-standards`, `swift-foundations`) are git submodule aggregators that exist for browsing, not for consumption.
+Every repository is a standalone Swift package with its own version history, release tags, and `Package.swift`. Consumers depend on individual packages directly — a `.package(url: ...)` line per dependency — rather than on umbrella imports. The superrepos (`swift-primitives`, `swift-standards`, `swift-foundations`) are git submodule aggregators that exist for browsing, not for consumption.
 
 `swift-standards` is primarily an organization of organizations. Each standards body has its own GitHub organization hosting its specifications, so governance, release cadence, and audience align with real-world specification authority. The question each organization name answers is "who standardized this?"
 
-Shared conventions live in this repository as Skills — the canonical source for naming, errors, memory safety, testing, modularization, and more. Research documents ground architectural decisions without prescribing them. Experiments reduce claims to runnable Swift packages. Blog posts link load-bearing claims directly to those experiments, so readers can verify rather than trust.
+Shared conventions live as Skills — the canonical source for naming, errors, memory safety, testing, modularization, and more. Research documents record architectural rationale. Experiments reduce claims to runnable Swift packages. Blog posts link load-bearing claims directly to those experiments, so readers can verify rather than trust.
 
 ## The Ecosystem
 
-| Layer | Organization | Role |
-|-------|--------------|------|
-| 1 | [swift-primitives](https://github.com/swift-primitives) | Atomic building blocks — buffer, geometry, algebra, memory, kernel |
-| 2 | [swift-standards](https://github.com/swift-standards) + per-authority orgs | Specification implementations |
-| 3 | [swift-foundations](https://github.com/swift-foundations) | Composed building blocks — IO, HTML, CSS, SVG, PDF, networking |
-| 4 | Components | Opinionated assemblies — planned |
-| 5 | Applications | End-user systems — planned |
+| Layer | Organization | Status |
+|-------|--------------|--------|
+| 1 | [swift-primitives](https://github.com/swift-primitives) | released |
+| 2 | [swift-standards](https://github.com/swift-standards) + per-authority orgs | released |
+| 3 | [swift-foundations](https://github.com/swift-foundations) | released |
+| 4 | Components | planned |
+| 5 | Applications | planned |
 
-> **Release in progress.** The organization links above point to GitHub organizations that are being made world-readable over the coming weeks. Some may currently return 404; they resolve as each layer's release lands.
+> **Release in progress.** Packages are being released repository by repository on a rolling basis. Some links may currently return 404; they resolve as each release tag lands.
 
-The per-authority organizations in active preparation include [swift-ietf](https://github.com/swift-ietf) (RFCs), [swift-iso](https://github.com/swift-iso), [swift-w3c](https://github.com/swift-w3c), [swift-whatwg](https://github.com/swift-whatwg), plus single-package organizations for IEEE, IEC, ECMA, INCITS, ARM, Intel, RISC-V, and Microsoft. `swift-standards` itself retains the cross-body and historical packages.
+The per-authority organizations include [swift-ietf](https://github.com/swift-ietf) (RFCs), [swift-iso](https://github.com/swift-iso), [swift-w3c](https://github.com/swift-w3c), and [swift-whatwg](https://github.com/swift-whatwg), plus additional per-authority organizations for other standards bodies. `swift-standards` itself retains the cross-body and historical packages.
 
 ## Repository Contents
 
 | Directory | Contents |
 |-----------|----------|
-| [`Audits/`](Audits) | Repository- and ecosystem-level audit reports (e.g., release-readiness reviews) |
+| [`Audits/`](Audits) | Repository- and ecosystem-level audit reports |
 | [`Blog/`](Blog) | Blog posts (drafts, published), the ideas index, style guide, and series plans |
-| [`Documentation.docc/`](Documentation.docc) | Architecture documentation — the five-layer model, naming conventions, shared vocabulary |
 | [`Experiments/`](Experiments) | Minimal reproductions — each experiment is a Swift package testing one claim, used as receipts for blog posts |
 | [`Research/`](Research) | Design rationale, trade-off analyses, and investigation notes (includes [`Research/Reflections/`](Research/Reflections) for post-session reflections). Non-normative |
 | [`Skills/`](Skills) | Development conventions — naming, errors, memory safety, testing, modularization. Each skill is the canonical source for its conventions |
 | [`Swift Evolution/`](Swift%20Evolution) | Draft proposals for Swift Evolution |
+| [`Swift Institute.docc/`](Swift%20Institute.docc) | Public-facing DocC documentation — architecture, platform, per-layer articles, blog |
 | [`Scripts/`](Scripts) | Scripts used by the institute's own processes (see [Scripts/README.md](Scripts/README.md)) |
 
 ## Where to start
 
 | If you are... | Read |
 |---------------|------|
-| Evaluating whether this is worth your time | [FAQ](Documentation.docc/FAQ.md) |
-| Trying to understand the architecture | [Five Layer Architecture](Documentation.docc/Five%20Layer%20Architecture.md) |
-| Looking for conventions to adopt | [Skills/](Skills) — start with [`code-surface`](Skills/code-surface/), [`implementation`](Skills/implementation/), [`memory-safety`](Skills/memory-safety/) |
+| Evaluating whether this is worth your time | [FAQ](Swift%20Institute.docc/FAQ.md) |
+| Trying to understand the architecture | [Architecture](Swift%20Institute.docc/Architecture.md) |
+| Looking for conventions to adopt | [Skills/](Skills) |
 | Here from a blog post's receipt link | [Experiments/](Experiments) — each subdirectory is a standalone Swift package exercising one investigation; multi-variant packages address related claims through separate targets |
 | Curious why a decision was made a particular way | [Research/](Research) — design rationale and trade-off analyses |
 
-This repository has no root `Package.swift`. Each Experiment is an independent Swift package and can be cloned and built with `swift build` on Swift 6.3 or newer; there is nothing to build at the top level.
+This repository has no root `Package.swift` intended for consumption. Each Experiment is an independent Swift package and can be cloned and built with `swift build` on Swift 6.3 or newer.
 
 ## Status
 
-This is an early public release, maintained by [Coen ten Thije Boonkkamp](https://github.com/coenttb). The documentation, research, experiments, and blog workflow in this repository are available now. The Swift package layers they describe are being released repository by repository over the coming weeks. Some links from blog posts and research documents point to repositories that are not yet world-readable; those links resolve as the release tags land.
+This is an early public release, maintained by [Coen ten Thije Boonkkamp](https://github.com/coenttb). The documentation, research, experiments, and blog workflow in this repository are available now. The Swift package layers they describe are being released repository by repository on a rolling basis. Some links from blog posts and research documents point to repositories that are not yet world-readable; those links resolve as the release tags land.
 
 If you arrived here from a blog post's receipt link, you're looking at the minimal Swift package that backs a specific technical claim. The relevant experiment lives in [`Experiments/`](Experiments) and can be cloned and built with `swift build` on Swift 6.3 or newer.
 
@@ -70,4 +68,4 @@ If you arrived here from a blog post's receipt link, you're looking at the minim
 
 ## License
 
-All packages use the Apache License 2.0. See [LICENSE.md](LICENSE.md).
+Each repository carries its own `LICENSE.md` file. See [LICENSE.md](LICENSE.md) for this repository.
