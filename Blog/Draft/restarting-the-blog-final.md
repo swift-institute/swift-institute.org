@@ -21,7 +21,7 @@ My last post went up in July 2025. Since then I have written no blog posts and r
 
 ## What I've been building
 
-A layered Swift package ecosystem, built continuously since last summer. It is organized into three layers, each a separate GitHub organization:
+A layered Swift package ecosystem, built continuously since last summer. It is organized into layers, each a separate GitHub organization:
 
 | Layer | Organization | Repositories | Role |
 |-------|--------------|-------------:|------|
@@ -39,7 +39,7 @@ An umbrella organization, swift-institute, holds cross-cutting documentation, de
 
 ## The standards refactor
 
-In March I restructured swift-standards. The middle layer had grown to roughly 90 specification packages from eight different standards bodies — IETF, ISO, W3C, WHATWG, IEEE, IEC, ECMA, INCITS, plus vendor specs from ARM, Intel, RISC-V, and Microsoft. They all lived in the same organization, and browsing it had become noisy. Each standards body has its own governance, its own release cadence, and its own natural audience. The repository structure should reflect that.
+In March I restructured swift-standards. The middle layer had grown to roughly 90 specification packages from eight different standards bodies — IETF, ISO, W3C, WHATWG, IEEE, IEC, Ecma, INCITS, plus vendor specs from ARM, Intel, RISC-V, and Microsoft. They all lived in the same organization, and browsing it had become noisy. Each standards body has its own governance, its own release cadence, and its own natural audience. The repository structure should reflect that.
 
 swift-standards is now primarily an organization of organizations. Each standards body gets its own GitHub org, holding the packages specific to that authority:
 
@@ -67,7 +67,7 @@ swift-standards itself retains 19 cross-body or historical packages. The questio
 | Jan 2026 | **237** | 2,646 | Primitives and foundations layers created; repo-creation peak |
 | Feb 2026 | 15 | 1,472 | Architecture hardening — module splits, testing, skills |
 | Mar 2026 | 31 | 2,605 | Typed throws conversion across every layer; standards refactor |
-| Apr 2026 | 3 | 1,559 | Swift 6.3 ecosystem migration, kernel event consolidation, IO redesign |
+| Apr 2026 (to date) | 3 | 1,559 | Swift 6.3 ecosystem migration, kernel event consolidation, IO redesign |
 
 Two things are worth reading out of that table. January 2026 produced 237 new repositories in a single month — this is when the primitives and foundations layers were created wholesale and every atomic concept got its own package. It is not a sustainable rate, and I do not want it to be. After that, the pace drops to the tens of new repos per month, and the activity shifts inside existing packages — typed throws conversions, audits, architectural tightening, the 6.3 migration.
 
@@ -97,7 +97,7 @@ A later post will cover the methodology in detail — how drafting, receipts, st
 
 The next few posts are warm-ups. I'm using them to test the writing system, to establish the voice, and to confirm that the claim-to-evidence loop works end-to-end before I get to the pieces that actually matter.
 
-The first technical post after this one is a short standalone piece on an associated-type trap — a specific pattern where flat, common-noun associated types like `associatedtype Content` quietly fracture generic constraints when a conforming type adopts a second protocol with the same name. It's a small observation, but it's the kind of thing the old writing cadence never would have surfaced.
+The first technical post after this one is a short standalone piece on an associated-type trap — a specific pattern where flat, common-noun associated types like `associatedtype Body` quietly fracture generic constraints when a conforming type adopts a second protocol with the same name. It's a small observation, but it's the kind of thing the old writing cadence never would have surfaced.
 
 After that, the backlog is roughly fifty topics deep. A series on typed throws across a real ecosystem conversion. An audit of an IO library with about 85 findings. Compiler bugs and workarounds for `~Copyable` types. Algebra package decomposition. Foundation-free standards. Cross-layer code navigation tooling.
 
