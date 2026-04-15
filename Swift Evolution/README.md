@@ -15,7 +15,7 @@ Work-in-progress tracking for the Swift Evolution process — drafts, pitches, p
 
 ## Current status
 
-One draft pitch exists today (`Drafts/PITCH-AAAA Allow Protocols Nested in Generic Types Without Capture.md`). The `Pitches/`, `Proposals/`, `Accepted/`, `Implemented/`, and `Declined/` directories are empty until the first draft progresses through the lifecycle.
+One draft pitch exists today (`Drafts/PITCH-0001 Allow Protocols Nested in Generic Types Without Capture.md`). The `Pitches/`, `Proposals/`, `Accepted/`, `Implemented/`, and `Declined/` directories are empty until the first draft progresses through the lifecycle.
 
 ## Process
 

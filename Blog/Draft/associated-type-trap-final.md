@@ -144,7 +144,7 @@ The dependent-member form (`SwiftUI::View.Body`) is rejected outright, with an e
 
 *Merged*. Not disambiguated. Not shadowed. The syntax position varies; the underlying language rule does not. ([V8_ModuleSelectors](https://github.com/swift-institute/swift-institute/tree/main/Experiments/member-import-visibility-body-conflict/Sources/V8_ModuleSelectors))
 
-This is the moment the investigation pivots. We stop poking at imports and start reading the compiler source.
+This is the moment the investigation pivots. I stopped poking at imports and started reading the compiler source.
 
 ### Wrong theory 4: route around it with a wrapper
 
@@ -210,7 +210,7 @@ Then the constraints fight:
 | `Rendering.View` (via `HTML.View`) | `Body: Rendering.View` |
 | `NSViewRepresentable` | `Body == Never` |
 
-`Never` does not conform to `Rendering.View`. Our generic parameter `Body` does not conform to `SwiftUI.View`. No single type satisfies both constraints. The conformance is unsatisfiable by construction.
+`Never` does not conform to `Rendering.View`. The generic parameter `Body` does not conform to `SwiftUI.View`. No single type satisfies both constraints. The conformance is unsatisfiable by construction.
 
 ### No `@_implements`, no `@_nonoverride`, no Features.def flag
 
