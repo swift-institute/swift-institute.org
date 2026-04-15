@@ -11,7 +11,6 @@ Style conventions for Swift Institute blog posts, extracted from industry resear
 **Applies to**: All posts in `Blog/Draft/`, `Blog/Review/`, and `Blog/Published/`.
 
 **Research basis**:
-- [Best-in-Class Blog Post Pattern](../Research/Best-in-Class%20Blog%20Post%20Pattern.md)
 - [Google Developer Documentation Style Guide](https://developers.google.com/style)
 - [Draft.dev Technical Blogging Style Guide](https://draft.dev/learn/styleguide)
 - [Apple Style Guide](https://help.apple.com/pdf/applestyleguide/en_US/apple-style-guide.pdf)
@@ -615,7 +614,6 @@ Before submitting for review:
 
 ### Research
 
-- [Best-in-Class Blog Post Pattern](../Research/Best-in-Class%20Blog%20Post%20Pattern.md) — Seven patterns from industry analysis
 - [What makes a great tech blog](https://notes.eatonphil.com/2024-04-10-what-makes-a-great-tech-blog.html) — Phil Eaton
 - [Write blog posts developers read](https://refactoringenglish.com/chapters/write-blog-posts-developers-read/) — Refactoring English
 - [Title case vs sentence case](https://resources.ascented.com/ascent-blog/technical-writing-tip-title-case-vs-sentence-case) — Ascent Technical Writing

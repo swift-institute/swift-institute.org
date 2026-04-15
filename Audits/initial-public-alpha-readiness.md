@@ -121,7 +121,7 @@ For an initial public alpha of an open-source project, common expectations inclu
 - **License, README, CI workflows, dependabot** all present. Mechanical OSS baseline is met.
 - **Skills all reviewed recently.** Review cadence is healthy; none are stale per the 90-day skill review convention.
 - **Cleanup is thorough.** No `/Users/coen/` paths, no legal references, no embedded-tooling leaks.
-- **Backup and recovery paths exist.** The backup tarball at `/Users/coen/Developer/swift-institute-backup-2026-04-14.tar.gz` and the latest commit at `origin/main` (`913d9c4`) both provide recovery options.
+- **Backup and recovery paths exist.** A local backup tarball and the latest commit at `origin/main` (`913d9c4`) both provide recovery options.
 
 #### Gaps — blocking
 

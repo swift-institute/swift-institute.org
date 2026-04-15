@@ -34,6 +34,7 @@ The per-authority organizations in active preparation include [swift-ietf](https
 
 | Directory | Contents |
 |-----------|----------|
+| [`Audits/`](Audits) | Repository- and ecosystem-level audit reports (e.g., release-readiness reviews) |
 | [`Blog/`](Blog) | Blog posts (drafts, published), the ideas index, style guide, and series plans |
 | [`Documentation.docc/`](Documentation.docc) | Architecture documentation — the five-layer model, naming conventions, shared vocabulary |
 | [`Experiments/`](Experiments) | Minimal reproductions — each experiment is a Swift package testing one claim, used as receipts for blog posts |
