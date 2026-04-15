@@ -6,9 +6,11 @@
 
 Patterns and constraints for writing Swift packages compatible with Embedded Swift.
 
+> Note: Embedded Swift as a target is in development for the ecosystem (see <doc:Platform>). This article describes the patterns and toolchain mechanics that the ecosystem's Embedded work is tracking, drawn from upstream Embedded Swift itself. Package-level Embedded support will ship with the platform milestone.
+
 ## Overview
 
-Embedded Swift is a language subset targeting baremetal and resource-constrained environments. Packages at the Primitives and Standards layers of the Swift Institute are compatible with Embedded Swift; Foundations and above are not constrained this way.
+Embedded Swift is a language subset targeting baremetal and resource-constrained environments. Packages at the Primitives and Standards layers are designed to be compatible with Embedded Swift; Foundations packages are compatible where their dependencies allow.
 
 This document covers how to compile for Embedded Swift, which concurrency features are available, and how to write dual-target code that works in both standard and Embedded builds.
 

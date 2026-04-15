@@ -12,12 +12,11 @@ Each repository in the ecosystem is a standalone Swift package. Add it as a depe
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/swift-primitives/swift-geometry-primitives", from: "0.1.0"),
-    .package(url: "https://github.com/swift-foundations/swift-json", from: "0.1.0"),
+    .package(url: "https://github.com/{org}/{package}", from: "0.1.0"),
 ]
 ```
 
-> The specific packages shown above are illustrative. Individual packages are being released over the coming weeks; `swift package resolve` against a not-yet-public repository returns a 404 until its release tag lands.
+> Packages are being released incrementally. `swift package resolve` against a not-yet-public repository returns a 404 until its release tag lands.
 
 There is no umbrella package to import. The superrepos (`swift-primitives`, `swift-standards`, `swift-foundations`) are git submodule aggregators for browsing the ecosystem. They are not meant to be consumed as dependencies.
 
@@ -25,22 +24,15 @@ There is no umbrella package to import. The superrepos (`swift-primitives`, `swi
 
 ## What's the license?
 
-Primitives and Standards packages are released under Apache 2.0 without exception. Foundations packages are Apache 2.0 by default, with selective commercial terms reserved for specific packages where appropriate. Components and Applications use more flexible licensing, since that is where policy and opinion accumulate. See the Licensing strategy section of <doc:Architecture>.
-
-Every repository carries its own `LICENSE.md` file. When in doubt, check the repository.
+Every repository carries its own `LICENSE.md` file. Layering gives licensing flexibility — foundational substrate can be permissively licensed for maximum embeddability, while higher layers where policy accumulates have room for different terms. See <doc:Architecture> for the rationale.
 
 ---
 
 ## What's the current state of the ecosystem?
 
-As of this release:
+This is an early public release. The primitives, standards, and foundations layers have active repositories; the components and applications layers exist in the design but have no released packages yet.
 
-- 130 repositories at the Primitives layer
-- 20 repositories at the Standards layer, distributed across `swift-standards` itself plus per-authority organizations (swift-ietf, swift-iso, swift-w3c, swift-whatwg, and single-package organizations for other standards bodies)
-- 136 repositories at the Foundations layer
-- Components and Applications are planned; no packages at those layers have been released yet
-
-This is an early public release. Documentation, research, experiments, and the blog workflow are all available now. The Swift packages themselves are being released repository by repository; some links in the documentation may resolve only as release tags land.
+Documentation, research, and the blog workflow are all available now. The Swift packages themselves are being released repository by repository; some links in the documentation may resolve only as release tags land.
 
 ---
 
@@ -88,11 +80,9 @@ The alternative, a monolithic `SwiftPrimitives` package, would force every consu
 
 Ask these questions in order:
 
-1. Does an external specification define it? If implementing an ISO, RFC, IEEE, W3C, or similar standard, the package belongs in the appropriate per-authority organization or in `swift-standards` as a convergence package.
-2. Do standards need it but not define it? If it is a prerequisite for standards, it belongs in `swift-primitives`.
-3. Does it compose standards and primitives into a reusable domain abstraction? It belongs in `swift-foundations`.
-4. Is it an opinionated assembly with defaults? It belongs in `swift-components`.
-5. Is it an end-user product? It belongs in `swift-applications`.
+1. Does an external specification define it? If implementing an ISO, RFC, IEEE, W3C, or similar standard, the package belongs at the standards layer.
+2. Do standards need it but not define it? If it is a prerequisite for standards, it belongs at the primitives layer.
+3. Does it compose standards and primitives into a reusable domain abstraction? It belongs at the foundations layer.
 
 See <doc:Architecture> for the full decision model.
 
@@ -100,43 +90,12 @@ See <doc:Architecture> for the full decision model.
 
 ## Can I depend on only part of a package?
 
-Yes. Many packages expose multiple library products for fine-grained dependencies:
-
-```swift
-// Depend on all numeric primitives
-.product(name: "Numeric Primitives", package: "swift-numeric-primitives"),
-
-// Or depend only on what you need
-.product(name: "Integer Primitives", package: "swift-numeric-primitives"),
-.product(name: "Real Primitives", package: "swift-numeric-primitives"),
-```
-
-This reduces compile times and binary sizes. Check each package's `Package.swift` for available products.
-
----
-
-## Why "Institute" and not "Framework"?
-
-The naming signals intent:
-
-- Framework implies consumption — you use it as provided
-- Institute implies stewardship — a body that maintains standards over time
-
-The Swift Institute does not ship a framework; it maintains a body of layered infrastructure. The "institute" framing communicates long-term stability, stewardship over ownership, and principled evolution over feature accumulation.
-
-See <doc:Architecture> for the full explanation.
-
----
-
-## When will the Components and Applications layers be released?
-
-No date is committed. The Primitives, Standards, and Foundations layers are being published first, because Components and Applications depend on them. Once those lower layers are stable and the releases have settled, work on Components will begin in public.
+Yes. Many packages expose multiple library products for fine-grained dependencies — an umbrella product alongside narrower sub-products. Depending only on what you need reduces compile times and binary sizes. Check each package's `Package.swift` for available products.
 
 ---
 
 ## Where do I report issues or ask questions?
 
-- GitHub Issues — for bugs and feature requests, file on the relevant package repository
-- GitHub Discussions — for architectural questions and design discussions on the [`swift-institute`](https://github.com/swift-institute/swift-institute/discussions) repository
-- Pull Requests — for contributions, see [`CONTRIBUTING.md`](../CONTRIBUTING.md)
+- GitHub Issues — file on the relevant package repository
+- Pull Requests — see [`CONTRIBUTING.md`](../CONTRIBUTING.md)
 

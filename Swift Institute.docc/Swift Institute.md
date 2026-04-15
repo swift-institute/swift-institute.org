@@ -5,43 +5,45 @@
   @TitleHeading("A layered Swift package ecosystem")
 }
 
-A stewarded body of typed Swift infrastructure — primitives, standards implementations, and composed foundations — designed for correctness, composability, and long-term evolution.
+A layered Swift package ecosystem — primitives, standards implementations, and composed foundations — aimed at correctness, composability, and long-term evolution.
 
 > Important: This is an early public release. Packages are being published incrementally across three layers. Some package URLs in examples may not resolve until their release tags land.
 
 ### Types encode meaning
 
-The ecosystem encodes domain knowledge in the type system. Different clock domains produce different types. Different coordinate spaces cannot be mixed. The compiler enforces constraints that tests can only approximate.
+The ecosystem encodes domain knowledge in the type system. Phantom types give zero-cost distinctions between values that share a representation but not a meaning; the compiler enforces constraints that tests can only approximate.
 
 ```swift
-import Clock_Primitives
+// Two tagged types over the same underlying representation
+// become type-distinct through their phantom tags.
+enum Timer {}
+enum Session {}
 
-let boot: Clock.Continuous.Instant    // monotonic, advances while asleep
-let wake: Clock.Suspending.Instant    // monotonic, pauses while asleep
+let timer: Tagged<Timer, UInt64> = ...
+let session: Tagged<Session, UInt64> = ...
 
-boot - wake  // Compile error — different clock domains.
+timer == session  // Compile error — different phantom tags.
 ```
 
 ### Specifications as namespaces
 
-Types mirror the specifications that define them. The RFC or ISO standard is the namespace. When you read a type name, you know which specification governs its behavior — no ambiguity, no silent drift between implementations.
+Types mirror the specifications that define them. The RFC or ISO identifier is the namespace. When you read a type name, you know which specification governs its behaviour.
 
 ```swift
-import Time_Standard
-import Email_Standard
+import RFC_3986
+import RFC_4122
 
-let timestamp: ISO_8601.DateTime      // governed by ISO 8601
-let sender: RFC_5322.EmailAddress     // governed by RFC 5322
-let tcp_state: RFC_9293.`3`.`3`.State // TCP state machine, RFC 9293 §3.3
+let endpoint: RFC_3986.URI    // governed by RFC 3986
+let id: RFC_4122.UUID         // governed by RFC 4122
 ```
 
 ### Concrete errors
 
-Every throwing function declares its error type. Callers get exhaustive switches, not catch-all blocks. The error type is part of the API contract, not an afterthought.
+Throwing functions declare their error type. Callers get exhaustive switches, not catch-all blocks. The error type is part of the API contract, not an afterthought.
 
 ```swift
-// The error type is visible at the call site.
-func read(into buffer: Memory.Buffer.Mutable) async throws(IO.Error) -> Int
+// The concrete error type is visible at the call site.
+func parse(_ input: Input) throws(Parse.Error) -> Output
 ```
 
 ### Foundation independence
@@ -55,20 +57,20 @@ No Foundation import at any layer. The ecosystem provides its own timestamps, pa
 | Embedded Swift | Coming soon |
 | Windows | Coming soon |
 
-Primitives use `~Copyable` for resources with unique ownership — file descriptors, kernel handles, connection state — so the compiler tracks their lifecycle rather than deferring to runtime checks.
+Resources with unique ownership — file descriptors, kernel handles, connection state — use `~Copyable` so the compiler tracks their lifecycle rather than deferring to runtime checks.
 
 ### Granular composition
 
-130 primitive packages. 20 standards implementations. 136 foundation packages. Depend on what you need:
+There is no umbrella import. Consumers depend on individual packages:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/swift-primitives/swift-clock-primitives", from: "0.1.0"),
-    .package(url: "https://github.com/swift-ietf/swift-rfc-5322", from: "0.1.0"),
+    .package(url: "https://github.com/swift-primitives/swift-{concept}-primitives", from: "0.1.0"),
+    .package(url: "https://github.com/swift-ietf/swift-rfc-{number}", from: "0.1.0"),
 ]
 ```
 
-The ecosystem spans three layers — [primitives, standards, and foundations](<doc:Architecture>) — each building only on layers below. There is no umbrella import.
+The ecosystem spans three layers — [primitives, standards, and foundations](<doc:Architecture>) — each building only on layers below.
 
 ## Topics
 
