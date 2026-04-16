@@ -345,7 +345,7 @@ Priority 6: Phase 4 — Sequence.Iterator.Protocol (finding #3)
 | 4 | LOW | [MEM-SAFE-001] | swift-standards `swift-pdf-standard/Tests/Package.swift:49` | Test sub-package missing `.strictMemorySafety()`. | OPEN |
 | 5 | LOW | [MEM-SAFE-001] | swift-standards `swift-svg-standard/Tests/Package.swift:35` | Test sub-package missing `.strictMemorySafety()`. | OPEN |
 | 6 | LOW | [MEM-SAFE-001] | swift-standards `swift-rfc-template/Package.swift.template` | Template stale: lacks `.strictMemorySafety()`, still on tools-version 6.0, imports Foundation. New packages scaffolded from this will not have strict safety. | OPEN |
-| 7 | MEDIUM | [MEM-SAFE-001] | swift-foundations — 13 packages | `swift-copy-on-write`, `swift-css`, `swift-css-html-rendering`, `swift-dependency-analysis`, `swift-html`, `swift-html-rendering`, `swift-markdown-html-rendering`, `swift-pdf-html-rendering`, `swift-pdf-rendering`, `swift-svg`, `swift-svg-rendering`, `swift-svg-rendering-worktree`, `swift-translating` — all missing `.strictMemorySafety()`. Entire rendering/HTML/CSS cluster. | OPEN |
+| 7 | MEDIUM | [MEM-SAFE-001] | swift-foundations — 13 packages | `swift-copy-on-write`, `swift-css`, `swift-css-html-rendering`, `swift-dependency-analysis`, `swift-html`, `swift-html-rendering`, `swift-markdown-html-rendering`, `swift-pdf-html-rendering`, `swift-pdf-rendering`, `swift-svg`, `swift-svg-rendering`, `swift-svg-rendering-worktree`, `swift-translating` — all missing `.strictMemorySafety()`. Entire rendering/HTML/CSS cluster. | RESOLVED 2026-04-16 — verified all 13 packages now declare `.strictMemorySafety()` |
 
 ### Findings — Unsafe Pointer Exposure [MEM-SAFE-023], [MEM-SAFE-012], [MEM-SAFE-014]
 
@@ -413,7 +413,7 @@ One exemplary pattern worth noting: `Loader.Section.Bounds` (`swift-loader-primi
    - Coroutine-scoped types (Property.View family): safe by convention but not type system. MEDIUM severity.
    - Escapable types (Memory.Arena): **genuinely dangerous** — pointer can outlive container. HIGH severity.
 
-3. **`.strictMemorySafety()` gaps** (finding #7): 13 swift-foundations packages in the rendering/HTML/CSS cluster lack the flag. These packages contain no unsafe code, so the risk is low, but the gap prevents compile-time enforcement.
+3. **`.strictMemorySafety()` gaps** (finding #7): ~~13 swift-foundations packages in the rendering/HTML/CSS cluster lack the flag.~~ RESOLVED 2026-04-16 — all 13 packages now declare `.strictMemorySafety()` in their Package.swift `swiftSettings`.
 
 4. **`nonisolated(unsafe)` sentinel globals** (findings #24–25): Safely encapsulated globals that should have `@safe` annotation for SE-0458 compliance.
 
@@ -586,6 +586,16 @@ Plus 3 swift-standards test sub-packages and the stale `swift-rfc-template/Packa
 - **Skill**: code-surface — [API-NAME-001], [API-NAME-003]; academic definitions from `variant-naming-audit.md`
 - **Files**: ~50 source files, ~10 test files across 6 packages + 2 downstream files
 - **Subject**: 7 types named "Fixed" with bounded-buffer semantics; 2 types named "Inline" at collection level where convention is "Static"
+
+### Partial Progress (2026-04-16 re-verification)
+
+The execution plan below describes a binary `Fixed → Bounded` and `Inline → Static` rename. Re-verification on 2026-04-16 shows the ecosystem has instead evolved a tripartite taxonomy:
+
+- **`Static<let capacity: Int>`** (added): compile-time-fixed capacity. New types: `Queue.Static`, `Queue.DoubleEnded.Static`, `Heap.Static`, `Heap.MinMax.Static`, `Set.Ordered.Static`, `Bitset.Static` — each in its own `* Static Primitives/` directory or alongside the legacy declarations.
+- **`Bounded`** (added in linked variants): runtime-bounded mutable count. New types: `Queue.Linked.Bounded`, `List.Linked.Bounded`, `Tree.N.Bounded` (full `Tree N Bounded Primitives/` directory with order/iterator/sequence variants).
+- **`Fixed` / `Inline`** (legacy, still declared): Original `public struct Fixed` and `public struct Inline<let capacity: Int>` declarations remain at the cited locations. The original audit findings (rename `Fixed → Bounded`, `Inline → Static`) remain OPEN at the struct-declaration level even though parallel directories and types have been added.
+
+The `Queue.Bounded.swift` file at `Sources/Queue Fixed Primitives/` is an extension file on the still-existing `Queue.Fixed` struct, not a renamed declaration. Cited line numbers below are still accurate within ±1 line.
 
 ### Findings
 
@@ -850,336 +860,227 @@ All 9 are naming violations where the code uses an academically incorrect term. 
 
 77 types across the ecosystem conform to the deprecated `Binary.ASCII.Serializable` protocol. The replacement infrastructure (`Parseable`, `Serializable`, `Serializer.Protocol`) is operational at L1. Phase 1 (integers) is done at L1 but the redundant L3 conformances remain. 22 deprecation warnings in swift-ascii: 4 from redundant conformances (deletable), 18 from protocol infrastructure (deprecation cascade). Three Phase 0 convenience extensions needed before Phases 2-7 can proceed at scale.
 
-## Path Type Compliance — 2026-03-31
+## Path Type Compliance — 2026-04-16
 
 ### Scope
 
-- **Target**: swift-primitives, swift-standards (swift-iso-9945), swift-foundations (ecosystem-wide)
+- **Target**: swift-primitives, swift-standards (swift-iso-9945), swift-foundations (ecosystem-wide); also swift-microsoft (new superrepo since 2026-03-31)
 - **Principle**: [string-path-type-inventory-file-system.md](string-path-type-inventory-file-system.md) v3.0 — "APIs that semantically operate on file system paths should accept/return path types. `Swift.String` should appear only at display boundaries and at explicit conversion points."
-- **Files**: Sources/ and Tests/ across three superrepos
+- **Files**: Sources/ and Tests/ across all superrepos
 - **Subject**: `Swift.String` used where `Kernel.Path`, `Path_Primitives.Path`, `Paths.Path`, or `Path.View` is semantically correct
+- **Re-audit basis**: Replaces 2026-03-31 section per [AUDIT-005]. Significant ecosystem restructuring landed 2026-04-09 through 2026-04-15: atomic-write code relocated from `swift-kernel` to `swift-file-system`; `swift-iso-9945` decomposed from a single "ISO 9945 Kernel" target into ~16 sub-targets; Windows.Loader extracted to new `swift-microsoft` superrepo; audit infrastructure moved from `Research/` to `Audits/`.
 
 ### Type Hierarchy Reference
 
 ```
 Layer 1 (Primitives)
-  Path_Primitives.Path          (~Copyable, platform-encoded, owns memory)
-  Path_Primitives.Path.View     (~Copyable, ~Escapable, borrowed view)
+  Path_Primitives.Path           (~Copyable, platform-encoded, owns memory)
+  Path_Primitives.Path.View      (~Copyable, ~Escapable, borrowed view)
+  Path_Primitives.Path.Protocol  (decomposition algebra: parent/component/appending) ← NEW (2026-04-07)
   Kernel.Path = Tagged<Kernel, Path_Primitives.Path>
-  Kernel.Path.View              (non-escapable borrowed view)
+  Kernel.Path.View               (non-escapable borrowed view)
 
 Layer 3 (Foundations)
-  Paths.Path                    (Copyable, Sendable, validated, user-facing)
-  Paths.Path.View               (~Copyable, ~Escapable, borrowed)
-  Paths.Path.Component          (validated single component)
-  File.Path = Paths.Path        (typealias in swift-file-system)
+  Paths.Path                     (Copyable, Sendable, validated, user-facing)
+  Paths.Path.View                (~Copyable, ~Escapable, borrowed)
+  Paths.Path.Component           (validated single component)
+  File.Path = Paths.Path         (typealias in swift-file-system)
 ```
 
 **Conversion boundary**: `Kernel.Path.scope(_:)` bridges `Swift.String` → scoped `Kernel.Path.View` for syscall use. Code that calls `.scope()` internally is evidence that the parameter should have been typed at the API boundary instead.
 
-### Per-Package Triage
+### Progress Since 2026-03-31
 
-| Superrepo | Package | Source Findings | Test Findings | Worst Severity | Notes |
-|-----------|---------|-----------------|---------------|---------------|-------|
-| swift-primitives | swift-windows-primitives | 2 | 0 | HIGH | `Windows.Loader.Library.open(path: String)` |
-| swift-standards | swift-iso-9945 | 0 | 15 | HIGH | All test helpers: `KernelIOTest.*`, test-local `cleanup`, `makeTempPath` |
-| swift-foundations | swift-kernel | 14 | 8 | HIGH | `Kernel.File.Write+Shared` internals, `Atomic.Error` cases, test helpers |
-| swift-foundations | swift-posix | 6 | 4 | HIGH | POSIX Glob public API: `match(in: String)`, `body: (String) -> Void` |
-| swift-foundations | swift-windows | 5 | 3 | HIGH | Windows Glob public API (mirrors POSIX) |
-| swift-foundations | swift-tests | 4 | 0 | MEDIUM | `Test.Reporter.json(to:)`, `.structured(to:)` public APIs |
-| swift-foundations | swift-source | 4 | 0 | MEDIUM | `Source.Cache` keyed by `[String: [UInt8]]` |
-| swift-foundations | swift-file-system | 0 | 8 | MEDIUM | `File.Directory.Temporary`, `File.System Tests` helpers |
-| **Total** | | **35** | **38** | | **73 findings** |
+| Phase | Status | Evidence |
+|-------|--------|----------|
+| **Phase 4a — L1 decomposition (POSIX)** | **COMPLETE** | `swift-path-primitives/Sources/Path Primitives/Path.Protocol.swift` (commit `a96dddf`, 2026-04-07). POSIX conformance at `swift-iso-9945/Sources/ISO 9945 Kernel File/ISO 9945.Kernel.Path.View+Path.Protocol.swift` (commit `a90491b`, 2026-04-07; relocated to `Kernel File` sub-target during target decomposition). `Path.init(_ span: Span<Char>)` exists at L1. |
+| **Phase 4a — L1 decomposition (Windows)** | **PENDING** | No `Path.View+Path.Protocol` conformance file in `swift-windows-primitives` or any Windows L1 location. |
+| **Phase 4b — Paths.Path delegation** | **NOT STARTED** | `swift-paths/Sources/Paths/Path.Navigation.swift` last touched 2026-03-04; still uses `string.lastIndex(of: "/")` and String concatenation. Package.swift gained no new dependency. Architectural decision discussion (2026-04-08): protocol delegation rejected as too heavy (would pull 6 transitive deps); agreed approach is direct `[Char]` byte scanning at L3 — yet to be implemented. |
+| **Phase 4c — Write pipeline migration** | **NOT STARTED** (file relocated only) | Atomic-write code relocated 2026-04-09 from `swift-kernel/Sources/Kernel File/Kernel.File.Write+Shared.swift` to `swift-file-system/Sources/File System Core/File.System.Write+Shared.swift`. The String pipeline is **byte-for-byte intact** — `resolvePaths`, `posixParentDirectory`, `windowsParentDirectory`, `fileName(of:)`, `normalizeWindowsPath`, `fileExists`, `atomicRename`, `syncDirectory` all still take and return `Swift.String`. |
+| **Phase 1 — POSIX Glob (directory parameter)** | **RESOLVED** | `swift-posix/Sources/POSIX Kernel Glob/Kernel.Glob+Match.swift:34` — `match(pattern:in directory:)` now `borrowing Kernel.Path.View`. |
+| **Phase 1 — POSIX Glob (callback yield)** | **OPEN** | Body callback still `(Swift.String) -> Void`. |
+| **Phase 1 — Windows Glob** | **OPEN** | `Windows.Kernel.Glob.Match.swift` String-typed end to end. |
+| **Phase 2 — Windows.Loader** | **OPEN (relocated)** | Moved to `swift-microsoft/swift-windows-standard/Sources/Windows Loader Standard/Windows.Loader.Library.swift`. Still `open(path: String)`. |
+| **Phase 3 — Test.Reporter, Source.Cache** | **OPEN** | Test.Reporter relocated to `swift-tests/Sources/Tests Reporter/`; signatures unchanged. Source.Cache file unchanged. |
+| **Phase 5 — Test helpers** | **OPEN** | All test helpers from #32–58 still String-typed. |
+| **Phase 6 — Error types** | **DEFERRED** (carried) | `File.System.Write.Atomic.Error` (relocated, was `Kernel.File.Write.Atomic.Error`); deferred per original audit pending Phase 4c. |
 
-### Findings — Sources: Public API (Layer Boundary Violations)
+### Per-Package Triage (Refreshed)
 
-These are public APIs that accept or return `Swift.String` where consumers must pass file system paths. Highest priority — these define the contract.
+| Superrepo | Package | Source OPEN | Test OPEN | Resolved/Partial | Notes |
+|-----------|---------|-------------|-----------|------------------|-------|
+| swift-primitives | swift-path-primitives | 0 | 0 | n/a | Phase 4a L1 decomposition shipped here |
+| swift-microsoft | swift-windows-standard | 2 | 0 | 0 | Windows.Loader relocated from swift-windows-primitives |
+| swift-standards | swift-iso-9945 | 0 | 15 | n/a | Test helpers unchanged. Phase 4a POSIX conformance lives here. |
+| swift-foundations | swift-file-system | 10 (relocated) | 1 + relocated | 0 | Atomic-write code relocated from swift-kernel; pipeline intact |
+| swift-foundations | swift-kernel | 0 | 7 | 10 (relocated) | Source findings #15–24 moved to swift-file-system |
+| swift-foundations | swift-posix | 1 (callback yield) | 4 | 1 (directory parameter) | Phase 1 partial |
+| swift-foundations | swift-windows | 2 | 1 | 0 | Glob unchanged |
+| swift-foundations | swift-tests | 2 | 0 | 0 | Reporters relocated, signatures unchanged |
+| swift-foundations | swift-source | 4 | 0 | 0 | Source.Cache unchanged |
+| swift-foundations | swift-paths | 0 | 0 | 0 | Phase 4b not started |
+| **Total** | | **21 OPEN** | **27 OPEN + 10 relocated-OPEN** | **2 RESOLVED/PARTIAL** | **49 OPEN + 7 DEFERRED carried** |
 
-| # | Severity | Location | Finding | Status |
-|---|----------|----------|---------|--------|
-| 1 | HIGH | `swift-windows-primitives/.../Windows.Loader.Library.swift:39` | `open(path: String)` — DLL path as bare String. `Windows.Kernel.File.Open` already uses `borrowing Kernel.Path`. | OPEN |
-| 2 | HIGH | `swift-windows-primitives/.../Windows.Loader.Library.swift:59` | `open(path: String, flags: DWORD)` — same, with flags variant. | OPEN |
-| 3 | HIGH | `swift-posix/.../POSIX.Kernel.Glob.Match.swift:38` | `match(pattern:in directory: Swift.String, ...)` — directory parameter is a file system path. | OPEN |
-| 4 | HIGH | `swift-posix/.../POSIX.Kernel.Glob.Match.swift:40` | `body: (Swift.String) -> Void` — yields matched file paths as String. | OPEN |
-| 5 | HIGH | `swift-posix/.../POSIX.Kernel.Glob.Match.swift:82` | `match(include:excluding:in directory: Swift.String, ...)` — multi-pattern variant, same issue. | OPEN |
-| 6 | HIGH | `swift-posix/.../POSIX.Kernel.Glob.Match.swift:84` | `body: (Swift.String) -> Void` — multi-pattern yields. | OPEN |
-| 7 | HIGH | `swift-windows/.../Windows.Kernel.Glob.Match.swift:33` | Windows Glob `match(in directory: Swift.String)` — mirrors POSIX. | OPEN |
-| 8 | HIGH | `swift-windows/.../Windows.Kernel.Glob.Match.swift:35` | Windows Glob return type `-> [Swift.String]`. | OPEN |
-| 9 | MEDIUM | `swift-tests/.../Test.Reporter.JSON.swift:28` | `json(to path: Swift.String?)` — output file path as optional String. Should accept `File.Path?`. | OPEN |
-| 10 | MEDIUM | `swift-tests/.../Test.Reporter.Structured.swift:21` | `structured(to path: Swift.String)` — output file path as String. Should accept `File.Path`. | OPEN |
-| 11 | MEDIUM | `swift-source/.../Source.Cache.swift:36` | `_loaded: [Swift.String: [UInt8]]` — dictionary keyed by String file paths. Should be `[File.Path: [UInt8]]` or typed equivalent. | OPEN |
-| 12 | MEDIUM | `swift-source/.../Source.Cache.swift:54` | `load(contentsOf path: Swift.String)` — file path parameter. | OPEN |
-| 13 | MEDIUM | `swift-source/.../Source.Cache.swift:72` | `contains(path: Swift.String)` — file path parameter. | OPEN |
-| 14 | MEDIUM | `swift-source/.../Source.Cache.swift:81` | `remove(path: Swift.String)` — file path parameter. | OPEN |
-
-### Findings — Sources: Internal Implementation
-
-These are `internal` functions inside `Kernel.File.Write` that operate on String paths. They use `Kernel.Path.scope()` at the syscall boundary, meaning the entire path-manipulation pipeline above that call is untyped.
+### Findings — Sources: Public API (Refreshed)
 
 | # | Severity | Location | Finding | Status |
 |---|----------|----------|---------|--------|
-| 15 | MEDIUM | `swift-kernel/.../Kernel.File.Write+Shared.swift:17-19` | `resolvePaths(_ pathString: String) -> (resolved: String, parent: String)` — path resolution returning String tuple. | OPEN |
-| 16 | MEDIUM | `swift-kernel/.../Kernel.File.Write+Shared.swift:31` | `normalizeWindowsPath(_ path: String) -> String` — Windows path normalization on bare String. | OPEN |
-| 17 | MEDIUM | `swift-kernel/.../Kernel.File.Write+Shared.swift:47-49` | `windowsParentDirectory(of path: String) -> String` — parent extraction on String. | OPEN |
-| 18 | MEDIUM | `swift-kernel/.../Kernel.File.Write+Shared.swift:63` | `fileName(of path: String) -> String` — Windows filename extraction. | OPEN |
-| 19 | MEDIUM | `swift-kernel/.../Kernel.File.Write+Shared.swift:70-72` | `posixParentDirectory(of path: String) -> String` — POSIX parent extraction. | OPEN |
-| 20 | MEDIUM | `swift-kernel/.../Kernel.File.Write+Shared.swift:82` | `fileName(of path: String) -> String` — POSIX filename extraction. | OPEN |
-| 21 | MEDIUM | `swift-kernel/.../Kernel.File.Write+Shared.swift:94` | `fileExists(_ pathString: String) -> Bool` — wraps `.scope()` internally. | OPEN |
-| 22 | MEDIUM | `swift-kernel/.../Kernel.File.Write+Shared.swift:307-309` | `atomicRename(from source: String, to dest: String)` — wraps `.scope()` internally. | OPEN |
-| 23 | MEDIUM | `swift-kernel/.../Kernel.File.Write+Shared.swift:338-341` | `atomicRenameNoClobber(from source: String, to dest: String)` — wraps `.scope()` internally. | OPEN |
-| 24 | MEDIUM | `swift-kernel/.../Kernel.File.Write+Shared.swift:371-373` | `syncDirectory(_ pathString: String)` — wraps `.scope()` internally. | OPEN |
+| 1 | HIGH | `swift-microsoft/swift-windows-standard/Sources/Windows Loader Standard/Windows.Loader.Library.swift` | `open(path: String)` — DLL path as bare String. `Windows.Kernel.File.Open` already uses `borrowing Kernel.Path`. | OPEN (relocated from swift-windows-primitives) |
+| 2 | HIGH | (same file as #1) | `open(path: String, flags: DWORD)` — flags variant. | OPEN (relocated) |
+| 3 | HIGH | `swift-posix/Sources/POSIX Kernel Glob/Kernel.Glob+Match.swift:34` | `match(pattern:in directory:)` — directory parameter | RESOLVED 2026-04-13 — now `borrowing Kernel.Path.View` |
+| 4 | HIGH | `swift-posix/Sources/POSIX Kernel Glob/Kernel.Glob+Match.swift:36` | `body: (Swift.String) -> Void` — callback still yields String | OPEN — callback yield not migrated |
+| 5 | HIGH | `swift-posix/Sources/POSIX Kernel Glob/Kernel.Glob+Match.swift:83` | Multi-pattern variant — directory parameter | RESOLVED 2026-04-13 — now `borrowing Kernel.Path.View` |
+| 6 | HIGH | `swift-posix/Sources/POSIX Kernel Glob/Kernel.Glob+Match.swift:85` | Multi-pattern body callback `(Swift.String) -> Void` | OPEN |
+| 7 | HIGH | `swift-windows/Sources/Windows Kernel/Windows.Kernel.Glob.Match.swift:33` | Windows Glob `match(in directory: Swift.String)` | OPEN |
+| 8 | HIGH | `swift-windows/Sources/Windows Kernel/Windows.Kernel.Glob.Match.swift:35` | Windows Glob `-> [Swift.String]` | OPEN |
+| 9 | MEDIUM | `swift-tests/Sources/Tests Reporter/Test.Reporter.JSON.swift:28` | `json(to path: Swift.String?)` | OPEN (file relocated from `Tests/`) |
+| 10 | MEDIUM | `swift-tests/Sources/Tests Reporter/Test.Reporter.Structured.swift:21` | `structured(to path: Swift.String)` | OPEN (file relocated) |
+| 11 | MEDIUM | `swift-source/Sources/Source/Source.Cache.swift:36` | `_loaded: [Swift.String: [UInt8]]` | OPEN |
+| 12 | MEDIUM | `swift-source/Sources/Source/Source.Cache.swift:54` | `load(contentsOf path: Swift.String)` | OPEN |
+| 13 | MEDIUM | `swift-source/Sources/Source/Source.Cache.swift:72` | `contains(path: Swift.String)` | OPEN |
+| 14 | MEDIUM | `swift-source/Sources/Source/Source.Cache.swift:81` | `remove(path: Swift.String)` | OPEN |
 
-### Findings — Sources: Error Types (Diagnostic Strings)
+### Findings — Sources: Internal Implementation (Refreshed)
 
-Error enum cases that store file paths as `Swift.String` for diagnostic/display purposes. These are borderline — the prior research ([string-path-type-inventory-file-system.md](string-path-type-inventory-file-system.md) Category E) identified 28 such cases and classified them as display-correct. However, the `Kernel.File.Write.Atomic.Error` cases propagate path values from the same internal String-pipeline (findings #15–24), meaning the String enters the error from an already-untyped source.
-
-| # | Severity | Location | Finding | Status |
-|---|----------|----------|---------|--------|
-| 25 | LOW | `swift-kernel/.../Kernel.File.Write.Atomic.Error.swift:18` | `parentVerificationFailed(path: String, ...)` | DEFERRED — diagnostic display; resolve when internal pipeline is typed |
-| 26 | LOW | `swift-kernel/.../Kernel.File.Write.Atomic.Error.swift:21` | `destinationStatFailed(path: String, ...)` | DEFERRED — same rationale |
-| 27 | LOW | `swift-kernel/.../Kernel.File.Write.Atomic.Error.swift:24` | `tempFileCreationFailed(directory: String, ...)` | DEFERRED — same rationale |
-| 28 | LOW | `swift-kernel/.../Kernel.File.Write.Atomic.Error.swift:42` | `renameFailed(from: String, to: String, ...)` | DEFERRED — same rationale |
-| 29 | LOW | `swift-kernel/.../Kernel.File.Write.Atomic.Error.swift:45` | `destinationExists(path: String)` | DEFERRED — same rationale |
-| 30 | LOW | `swift-kernel/.../Kernel.File.Write.Atomic.Error.swift:48` | `directorySyncFailed(path: String, ...)` | DEFERRED — same rationale |
-| 31 | LOW | `swift-kernel/.../Kernel.File.Write.Atomic.Error.swift:55` | `directorySyncFailedAfterCommit(path: String, ...)` | DEFERRED — same rationale |
-
-### Findings — Tests: swift-iso-9945 (Layer 2)
-
-All test support code in the standards layer. These helpers wrap `Kernel.Path.scope()` internally — the `Swift.String` parameter forces every call site to traffic in bare strings. Layer 2 can use `Kernel.Path` (L1) but NOT `Paths.Path` (L3).
+**Relocated 2026-04-09** from `swift-kernel/Sources/Kernel File/Kernel.File.Write+Shared.swift` to `swift-file-system/Sources/File System Core/File.System.Write+Shared.swift`. The String pipeline is byte-for-byte intact — only the namespace changed (`Kernel.File.Write` → `File.System.Write`). All findings remain OPEN.
 
 | # | Severity | Location | Finding | Status |
 |---|----------|----------|---------|--------|
-| 32 | HIGH | `swift-iso-9945/Tests/Support/Kernel.IO.Test.Helpers.swift:31` | `makeTempPath(prefix:) -> Swift.String` — returns temp path as String. | OPEN |
-| 33 | HIGH | `swift-iso-9945/Tests/Support/Kernel.IO.Test.Helpers.swift:36` | `open(at path: Swift.String)` — wraps `.scope()` internally. | OPEN |
-| 34 | HIGH | `swift-iso-9945/Tests/Support/Kernel.IO.Test.Helpers.swift:56` | `cleanup(path: Swift.String)` — the user's example violation. | OPEN |
-| 35 | HIGH | `swift-iso-9945/Tests/Support/Kernel.Temporary.swift:30` | `directory: Swift.String` — temp directory property. | OPEN |
-| 36 | HIGH | `swift-iso-9945/Tests/Support/Kernel.Temporary.swift:51` | `filePath(prefix:) -> Swift.String` — temp file path generation. | OPEN |
-| 37 | MEDIUM | `swift-iso-9945/Tests/.../ISO 9945.Kernel.File.Handle Tests.swift:32` | `cleanup(path: Swift.String)` — test-local duplicate. | OPEN |
-| 38 | MEDIUM | `swift-iso-9945/Tests/.../ISO 9945.Kernel.File.Clone Tests.swift:28` | `createTempFileWithContent(prefix:content:) -> Swift.String` | OPEN |
-| 39 | MEDIUM | `swift-iso-9945/Tests/.../ISO 9945.Kernel.File.Clone Tests.swift:38` | `readFileContent(_ path: Swift.String) -> String?` | OPEN |
-| 40 | MEDIUM | `swift-iso-9945/Tests/.../ISO 9945.Kernel.File.Clone Tests.swift:57` | `cleanup(_ path: Swift.String)` — another test-local duplicate. | OPEN |
-| 41 | MEDIUM | `swift-iso-9945/Tests/.../ISO 9945.Kernel.Lock.Integration Tests.swift:62` | `isExecutable(_ path: Swift.String)` — uses `withCString`/`access()` directly. | OPEN |
-| 42 | MEDIUM | `swift-iso-9945/Tests/.../ISO 9945.Kernel.Lock.Integration Tests.swift:74` | `spawn(lockingFile filePath: Swift.String, ...)` | OPEN |
-| 43 | MEDIUM | `swift-iso-9945/Tests/.../ISO 9945.Kernel.Lock.Integration Tests.swift:120` | `makeLockTestFile(prefix:) -> (path: Swift.String, fd: ...)` — tuple return. | OPEN |
-| 44 | MEDIUM | `swift-iso-9945/Tests/.../ISO 9945.Kernel.Process.Execute Tests.swift:39` | `findTruePath() -> Swift.String` — searches `/usr/bin/true`. | OPEN |
-| 45 | MEDIUM | `swift-iso-9945/Tests/.../ISO 9945.Kernel.TestHelper.swift:92` | `isExecutable(_ path: Swift.String)` — duplicate of #41. | OPEN |
-| 46 | MEDIUM | `swift-iso-9945/Tests/.../ISO 9945.Kernel.File.Open Tests.swift:130+` | Multiple test bodies using `let path = KernelIOTest.makeTempPath(...)` flowing String. | OPEN |
+| 15 | MEDIUM | `swift-file-system/Sources/File System Core/File.System.Write+Shared.swift:17–19` | `resolvePaths(_ pathString: Swift.String) -> (resolved: Swift.String, parent: Swift.String)` | OPEN (relocated) |
+| 16 | MEDIUM | `:31` | `normalizeWindowsPath(_ path: Swift.String) -> Swift.String` | OPEN (relocated) |
+| 17 | MEDIUM | `:47` | `windowsParentDirectory(of path: Swift.String) -> Swift.String` | OPEN (relocated) |
+| 18 | MEDIUM | `:63` | `fileName(of path: Swift.String) -> Swift.String` (Windows) | OPEN (relocated) |
+| 19 | MEDIUM | `:70` | `posixParentDirectory(of path: Swift.String) -> Swift.String` | OPEN (relocated) |
+| 20 | MEDIUM | `:82` | `fileName(of path: Swift.String) -> Swift.String` (POSIX) | OPEN (relocated) |
+| 21 | MEDIUM | `:94` | `fileExists(_ pathString: Swift.String) -> Bool` — wraps `Kernel.Path.scope` | OPEN (relocated) |
+| 22 | MEDIUM | `File.System.Write+Shared.swift` (further in file) | `atomicRename(from source: Swift.String, to dest: Swift.String)` | OPEN (relocated) |
+| 23 | MEDIUM | (same file) | `atomicRenameNoClobber(from source: Swift.String, to dest: Swift.String)` | OPEN (relocated) |
+| 24 | MEDIUM | (same file) | `syncDirectory(_ pathString: Swift.String)` — wraps `Kernel.Path.scope` | OPEN (relocated) |
 
-### Findings — Tests: swift-foundations (Layer 3)
+### Findings — Sources: Error Types (Refreshed — DEFERRED carried forward per [AUDIT-005])
+
+Relocated 2026-04-09 to `swift-file-system/Sources/File System Core/File.System.Write.Atomic.Error.swift`. All path fields still `Swift.String`. Per original audit, deferred pending Phase 4c.
 
 | # | Severity | Location | Finding | Status |
 |---|----------|----------|---------|--------|
-| 47 | MEDIUM | `swift-kernel/Tests/Support/Kernel.Temporary.swift:39` | `directory: Swift.String` — duplicates iso-9945 pattern. | OPEN |
-| 48 | MEDIUM | `swift-kernel/Tests/Support/Kernel.Temporary.swift:60` | `filePath(prefix:) -> Swift.String` — duplicates iso-9945 pattern. | OPEN |
-| 49 | MEDIUM | `swift-kernel/Tests/Kernel Tests/Kernel.File.Open Tests.swift:27` | `makeTempFile(prefix:content:) -> String` — constructs path via string interpolation. | OPEN |
-| 50 | MEDIUM | `swift-kernel/Tests/Kernel Tests/Kernel.File.Open Tests.swift:41` | `removeTempFile(_ path: String)` — calls `unlink` via `withCString`. | OPEN |
-| 51 | MEDIUM | `swift-kernel/Tests/Kernel Tests/Kernel.File.Clone Tests.swift:28` | `createTempFile(prefix:content:) -> String` | OPEN |
-| 52 | MEDIUM | `swift-kernel/Tests/Kernel Tests/Kernel.File.Clone Tests.swift:42` | `readFileContent(_ path: String) -> String?` — `open()` syscall via String. | OPEN |
-| 53 | MEDIUM | `swift-kernel/Tests/Kernel Tests/Kernel.File.Clone Tests.swift:55` | `cleanup(_ path: String)` — `unlink` via `withCString`. | OPEN |
-| 54 | MEDIUM | `swift-file-system/Tests/.../File.System Tests.swift:35` | `createTempPath() -> Swift.String` | OPEN |
-| 55 | MEDIUM | `swift-file-system/Tests/.../File.System Tests.swift:39` | `cleanup(_ path: Swift.String)` — converts to `File.Path` internally. | OPEN |
-| 56 | MEDIUM | `swift-file-system/Tests/Support/File.Directory.Temporary.swift:39` | `directory: Swift.String` — temp directory property. | OPEN |
-| 57 | MEDIUM | `swift-posix/Tests/.../POSIX.Kernel.Glob Tests.swift:37+` | `removeDirectoryRecursively`, `parentDirectory(of:)`, `withTestDirectory`, `createTestFiles(in:)` — all use `String` for paths. | OPEN |
-| 58 | MEDIUM | `swift-windows/Tests/.../Windows.Kernel.Glob Tests.swift:56+` | Windows mirror of #57. | OPEN |
+| 25 | LOW | `swift-file-system/Sources/File System Core/File.System.Write.Atomic.Error.swift` | `parentVerificationFailed(path: Swift.String, ...)` | DEFERRED — resolve with Phase 4c |
+| 26 | LOW | (same file) | `destinationStatFailed(path: Swift.String, ...)` | DEFERRED — same |
+| 27 | LOW | (same file) | `tempFileCreationFailed(directory: Swift.String, ...)` | DEFERRED — same |
+| 28 | LOW | (same file) | `renameFailed(from: Swift.String, to: Swift.String, ...)` | DEFERRED — same |
+| 29 | LOW | (same file) | `destinationExists(path: Swift.String)` | DEFERRED — same |
+| 30 | LOW | (same file) | `directorySyncFailed(path: Swift.String, ...)` | DEFERRED — same |
+| 31 | LOW | (same file) | `directorySyncFailedAfterCommit(path: Swift.String, ...)` | DEFERRED — same |
 
-### False Positives / Legitimate String Usage
+### Findings — Tests: swift-iso-9945 (Layer 2) (Refreshed)
 
-The following were evaluated and determined to be correct uses of `Swift.String`:
+| # | Severity | Location | Finding | Status |
+|---|----------|----------|---------|--------|
+| 32 | HIGH | `swift-iso-9945/Tests/Support/Kernel.IO.Test.Helpers.swift:40` | `makeTempPath(prefix:) -> Swift.String` | OPEN |
+| 33 | HIGH | `swift-iso-9945/Tests/Support/Kernel.IO.Test.Helpers.swift:45` | `open(at path: Swift.String)` | OPEN |
+| 34 | HIGH | `swift-iso-9945/Tests/Support/Kernel.IO.Test.Helpers.swift:65` | `cleanup(path: Swift.String)` | OPEN |
+| 35 | HIGH | `swift-iso-9945/Tests/Support/Kernel.Temporary.swift:39` | `directory: Swift.String` | OPEN |
+| 36 | HIGH | `swift-iso-9945/Tests/Support/Kernel.Temporary.swift:60` | `filePath(prefix:) -> Swift.String` | OPEN |
+| 37 | MEDIUM | `swift-iso-9945/Tests/ISO 9945 Kernel Tests/ISO 9945.Kernel.File.Handle Tests.swift` | `cleanup(path: Swift.String)` test-local duplicate | OPEN |
+| 38 | MEDIUM | `swift-iso-9945/Tests/ISO 9945 Kernel Tests/ISO 9945.Kernel.File.Clone Tests.swift` | `createTempFileWithContent(prefix:content:) -> Swift.String` | OPEN |
+| 39 | MEDIUM | (same file) | `readFileContent(_ path: Swift.String) -> Swift.String?` | OPEN |
+| 40 | MEDIUM | (same file) | `cleanup(_ path: Swift.String)` | OPEN |
+| 41 | MEDIUM | `swift-iso-9945/Tests/ISO 9945 Kernel Tests/ISO 9945.Kernel.Lock.Integration Tests.swift` | `isExecutable(_ path: Swift.String)` | OPEN |
+| 42 | MEDIUM | (same file) | `spawn(lockingFile filePath: Swift.String, ...)` | OPEN |
+| 43 | MEDIUM | (same file) | `makeLockTestFile(prefix:) -> Swift.String` | OPEN |
+| 44 | MEDIUM | `swift-iso-9945/Tests/ISO 9945 Kernel Tests/ISO 9945.Kernel.Process.Execute Tests.swift` | `findTruePath() -> Swift.String` | OPEN |
+| 45 | MEDIUM | (Lock.Integration Tests) | `isExecutable(_ path: Swift.String)` (duplicate of #41 — TestHelper.swift no longer present at original path) | OPEN |
+| 46 | MEDIUM | `swift-iso-9945/Tests/ISO 9945 Kernel Tests/ISO 9945.Kernel.File.Open Tests.swift` | Test bodies threading String paths via `KernelIOTest.makeTempPath(...)` | OPEN |
 
-| Location | Rationale |
-|----------|-----------|
-| `swift-source-primitives/.../Source.File.filePath: String` | Display metadata for diagnostics, not syscall-bound. L1 boundary — no file I/O. |
-| `swift-source-primitives/.../Source.Location.filePath: String?` | Matches Swift `#filePath` semantics. Display-only. |
-| `swift-kernel-primitives/.../Kernel.Glob.Error` path fields | Documented design decision: "Error paths are String by design — for diagnostics/logging, not further processing." |
-| `swift-kernel-primitives/.../Kernel.Glob.Pattern.init(_ pattern: String)` | Glob patterns are text syntax, not file system paths. |
-| `swift-test-primitives/.../Test.Snapshot.Result` path fields | Diagnostic reporting strings for test framework output. |
-| `swift-test-primitives/.../Test.Snapshot.Diff.Result.StructuralOperation` | JSON/YAML structural paths (e.g., `"user.name"`), not file system paths. |
-| `swift-darwin-primitives/.../Darwin.Loader.Image.pathString(at:)` | Diagnostic return with documented guidance toward scoped accessors. |
-| `Kernel.File.Write.randomToken` / `hexEncode` | Generate opaque tokens, not path data. |
+### Findings — Tests: swift-foundations (Layer 3) (Refreshed)
 
-### Systemic Patterns
+| # | Severity | Location | Finding | Status |
+|---|----------|----------|---------|--------|
+| 47 | MEDIUM | `swift-kernel/Tests/Support/Kernel.Temporary.swift:39` | `directory: Swift.String` — duplicates iso-9945 pattern | OPEN |
+| 48 | MEDIUM | `swift-kernel/Tests/Support/Kernel.Temporary.swift:60` | `filePath(prefix:) -> Swift.String` | OPEN |
+| 49 | MEDIUM | `swift-kernel/Tests/Kernel Tests/Kernel.File.Open Tests.swift:27` | `makeTempFile(prefix:content:) -> Swift.String` | OPEN |
+| 50 | MEDIUM | `swift-kernel/Tests/Kernel Tests/Kernel.File.Open Tests.swift:41` | `removeTempFile(_ path: Swift.String)` | OPEN |
+| 51 | MEDIUM | `swift-kernel/Tests/Kernel Tests/Kernel.File.Clone Tests.swift:28` | `createTempFile(prefix:content:) -> Swift.String` | OPEN |
+| 52 | MEDIUM | `swift-kernel/Tests/Kernel Tests/Kernel.File.Clone Tests.swift:42` | `readFileContent(_ path: Swift.String) -> Swift.String?` | OPEN |
+| 53 | MEDIUM | `swift-kernel/Tests/Kernel Tests/Kernel.File.Clone Tests.swift:55` | `cleanup(_ path: Swift.String)` | OPEN |
+| 54 | MEDIUM | `swift-file-system/Tests/File System Core Tests/File.System Tests.swift:35` | `createTempPath() -> Swift.String` | OPEN |
+| 55 | MEDIUM | `swift-file-system/Tests/File System Core Tests/File.System Tests.swift:39` | `cleanup(_ path: Swift.String)` | OPEN |
+| 56 | MEDIUM | `swift-file-system/Tests/Support/File.Directory.Temporary.swift:39` | `directory: Swift.String` | OPEN |
+| 57 | MEDIUM | `swift-posix/Tests/POSIX Kernel Tests/POSIX.Kernel.Glob Tests.swift:38+` | `removeDirectoryRecursively`, `parentDirectory(of:)`, `withTestDirectory`, `createTestFiles(in:)` | OPEN |
+| 58 | MEDIUM | `swift-windows/Tests/Windows Kernel Tests/Windows.Kernel.Glob Tests.swift` | Windows mirror of #57 | OPEN |
 
-1. **`.scope()` as symptom**: 16 of the 24 source-level findings (findings #15–24, #21–24, #33–34) wrap `Kernel.Path.scope()` internally. Each `.scope()` call is a typed-path conversion that should have happened at the API boundary. The scope call is the conversion *escape hatch* — its presence inside a function body signals that the parameter type is too weak.
+### False Positives / Legitimate String Usage (Unchanged from 2026-03-31)
 
-2. **Test helper duplication**: `Kernel.Temporary.directory`, `Kernel.Temporary.filePath(prefix:)`, and `cleanup(path:)` appear in three separate test support directories (swift-iso-9945, swift-kernel, swift-file-system) with identical String-based signatures. A single typed test helper would eliminate all three.
+8 entries remain valid: `Source.File.filePath`, `Source.Location.filePath`, `Kernel.Glob.Error` path fields, `Kernel.Glob.Pattern.init(_ pattern: String)`, `Test.Snapshot.Result` path fields, `Test.Snapshot.Diff.Result.StructuralOperation`, `Darwin.Loader.Image.pathString(at:)`, `Kernel.File.Write.randomToken`/`hexEncode`.
 
-3. **Glob pipeline end-to-end**: The POSIX/Windows Glob APIs accept `directory: Swift.String` and yield `body: (Swift.String) -> Void`. The entire traversal pipeline — directory entry, path concatenation, match filtering — operates on `Swift.String`. The prior research inventory counted this as the largest single cluster of String-as-path usage.
+### Systemic Patterns (Refreshed)
 
-4. **Error type coupling**: `Kernel.File.Write.Atomic.Error` stores paths as `Swift.String` because the internal functions that populate those errors (findings #15–24) traffic in String. Fixing the internal pipeline automatically enables typed error fields.
+1. **`.scope()` as symptom** (still active): The relocated `File.System.Write+Shared.swift` wraps `Kernel.Path.scope()` inside `fileExists`, `atomicRename`, `syncDirectory`.
 
-5. **Layer-correct types**: L2 (swift-iso-9945) should use `Kernel.Path` / `Kernel.Path.View`. L3 (swift-foundations) should use `Paths.Path` / `File.Path` at public boundaries and may use `Kernel.Path.View` at syscall boundaries. No L3 type should appear at L1 or L2.
+2. **Test helper duplication** (still active): `Kernel.Temporary` appears in three locations (swift-iso-9945, swift-kernel, swift-file-system) with identical String-based signatures.
 
-6. **Missing L1 path decomposition**: `Kernel.File.Write` needs path decomposition (parent directory, filename extraction) but `path-primitives` (L1) only provides `Path`, `Path.View`, and `Path.String.Scope` — no `.parent`, `.lastComponent`, or `.appending`. This forces the internal pipeline to convert to `Swift.String` for manipulation, then convert back via `Kernel.Path.scope()` at each syscall. The decomposition primitives should exist at L1.
+3. **Glob pipeline** (partially resolved): POSIX glob directory parameter now `borrowing Kernel.Path.View` (2026-04-13). Callback yield and Windows glob still String.
 
-### Architectural Decision: Path Decomposition at L1
+4. **Error type coupling** (still active): `File.System.Write.Atomic.Error` (relocated from `Kernel.File.Write.Atomic.Error`) stores paths as `Swift.String`.
 
-**Context**: swift-kernel depends on `swift-kernel-primitives` which re-exports `path-primitives` (L1). swift-kernel MUST NOT depend on `swift-paths` (L3) — it has 10 L3 dependents and the fan-out would be inappropriate. swift-kernel MUST NOT use `Swift.String` for internal path manipulation.
+5. **Layer-correct types** (still active): L2 → `Kernel.Path`/`Kernel.Path.View`; L3 → `Paths.Path`/`File.Path` at public boundaries.
 
-**Decision**: Add path decomposition primitives to `swift-path-primitives` (L1). Single implementation at L1; `Paths.Path` (L3) delegates to it — no double implementations.
+6. **Missing L1 decomposition** (**PARTIALLY RESOLVED**): `Path.Protocol` (L1) now provides `parent`/`component`/`appending`. POSIX conformance ships via `swift-iso-9945`. Windows conformance pending. Consumers have not yet adopted.
 
-**Design**: Following `string-primitives` pattern. `Path.View` is `pointer + count` (~Copyable, ~Escapable). Decomposition on View returns **sub-views** (different pointer+count over the same backing bytes) — zero allocation. Owned `Path` allocated only when ownership is needed.
+### Architectural Decisions (Preserved + Updated)
 
-**L1 primitives needed**:
+**Decision 1 — Path decomposition at L1** (2026-03-31, IMPLEMENTED for POSIX):
 
-| Primitive | On | Returns | Allocates? | Purpose |
-|-----------|-----|---------|------------|---------|
-| `parent` | `Path.View` | `Path.View` | No — sub-view | Parent directory (up to last separator) |
-| `lastComponent` | `Path.View` | `Path.View` | No — sub-view | Filename (after last separator) |
-| `appending(_: borrowing Path.View)` | `Path.View` | `Path` (owning) | Yes — new buffer | Joins with platform separator |
+`Path.Protocol` declares the algebra (`parent`/`component`/`appending`); platform packages provide conformances. POSIX → `swift-iso-9945` (`ISO 9945 Kernel File` sub-target); Windows → `swift-windows-primitives` (pending).
 
-**Why sub-views**: `Path.View` is `pointer + count`, ~Escapable. `parent` returns a view with the same pointer but shorter count (up to the last separator). `lastComponent` returns a view with an advanced pointer and shorter count. Both borrow the same backing bytes — zero allocation. The caller explicitly opts into allocation when ownership is needed: `Path(copying: view.parent)`.
+**Decision 2 — Phase 4b approach revision** (2026-04-08):
 
-**Temp path construction**: Single allocation via `appending`. `parent.appending(tempComponent)` allocates one buffer: parent bytes + separator + component bytes + terminator. The random token in the component name is the only unavoidable String → bytes conversion.
+Original plan: `Paths.Path` delegates to L1 by importing `swift-iso-9945`. Rejected — pulls 6 transitive deps for trivial separator scanning. **Approved approach**: `Paths.Path` operates directly on its `[Char]` storage with byte scanning. Same algebra, different representation, no protocol indirection.
 
-**Error type path fields**: `Swift.Error` requires `Copyable`, so error enum cases cannot store ~Copyable `Path`. Error path fields remain `Swift.String` for display. This is consistent with `Kernel.Glob.Error` which documents the same design choice.
+**Decision 3 — Phase 4c uses Paths.Path, not Kernel.Path.View** (2026-04-16):
 
-**Blast radius**: Zero direct consumers of `Kernel.File.Write.Atomic` / `Kernel.File.Write.Streaming` found outside swift-kernel. The `File.System.Write.Atomic` → `Kernel.File.Write.Atomic` delegation is the only call site. No consumer migration needed.
+Atomic-write code relocated to L3 `swift-file-system` (2026-04-09). The original rationale ("swift-kernel must not depend on swift-paths") is moot at L3. `File.System.Write` already imports `swift-paths` (defines `File.Path = Paths.Path`). **Decided**: Phase 4c internal pipeline uses `Paths.Path` throughout. Decomposition via `.parent`/`.appending` (Phase 4b byte scanning). Syscall access via `.kernelPath` (zero-alloc on POSIX). This eliminates the need to import the L2 POSIX conformance for `Kernel.Path.View.parent`. **Consequence**: Phase 4b must land before Phase 4c.
 
-**Layer responsibilities**:
+**Layer responsibilities** (updated for atomic-write relocation):
 
 | Layer | Package | Responsibility | Path Type |
 |-------|---------|---------------|-----------|
-| L1 | path-primitives | Byte-level decomposition (sub-views) + construction (appending) | `Path` (~Copyable), `Path.View` (~Escapable) |
-| L1 | kernel-primitives | Syscall wrappers, re-exports path-primitives | `Kernel.Path`, `Kernel.Path.View` |
-| L3 | swift-kernel | Composed kernel operations (atomic write, streaming write) | `Kernel.Path.View` internally, no String |
-| L3 | swift-paths | Copyable wrapper, delegates decomposition to L1 | `Paths.Path` (Copyable, Sendable) |
-| L3 | swift-file-system | User-facing file API, delegates to swift-kernel | `File.Path` (= `Paths.Path`) |
+| L1 | path-primitives | Decomposition algebra (`Path.Protocol`) + construction | `Path` (~Copyable), `Path.View` (~Escapable) |
+| L2 | swift-iso-9945 | POSIX conformance (`0x2F` scanning) | `Path.View` conforms `Path.Protocol` |
+| L3 | swift-file-system | Atomic/streaming write (**relocated** from swift-kernel 2026-04-09) | Currently `Swift.String` pipeline |
+| L3 | swift-paths | Copyable user-facing wrapper | Currently String-based decomposition |
 
-**Consequence for `Kernel.File.Write`**: The internal String pipeline (`resolvePaths`, `posixParentDirectory`, `fileName(of:)`, etc.) is replaced by L1 path decomposition. `Kernel.Path.scope()` happens once at the public API boundary; the internal pipeline operates on `Kernel.Path` / `Kernel.Path.View` throughout. Parent extraction is zero-alloc (sub-view). Temp path construction is one allocation (appending).
+### Remaining Tasks (Prioritized)
 
-**Consequence for `Paths.Path`**: Current `.parent`, `.lastComponent`, `.components`, `.appending()` in swift-paths are replaced with delegation to L1 primitives. `Paths.Path.parent` calls the L1 `Path.View.parent` on its internal storage, wraps the result in a new `Paths.Path`. No double implementations.
+**P0 — Architectural keystone** (unblocks Windows consumers)
+1. **Phase 4a Windows conformance** — `swift-windows-primitives/.../Windows.Kernel.Path.View+Path.Protocol.swift`. Dual separator (`/` and `\`), drive letters, UNC.
 
-**Consequence for Glob pipeline**: swift-posix and swift-windows depend on `swift-kernel-primitives` (L1) which re-exports path-primitives. The Glob APIs can use `Kernel.Path.View` for the directory parameter and yield `Kernel.Path` for matched paths. L1 decomposition (parent, lastComponent, appending) is available for directory traversal.
+**P1 — Highest impact, lowest risk**
+2. **Phase 4b — Paths.Path direct byte scanning** (~50 lines in `Path.Navigation.swift`). No new deps. Eliminates 3 allocations + UTF-8 round-trip per `parent`/`appending` call. Scope: `parent`, `appending(Component)`, `appending(Path)`, `appending(String)`. Defer `lastComponent`/`components` (semantic mismatch with L1).
 
-### Relationship to Prior Research
+**P2 — Pipeline elimination**
+3. **Phase 4c — File.System.Write pipeline migration**. Replace `Swift.String` in `File.System.Write+Shared.swift` with `Paths.Path`. Delete `resolvePaths`, `*ParentDirectory`, `fileName(of:)`, `normalizeWindowsPath`. Use `.parent`/`.appending` for decomposition, `.kernelPath` at syscall boundaries. **Depends on P1 (Phase 4b).**
 
-This audit verifies the current state against the inventory and decisions in [string-path-type-inventory-file-system.md](string-path-type-inventory-file-system.md) v3.0 (2026-03-19). That research identified 93 Category A symbols (String in non-display API signatures). Since then, partial implementation has reduced the count:
+**P3 — Public API typed boundaries**
+4. **Phase 1 — POSIX Glob callback yield**: `(Swift.String) -> Void` → typed path yield.
+5. **Phase 1 — Windows Glob**: mirror POSIX migration (after P0).
+6. **Phase 2 — Windows.Loader**: `open(path: borrowing Kernel.Path)`. File at `swift-microsoft` superrepo.
+7. **Phase 3 — Test.Reporter, Source.Cache**: typed `File.Path` parameters.
 
-| Already resolved (post-inventory) | Mechanism |
-|-----------------------------------|-----------|
-| `Path.Component` in navigation APIs | Replaced `String` parameters |
-| `Path.Component.Extension` / `.Stem` | New validated types |
-| `File.Directory.init(validating:)` | Explicit String→Path conversion point |
-| `File.init(_ path: File.Path)` | Typed path in public API |
-| Glob callback-based API | Internal refactor (String still in public API) |
+**P4 — Test infrastructure**
+8. **Phase 5 — Test helper unification**: collapse three `Kernel.Temporary` copies.
 
-**Remaining**: 35 source findings + 38 test findings = 73 total. The bulk of the remaining work is the Glob pipeline (findings #3–8), the `Kernel.File.Write` internals (#15–24), and the test helper unification (#32–58).
-
-### Remediation Plan
-
-#### Phase 1: Public API — Glob Pipeline (findings #3–8)
-
-Highest impact. Depends on Phase 4a (L1 decomposition). swift-posix and swift-windows depend on `swift-kernel-primitives` which re-exports `path-primitives` — L1 path types are available.
-
-```swift
-// Before
-public static func match(pattern: Pattern, in directory: Swift.String, ..., body: (Swift.String) -> Void)
-
-// After
-public static func match(pattern: Pattern, in directory: borrowing Kernel.Path.View, ..., body: (borrowing Kernel.Path.View) -> Void)
-```
-
-Internal helpers (`matchSegments`, `pathExists`, `isDirectory`) use L1 `Kernel.Path.View` for directory parameters and L1 `appending` for path construction during traversal.
-
-**Blast radius**: `File.Directory.Glob` in swift-file-system is the primary consumer. Already callback-based internally per prior research implementation.
-
-#### Phase 2: Public API — Windows.Loader (findings #1–2)
-
-```swift
-// Before
-public static func open(path: String) throws(Loader.Error) -> Handle
-
-// After
-public static func open(path: borrowing Kernel.Path) throws(Loader.Error) -> Handle
-```
-
-Matches `Windows.Kernel.File.Open` which already uses `borrowing Kernel.Path`.
-
-#### Phase 3: Public API — Test.Reporter + Source.Cache (findings #9–14)
-
-```swift
-// Test.Reporter: String → File.Path
-public static func json(to path: File.Path? = nil) -> Test.Reporter
-public static func structured(to path: File.Path) -> Test.Reporter
-
-// Source.Cache: String → File.Path as key
-internal var _loaded: [File.Path: [UInt8]]
-```
-
-#### Phase 4: L1 Path Decomposition + Kernel.File.Write Migration (findings #15–24, #25–31)
-
-Three sub-phases, bottom-up:
-
-**Phase 4a: Add path decomposition as platform extensions on `Path.View`**
-
-Per [PLAT-ARCH-008c], decomposition methods live in platform packages — NOT in `swift-path-primitives` with `#if os()`. `Path.View` is visible in platform packages via the `Kernel_Primitives` re-export chain. Each platform package extends `Path.View` with `parentBytes`, `lastComponentBytes`, `appending`. No conditional compilation inside the implementations — the package boundary is the platform boundary.
-
-| Platform | Package | File |
-|----------|---------|------|
-| POSIX | `swift-iso-9945` | `ISO 9945.Kernel.Path.Navigation.swift` |
-| Windows | `swift-windows-primitives` | `Windows.Kernel.Path.Navigation.swift` |
-
-`swift-path-primitives` adds only `Path.init(_ span: Span<Char>)` — platform-agnostic allocation from a `Span` sub-view.
-
-`parentBytes` and `lastComponentBytes` return zero-alloc `Span<Char>` sub-views. `appending` returns owned `Path` (one allocation). Windows handles UNC paths (`\\server\share`), drive letters (`C:\`), and dual separators (`/` and `\`). Oracle: `Paths.Path.Navigation.swift` + `Kernel.File.Write+Shared.swift`.
-
-**Phase 4b: Migrate `Paths.Path` decomposition to delegate to L1**
-
-Current `Paths.Path.parent`, `.lastComponent`, `.components`, `.appending()` in swift-paths reimplement separator scanning on `Swift.String`. Replace with delegation to L1 primitives — `Paths.Path.parent` calls `Path.View.parent` on its internal storage, wraps the result in a new `Paths.Path`.
-
-**Sequencing**: 4b should follow 4a after the L1 primitives are verified by tests and by Phase 4c. The existing swift-paths implementation is working and tested; replacement should be incremental.
-
-**Phase 4c: Replace String pipeline in `Kernel.File.Write` with L1 path types**
-
-`Kernel.File.Write.Atomic` and `Kernel.File.Write.Streaming` stay in swift-kernel. The delegation from `File.System.Write.Atomic` → `Kernel.File.Write.Atomic` stays. What changes is the **internal pipeline**:
-
-```swift
-// Before (String pipeline):
-let (resolved, parent) = resolvePaths(pathString)           // String → String
-let baseName = fileName(of: dest)                            // String → String
-let tempPath = "\(parent)/.\(baseName).atomic.\(pid).tmp"   // String interpolation
-try Kernel.Path.scope(tempPath) { ... }                      // String → Kernel.Path at each syscall
-
-// After (L1 path pipeline):
-let parent = path.parent                                     // Kernel.Path.View → Kernel.Path
-let baseName = path.lastComponent                            // Kernel.Path.View → Kernel.Path
-let tempPath = parent.view.appending(tempComponent.view)     // L1 path construction
-try Kernel.File.Open.open(path: tempPath.view, ...)          // Kernel.Path.View at syscall — no .scope()
-```
-
-**Deletions from swift-kernel**:
-- `resolvePaths`, `normalizeWindowsPath`, `posixParentDirectory`, `windowsParentDirectory`, `fileName(of:)` — replaced by L1 primitives
-- `fileExists(_ pathString: String)` → `fileExists(_ path: borrowing Kernel.Path.View)`
-- `atomicRename(from: String, to: String)` → uses `Kernel.Path.View` directly
-- `syncDirectory(_ pathString: String)` → uses `Kernel.Path.View` directly
-- All `Kernel.Path.scope()` calls inside function bodies — eliminated
-
-**Error types**: `Kernel.File.Write.Atomic.Error` path fields change from `Swift.String` to `Kernel.Path` (or remain String for display — design decision at implementation time). The `File.System.Write.Atomic` type aliases continue to work.
-
-This phase resolves all 17 findings (#15–31) by replacing the String pipeline with L1 typed paths.
-
-#### Phase 5: Test Helpers (findings #32–58)
-
-Test helpers at each layer should use the layer-appropriate path type:
-
-- **L2 tests (swift-iso-9945)**: Use `Kernel.Path.View` with scoped patterns (`withTempFile { path, fd in }`). The existing scoped helpers in swift-kernel's test support already demonstrate this pattern.
-- **L3 tests (swift-foundations)**: Use `File.Path` (= `Paths.Path`). `ExpressibleByStringLiteral` gives ergonomic literal syntax. Runtime-constructed paths use `File.Path(stringValue)` or string interpolation.
-
-Unify duplicated helpers (3 copies of `Kernel.Temporary`) into layer-appropriate test support.
-
-#### Phase 6: Error Types (findings #25–31)
-
-Depends on Phase 4c. Once the internal pipeline uses `Kernel.Path` / `Kernel.Path.View`, error cases can store typed paths instead of `Swift.String`. Design decision at implementation time: typed path for programmatic access vs. `.string` for display ergonomics.
+**P5 — Cleanup (depends on P2)**
+9. **Phase 6 — Error type path fields** (carried DEFERRED).
 
 ### Summary
 
-58 findings: 0 critical, 10 high, 41 medium, 7 low (deferred).
+58 original findings. **Current status**: 2 RESOLVED (findings #3, #5 — POSIX glob directory parameter). 49 OPEN. 7 DEFERRED carried forward. 10 findings relocated from swift-kernel to swift-file-system (pipeline unchanged).
 
-**Systemic root cause**: Path decomposition was missing at L1. `path-primitives` provides `Path` and `Path.View` but no `.parent`, `.lastComponent`, or `.appending`. This forced `Kernel.File.Write` to convert to `Swift.String` for path manipulation, and forced `Paths.Path` (L3) to reimplement decomposition. The fix is bottom-up: add decomposition to L1, then both swift-kernel and swift-paths delegate to the single implementation.
+**Progress since 2026-03-31**: Phase 4a (POSIX) complete — L1 `Path.Protocol` shipped. POSIX glob directory parameter migrated. Everything else unstarted; swift-kernel → swift-file-system relocation moved the String pipeline without altering it.
 
-**Key insight**: 16 of 24 source findings contain `Kernel.Path.scope()` calls inside function bodies. Each `.scope()` is a smoking gun: it proves the function receives a path-as-String and must convert before the syscall. The architectural decision to relocate composed write operations to swift-file-system eliminates the entire String pipeline — `Paths.Path` provides typed decomposition, and `.kernelPath` provides zero-alloc syscall access.
+**Key architectural decision**: `File.System.Write` (now L3) will consume `Paths.Path` directly for Phase 4c, using `.kernelPath` for zero-alloc syscall access. Phase 4b (byte scanning in `Paths.Path`) must land first.
 
-**Architectural principle**: Path decomposition is an L1 primitive. Single implementation in `swift-path-primitives`; `Paths.Path` (L3) delegates to it. swift-kernel uses L1 path types internally — no `Swift.String`, no L3 dependency. The delegation chain `File.System.Write.Atomic` → `Kernel.File.Write.Atomic` → kernel syscall primitives stays intact; what changes is that String exits the internal pipeline entirely.
+<!-- END Path Type Compliance -->
 
 ## Pre-Publication — 2026-04-02
 
@@ -1292,3 +1193,154 @@ swift-iso-32000 imports Foundation in `12.8 Digital signatures.swift`. Foundatio
 
 277 findings across 7 packages: 45 critical, 122 high, 76 medium, 27 low.
 Dominant patterns: multi-type files (all 7), compound identifiers (5/7), methods in type bodies (6/7), Codable bare throws (systemic).
+
+---
+
+## Corpus Meta-Analysis — 2026-04-16
+
+### Scope
+
+- **Target**: Research corpus, experiments, reflections, blog pipeline, and index files across swift-institute, swift-primitives, swift-standards, swift-foundations, rule-law, swift-nl-wetgever
+- **Skill**: corpus-meta-analysis — [META-001]..[META-026]
+- **Basis**: Re-audit of the 30 action items (P0–P3) from the 2026-04-08 full corpus sweep, verified against current ecosystem state after 8 days of heavy activity (reflection-processing pass on 2026-04-11, audit relocation to `Audits/` on 2026-04-13, Swift 6.3 revalidation, pre-alpha readiness passes).
+- **Work artifact**: `swift-institute/Research/_work/meta-analysis-audit-2026-04-16.md` (detailed item-by-item evidence)
+
+### Resolution Since 2026-04-08
+
+| Priority | Items | Resolved | Partial | Open |
+|----------|-------|----------|---------|------|
+| P0 (status corrections) | 15 | 9 | 0 | 6 |
+| P1 (triage decisions) | 11 | 11 | 0 | 0 |
+| P2 (corpus maintenance) | 4 | 1 | 0 | 3 |
+| P3 (strategic) | 3 | 0 | 0 | 3 |
+| **Total** | **33** | **21** | **0** | **12** |
+
+Resolution rate: **64%** of action items resolved in 8 days. Biggest wins: reflections backlog drained from 46 pending to 6 (40 processed + 7 research stubs per commit d21c397); all 6 experiment-triage items carry explicit Result/Revalidation lines; swift-foundations/Experiments/_index.md created; `soort-of-aanduiding` frontmatter/body mismatch resolved.
+
+### Findings (Remaining Tasks)
+
+Only OPEN findings are listed. RESOLVED items are tracked in the work artifact and omitted here per [AUDIT-005].
+
+| # | Severity | Rule | Location | Finding | Status |
+|---|----------|------|----------|---------|--------|
+| 1 | MEDIUM | [META-003] | swift-institute/Research/benchmark-implementation-conventions.md | Recommendations absorbed into `benchmark` skill ([BENCH-001..009]); still carries `status: RECOMMENDATION`. Should be SUPERSEDED. | RESOLVED 2026-04-16 — status: SUPERSEDED, superseded_by benchmark skill [BENCH-001..009] |
+| 2 | MEDIUM | [META-003] | swift-institute/Research/agent-handoff-patterns.md | Recommendations absorbed into `handoff` skill ([HANDOFF-*]); still `status: RECOMMENDATION`. | RESOLVED 2026-04-16 — status: SUPERSEDED, superseded_by handoff skill [HANDOFF-001..016] |
+| 3 | MEDIUM | [META-003] | swift-institute/Research/generalized-audit-skill-design.md | Recommendations absorbed into `audit` skill ([AUDIT-001..016]); still `status: RECOMMENDATION`. | RESOLVED 2026-04-16 — status: SUPERSEDED, superseded_by audit skill [AUDIT-001..019] (skill grew to 019) |
+| 4 | MEDIUM | [META-003] | swift-primitives/Research/intra-package-modularization-patterns.md | 13 patterns absorbed into `modularization` skill ([MOD-001..014]); still `status: RECOMMENDATION`. | RESOLVED 2026-04-16 — status: SUPERSEDED, superseded_by modularization skill [MOD-001..016] (skill grew to 016) |
+| 5 | MEDIUM | [META-003] | swift-primitives/Research/modularization-theoretical-foundations.md | Literature foundations absorbed into `modularization` skill rationale; still `status: RECOMMENDATION`. | RESOLVED 2026-04-16 — status: SUPERSEDED, superseded_by modularization skill rationale |
+| 6 | MEDIUM | [META-003] | swift-primitives/Research/bounded-index-precondition-elimination.md | Core recommendations absorbed into `implementation` skill ([IMPL-050..053]); still `status: RECOMMENDATION`. | RESOLVED 2026-04-16 — status: SUPERSEDED, superseded_by implementation skill [IMPL-050..053] |
+| 7 | MEDIUM | [META-002] | rule-law/Research/aandeelhoudersregister-comparative-analysis.md | No YAML frontmatter `status:` field. Body indicates RECOMMENDATION or DECISION. | RESOLVED 2026-04-16 — frontmatter added: status: RECOMMENDATION (priority action items + do-not-bring-forward lists indicate recommendation, not yet decided) |
+| 8 | MEDIUM | [META-002] | swift-nl-wetgever/Research/conclusion-types-converged-plan.md | No frontmatter `status:` field. Title ("Converged Plan") suggests DECISION. | RESOLVED 2026-04-16 — frontmatter added: status: DECISION; companion field points at the discussion transcript |
+| 9 | MEDIUM | [META-002] | swift-nl-wetgever/Research/conclusion-types-discussion-transcript.md | No frontmatter `status:` field. Discussion reached convergence; classify as supporting material or DECISION. | RESOLVED 2026-04-16 — frontmatter added: status: INFO (transcript is supporting material; converged plan is the canonical decision artifact) |
+| 10 | MEDIUM | [META-008] | swift-institute/Research/_index.md | 6 research docs missing from index: apple-http-api-proposal-patterns.md, apple-http-middleware-chain-isolation.md, apple-http-outputspan-writer-pattern.md, apple-http-withclient-scoped-pattern.md, claurst-analysis.md, claurst-rust-patterns.md. (Re-verify — may have been addressed during audit relocation.) | RESOLVED 2026-04-16 — re-verified, all 6 entries already present in index (added incidentally between 2026-04-08 and 2026-04-16) |
+| 11 | MEDIUM | [META-008] | swift-institute/Experiments/_index.md | 6 experiments missing from index (2026-04-08): async-closure-noncopyable-escaping, async-let-typed-throws, callasfunction-noncopyable-consuming-sending, mutablespan-async-read, sending-vs-sendable-structured-concurrency, span-async-parameter. Re-verify. | RESOLVED 2026-04-16 — re-verified, all 6 entries already present in index |
+| 12 | MEDIUM | [META-008] | swift-primitives/Research/_index.md | 2 research docs missing: linked-list-cursor-and-arena-backing-improvements.md, linked-list-theoretical-perfect.md. Re-verify. | RESOLVED 2026-04-16 — both entries added to index between kernel-atomic-memory-ordering and linux-io-uring-api-reference |
+| 13 | MEDIUM | [META-008] | swift-primitives/Experiments/_index.md | 2 experiments missing: link-topology-element-free, sendable-noncopyable-conditional-conformance. Re-verify. | RESOLVED 2026-04-16 — both entries added to index after optional-take-sending-region-isolation |
+| 14 | MEDIUM | [META-015] | swift-institute/Audits/audit.md → Memory Safety section | Audit finding #7 (13 swift-foundations packages missing `.strictMemorySafety()`) was RESOLVED per Phase 2 verification, but the Memory Safety section still marks it OPEN. Update the section's status. | RESOLVED 2026-04-16 — Memory Safety finding #7 marked RESOLVED in-section; summary updated |
+| 15 | MEDIUM | [META-015] | swift-institute/Audits/audit.md → Variant Naming section | Findings #1–7 (7 types named "Fixed" should be "Bounded"): `Queue.Bounded.swift` now exists alongside `Queue.Fixed.swift`. Section does not reflect the partial rename in progress. | RESOLVED 2026-04-16 — Variant Naming section now carries a "Partial Progress" subsection documenting the Static/Bounded/Fixed tripartite evolution |
+| 16 | MEDIUM | [META-015] | swift-institute/Research/swift-6.3-ecosystem-opportunities.md | Claim: "36 `_deinitWorkaround` sites pending #86652 verification". The related `value-generic-nested-type-bug` experiment is FIXED 6.2.4 per its Revalidation header. Back-propagate: verify whether some or all 36 sites can now be removed. | RESOLVED 2026-04-16 — bugs are distinct (value-generic nested types vs `@_rawLayout` deinit IR domination). #86652 still broken in 6.3 per `swift-6.3-revalidation-status.md`; 36 sites must remain. Re-evaluation note appended to doc. |
+| 17 | MEDIUM | [META-015] | swift-institute/Research/feature-flags-assessment.md | CoroutineAccessors WAIT recommendation predates the `noncopyable-accessor-incompatibility` FIXED 6.2.4 result. Re-evaluate whether WAIT still applies. | RESOLVED 2026-04-16 — WAIT verdict is grounded in absence of SE proposal + `FUTURE` availability gate, both unaffected by the 6.2.4 ~Copyable accessor fix. CoroutineAccessors not listed as fixed in 6.3 revalidation status. Re-evaluation note appended to doc; verdict unchanged. |
+| 18 | MEDIUM | [META-026] | swift-institute/Experiments/{consuming-iteration-pattern,noncopyable-access-patterns,foreach-consuming-accessor} | CLAIM-001..005 IDs are not globally unique — reused across experiments with different meanings (V01: "Iterator deinit cleanup"; V02/V03: "consuming can consume original container"). Define a namespacing convention (e.g., `[CLAIM-EXP-NAME-001]`) or deprecate if unused. | OPEN |
+| 19 | LOW | [META-012] | swift-institute/Blog/_index.md | 6 blog ideas captured 2026-01-23/24 are labeled "Stalled 80 days — needs writer assignment" (BLOG-IDEA-007, 010, 014, 024, 025, 026). Explicit labeling is acknowledgment but not triage. Decide: draft, demote to "Needs More Context", or archive. | OPEN |
+| 20 | LOW | [META-018] | swift-institute/Research/discrete-scaling-morphisms.md | RECOMMENDATION for cross-domain scaling factor type design has no experimental validation of API ergonomics or type-checker behavior. Spawn experiment if recommendation will inform type infrastructure. | OPEN |
+| 21 | LOW | [META-016] | swift-institute/Research/benchmark-*.md cluster | 6-document benchmark cluster is a consolidation candidate once `benchmark-inline-strategy.md` (IN_PROGRESS) resolves. Non-urgent. | OPEN |
+| 22 | LOW | [AUDIT-002] | swift-institute/Audits/audit.md | Per updated [AUDIT-002], ecosystem-wide audits should be standalone files with descriptive slugs, not sections in `audit.md`. The 6 pre-existing sections + this section predate the convention change. Consider migrating ecosystem sweeps to standalone files, or treat this `audit.md` as the meta-repo's own superrepo audit file. | OPEN |
+
+### Known Deviations
+
+| Pattern | Items | Status | Reason |
+|---------|-------|--------|--------|
+| P1 triage status "stronger than recommended" | next-steps-parsers (→DECISION), developer-tool-package-architecture (→DECISION), primitives-public-api-graph-analysis (→RECOMMENDATION), knowledge-encoding (→RECOMMENDATION) | ACCEPTED | Three IN_PROGRESS docs were promoted to DECISION/RECOMMENDATION rather than the recommended DEFERRED. This is a stronger, not weaker, outcome — finding recommendation was treated as a minimum, not a ceiling. |
+| `document-infrastructure-ergonomic-audit.md` | Missing | DELETED 2026-04-14 | File removed in commit a774bac (321 lines). Item 5b from 2026-04-08 report closed by deletion. |
+| No version tags in any superrepo | [META-025] | DEFERRED | Pre-alpha — first release not yet cut. Discovery coverage check N/A until first tag. |
+| ASSUMP-* namespace unused | [META-026] | INFO | Namespace defined but has zero uses ecosystem-wide. Keep or formally deprecate on next sweep. |
+
+### Phase 2 Resolution (2026-04-16, same-day)
+
+17 of the 22 listed findings resolved later on 2026-04-16 per `HANDOFF-corpus-meta-analysis.md`:
+
+| Block | Findings | Outcome |
+|-------|----------|---------|
+| Back-propagation of 6.2.4 fixes | 14, 15, 16, 17 | RESOLVED — Memory Safety #7 marked RESOLVED in-section, Variant Naming gained Partial Progress note, swift-6.3-ecosystem-opportunities + feature-flags-assessment got re-evaluation notes (verdicts unchanged) |
+| Skill-absorption supersession | 1–6 | RESOLVED — 6 docs flipped to `status: SUPERSEDED` with `superseded_by:` pointing at the absorbing skill |
+| Legal-domain frontmatter | 7–9 | RESOLVED — frontmatter blocks added (RECOMMENDATION / DECISION / INFO) |
+| Index freshness | 10–13 | RESOLVED — findings 10, 11 already incidentally in index; findings 12, 13 added (4 new entries) |
+
+5 findings remain OPEN by design (LOW priority, out of scope per handoff): 18 (CLAIM-* namespacing), 19 (BLOG-IDEA stalled triage), 20 (discrete-scaling-morphisms experiment), 21 (benchmark-* cluster consolidation candidate), 22 (ecosystem-wide audit placement migration).
+
+### Summary
+
+22 remaining findings: 0 critical, 0 high, 18 medium, 4 low.
+
+Dominant patterns:
+1. **Incomplete skill-absorption supersession** (6/22): 6 of 10 research documents whose recommendations were absorbed into skills still carry `status: RECOMMENDATION`. The "design" docs for skills (skill-creation, readme-skill, collaborative-llm, session-reflection) were correctly marked SUPERSEDED; process/architecture docs (benchmark, handoff, audit, modularization ×3, bounded-index) were not.
+2. **Missing frontmatter on legal-domain docs** (3/22): 3 documents in rule-law/swift-nl-wetgever still lack `status:` frontmatter. The convention is less consistently enforced in legal corpus.
+3. **Index freshness drift** (4/22): 16 total missing entries across 4 `_index.md` files flagged on 2026-04-08 — need re-verification after audit-relocation activity. Some may have been addressed incidentally.
+4. **Unpropagated toolchain-fix consequences** (3/22 in [META-015]): Three bugs fixed in Swift 6.2.4 (accessor incompatibility, value-generic nested type, workaround sites) have corresponding Result updates on experiments but have not been back-propagated to the RECOMMENDATION documents that cited them as blockers.
+5. **Ecosystem-wide audit placement** (1/22): Per updated [AUDIT-002], ecosystem-wide audits should be standalone descriptive-slug files, not sections in `audit.md`. This section and the 6 pre-existing sections predate the convention. Low-priority migration candidate.
+
+**Verdict**: Corpus is in better shape than it was 8 days ago. The P1 triage layer is fully cleared, the reflections backlog is functionally drained (6 pending, all today's), and the experiment-result layer is fully consistent. Remaining work is largely mechanical: 6 status updates, 3 frontmatter additions, 4 index re-verifications, and 3 back-propagation passes. No CRITICAL or HIGH findings remain.
+
+---
+
+## Xylem Lessons — Cross-Package Assignment — 2026-04-16
+
+### Scope
+
+- **Assignment**: Apply parsing lessons from `compnerd/xylem` to the ecosystem's parser/lexer stack
+- **Packages touched**: swift-lexer-primitives (L1), swift-text-primitives (L1), swift-parsers (L3), swift-lexer (L3)
+- **Skills checked**: code-surface, implementation, memory-safety, existing-infrastructure
+- **Provenance**: Comparative analysis of xylem's XML.Lexer vs our parser/lexer primitives (2026-04-08)
+
+### Per-Package Triage
+
+| Package | Findings | Worst Open | Status |
+|---------|----------|-----------|--------|
+| swift-lexer-primitives | 2 low (1 deferred, 1 cosmetic) | LOW | Functional — scanner operational, 25 tests pass |
+| swift-lexer (foundation) | 0 | — | CLEAN — `Lexer.tokenize` entry point + 6 tests |
+| swift-parsers | 0 open (5 resolved) | — | CLEAN — classification routed through `ASCII.Classification` |
+| swift-text-primitives | 2 low (both deferred) | LOW | Functional — `Text.Location.Tracker` operational, 58 tests pass |
+
+### Completed Lessons
+
+| # | Lesson | Delivered | Key Commit |
+|---|--------|-----------|-----------|
+| 1 | Span-based `~Copyable, ~Escapable` scanner | `Lexer.Scanner` in swift-lexer-primitives | `be0dc0c` |
+| 2 | `[IMPL-042]` Failure==Never specialization | Rule added to /implementation skill | N/A (skill update) |
+| 3 | Route classification through `ASCII.Classification` | 6 swift-parsers files, net -25 lines | `09151a2` |
+| 5 | `Text.Location.Tracker` (amortized line/column) | New type in swift-text-primitives | `1b06d5c` |
+| — | L3 `Lexer.tokenize` entry point | `Lexer.Tokenized` + `Lexer.tokenize(_: Span<UInt8>)` | `1684120` |
+| — | Package.swift path fix in swift-lexer | `../` → `../../` matching swift-parsers convention | `1684120` |
+
+### Outstanding Work
+
+| # | Lesson | Scope | Dependency | Priority |
+|---|--------|-------|-----------|----------|
+| 5b | Wire `Text.Location.Tracker` into `Lexer.Scanner` | swift-lexer-primitives | None (Tracker exists) | MEDIUM — enables per-token live position |
+| 4 | SIMD/SWAR tiered bulk scanning | New primitives package or extension of parser-primitives | Benchmark harness (`/benchmark` skill) | HIGH impact, benchmark-gated |
+| 6 | Flat `Lexer.Buffer` for packed token streams | swift-lexer-primitives or swift-lexer | Scanner functional | LOW — most consumers don't materialize token streams |
+| 7 | Expand Token.Kind coverage | swift-lexer-primitives | Scanner functional | MEDIUM — hex/binary/octal literals, string interpolation, `#if` directives, prefix/postfix operator disambiguation |
+| — | Align `ASCII.Byte.` → `.ascii.` in lexer-primitives | swift-lexer-primitives | None | LOW — cosmetic consistency with swift-parsers |
+
+### Deferred Infrastructure Gaps (cross-cutting)
+
+| Gap | Location | Impact |
+|-----|----------|--------|
+| No `Int(bitPattern: some Ordinal.Protocol)` overload | swift-ordinal-primitives | 3 boundary methods in Lexer.Scanner need `.rawValue` extraction |
+| No typed increment on `Text.Line.Number` | swift-text-primitives | `Text.Location.Tracker.newline(at:)` uses `rawValue + 1` |
+| `Cardinal.+` shadows `Cardinal.Protocol.+` in operator resolution | swift-cardinal-primitives | `Text.Location.Tracker.location(at:)` requires explicit type annotations on all intermediates |
+
+### Verdict
+
+6 of 7 planned xylem lessons delivered. Scanner operational with 37 tests, typed state throughout, no CRITICAL or HIGH open findings. Second session (2026-04-16) added: Location.Tracker integration, hex/binary/octal/float literals, `#if`/`#else`/`#elseif`/`#endif` directives, `.ascii.` form alignment.
+
+**Remaining work** (all moderate-to-hard):
+
+| Item | Difficulty | Blocker |
+|------|-----------|---------|
+| SIMD/SWAR tiered bulk scanning | Hard | `/benchmark` harness |
+| Prefix/postfix operator disambiguation | Moderate | Ordinal subtraction + spacing heuristic |
+| String interpolation `\(...)` | Hard | Mode stack / recursive scanner |
+| Flat `Lexer.Buffer` | **Already realized** | `[Lexer.Lexeme]` + source Span IS flat storage |
+
+The three infrastructure gaps (missing `Ordinal.Protocol` overload, missing `Text.Line.Number` increment, `Cardinal.+` shadowing) remain LOW severity but systemic.
