@@ -316,7 +316,7 @@ grep -r "<topic-keyword>" Research/
 
 Keyword selection: the investigation's core concepts (type names, feature names, bug class, design question). At least three distinct keywords drawn from the Issue and Scope sections of the branching brief.
 
-**If a prior doc exists**: read it before writing. The new findings MUST either (a) cite the prior doc and extend it, (b) cite the prior doc and explain why it is superseded, or (c) consolidate with it per the corpus-meta-analysis supersession protocol.
+**If a prior doc exists**: read it before writing. The new findings MUST either (a) cite the prior doc and extend it, (b) cite the prior doc and explain why it is superseded per [META-003]/[META-004], or (c) consolidate with it per [META-016].
 
 **Example (correct)**:
 ```
@@ -338,7 +338,7 @@ Step 4: Delete the new spec; re-do the work
 
 **Provenance**: 2026-04-07-actor-state-inline-fallback-visibility.md
 
-**Cross-references**: [HANDOFF-005] Branching Template, [HANDOFF-010] Resume Protocol, corpus-meta-analysis supersession protocol
+**Cross-references**: [HANDOFF-005] Branching Template, [HANDOFF-010] Resume Protocol, [META-003], [META-004], [META-016]
 
 ---
 

@@ -1050,36 +1050,13 @@ static func max(_ a: consuming Self, _ b: consuming Self) -> Self {
 
 ---
 
-### [IMPL-084] Single-Inhabitant Namespaces
+### [IMPL-084] Single-Inhabitant Namespaces — See [API-NAME-001a]
 
-**Statement**: A namespace enum containing exactly one type is not a namespace — it is a variant label. The type MUST be collapsed into the namespace, or the namespace MUST be removed. Corollary of [PATTERN-013] (no protocol before 3+ conformers) applied at the namespace level: no namespace before 2+ inhabitants.
+**Statement**: A namespace enum containing exactly one type is not a namespace — it is a variant label. This is a naming concern; the canonical rule lives in the **code-surface** skill as [API-NAME-001a] Single-Type-No-Namespace Rule.
 
-**Resolution procedure**: When a namespace `Outer.Middle` has a single inhabitant `Outer.Middle.Only`:
+**When this comes up in implementation**: The refactor — collapse `Outer.Middle.Only` → `Outer.Middle`, or preserve `Outer.Middle` when it is a variant label under a sibling-having parent (`Executor.Cooperative` alongside `Executor.Stealing`, `Executor.Scheduled`) — is an implementation of the naming rule. See [API-NAME-001a] for the canonical decision procedure and examples.
 
-1. If `Middle` has no siblings and exists only to qualify `Only`, remove `Middle` — rename `Only` to `Outer.Middle` (the type IS the namespace).
-2. If `Middle` is a variant label under a larger domain (e.g., `Executor.Cooperative` where `Executor` has siblings `Stealing`, `Scheduled`, etc.), keep the nesting — `Cooperative` is a variant, not a namespace.
-
-**Correct** — namespace collapsed into the type:
-```swift
-public struct IO.Blocking { /* the driver */ }            // ✓ one thing, one name
-public struct Executor.Cooperative { /* the executor */ } // ✓ variant under a sibling-having parent
-```
-
-**Incorrect** — empty namespace with single inhabitant:
-```swift
-public enum IO.Blocking {}                                // ✗ namespace with one thing
-extension IO.Blocking { public struct Driver { ... } }    // ✗ Driver IS the namespace
-public enum IO.Failure {}                                 // ✗ namespace with one thing
-extension IO.Failure { public struct Work { ... } }       // ✗ Work IS the namespace
-```
-
-**Rationale**: Empty namespaces with single inhabitants signal premature abstraction — the author expected siblings that never arrived. The namespace adds a segment to every call site and a type-decl boundary for no compositional benefit. Collapsing them always simplifies; re-introducing the namespace when a second sibling arrives is mechanical.
-
-**Diagnostic question**: *"What is the other type that would live here?"* If the answer is "none, actually," the namespace is the premature abstraction.
-
-**Provenance**: `swift-io/Research/Reflections/2026-04-08-architectural-simplification-and-api-consolidation.md` — `IO.Blocking.Driver` → `IO.Blocking`, `IO.Failure.Work` → extracted. Also `swift-foundations/Research/Reflections/2026-04-15-swift-executors-toolkit-taxonomy.md` — "single-type-no-namespace" rule.
-
-**Cross-references**: [PATTERN-013], [API-NAME-001], [IMPL-INTENT]
+**Cross-references**: [API-NAME-001a] (canonical), [PATTERN-013], [IMPL-INTENT]
 
 ---
 
@@ -1111,7 +1088,7 @@ struct Handle: @unchecked Sendable {                   // ✗ asserts safety eve
 
 **Provenance**: `swift-io/Research/Reflections/2026-04-08-architectural-simplification-and-api-consolidation.md` — `Handle.Slot` rendezvous pattern replaced initial `@unchecked Sendable` design.
 
-**Cross-references**: [IMPL-066], [IMPL-068], [IMPL-069], [IMPL-076]
+**Cross-references**: [IMPL-066], [IMPL-068], [IMPL-069], [IMPL-076], [MEM-SAFE-024] (Category D: `@unchecked Sendable` as structural workaround — when sending+nonisolated(unsafe) is not applicable)
 
 ---
 
@@ -1145,7 +1122,7 @@ struct Handle: @unchecked Sendable {                   // ✗ asserts safety eve
 
 **Provenance**: `swift-io/Research/Reflections/2026-04-08-parent-side-deletion-vs-addition.md` — actor-state visibility fix where 5 proposal iterations of "add structure" preceded the realization that deletion was the right move.
 
-**Cross-references**: [IMPL-COMPILE], [IMPL-063], [PATTERN-016]
+**Cross-references**: [IMPL-COMPILE], [IMPL-063], [PATTERN-016], [AUDIT-017] (when deletion authority is not present in the current session, park the investigation as DEFERRED rather than forcing a fix)
 
 ---
 

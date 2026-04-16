@@ -158,7 +158,7 @@ Every declaration plays one of three roles:
 | `~Escapable` | Public pointer property | LOW — structurally safe |
 | Coroutine-scoped (not `~Escapable`) | Public pointer property | MEDIUM — safe by convention, not type system |
 
-**Cross-references**: [MEM-SAFE-012], [MEM-SAFE-014], [MEM-SAFE-020], [MEM-COPY-013]
+**Cross-references**: [MEM-SAFE-012], [MEM-SAFE-014], [MEM-SAFE-020], [MEM-COPY-013], [IMPL-085] (prefer `sending` + `nonisolated(unsafe)` when a lock provides synchronization — narrower than type-wide `@unchecked Sendable`)
 
 ---
 

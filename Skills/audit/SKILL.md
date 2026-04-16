@@ -461,7 +461,7 @@ Files found at wrong scope levels are consolidated into the target scope's `Rese
 
 **Provenance**: Reflection `2026-04-08-parent-side-deletion-vs-addition.md`.
 
-**Cross-references**: [AUDIT-004], [AUDIT-005], [AUDIT-011], [HANDOFF-005]
+**Cross-references**: [AUDIT-004], [AUDIT-005], [AUDIT-011], [HANDOFF-005], [IMPL-086] (when the current session HAS deletion authority, the structural fix is deletion rather than parking — use [AUDIT-017] only when authority is pending)
 
 ---
 
@@ -495,7 +495,7 @@ Files found at wrong scope levels are consolidated into the target scope's `Rese
 
 ### [AUDIT-019] Skill-vs-Skill Cluster Consistency Mode
 
-**Statement**: `/audit cluster {skill-1} {skill-2} ...` is a first-class audit mode that checks inter-skill consistency across a cluster of composing skills. The output MUST be written to `Research/audit.md` per [AUDIT-001] with a section titled `## Cluster: {skill-1}+{skill-2}+... — {YYYY-MM-DD}`, following the standard Scope/Findings/Summary structure per [AUDIT-003].
+**Statement**: `/audit cluster {skill-1} {skill-2} ...` is a first-class audit mode that checks inter-skill consistency across a cluster of composing skills. The output MUST be written to `Audits/audit.md` per [AUDIT-001] with a section titled `## Cluster: {skill-1}+{skill-2}+... — {YYYY-MM-DD}`, following the standard Scope/Findings/Summary structure per [AUDIT-003].
 
 **Scope**: a cluster audit MUST target two or more skills that compose (cross-reference each other or are expected to interoperate). It checks requirement IDs, not code. Findings include:
 
