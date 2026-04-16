@@ -14,6 +14,12 @@ concurrency:
   group: pages
   cancel-in-progress: false
 
+env:
+  SITE_TITLE: "Swift Institute"
+  SITE_DESCRIPTION: "The integrated Swift package ecosystem. Primitives, standards, and foundations."
+  SITE_URL: "https://swift-institute.org/documentation/swift_institute/"
+  SITE_DOMAIN: "swift-institute.org"
+
 jobs:
   build:
     name: Build DocC
@@ -45,40 +51,50 @@ jobs:
             --transform-for-static-hosting \
             --output-path ./docc-output
 
-      - name: Post-process nav title
+      - name: Post-process
         run: |
-          sed -i '' 's/VUE_APP_TITLE:"Documentation"/VUE_APP_TITLE:"Swift Institute"/g' ./docc-output/js/index.*.js
-          sed -i '' 's/"documentation":{"title":"Documentation"/"documentation":{"title":"Swift Institute"/g' ./docc-output/js/index.*.js
+          # Nav title (baked into DocC renderer JS)
+          sed -i '' "s/VUE_APP_TITLE:\"Documentation\"/VUE_APP_TITLE:\"${SITE_TITLE}\"/g" ./docc-output/js/index.*.js
+          sed -i '' "s/\"documentation\":{\"title\":\"Documentation\"/\"documentation\":{\"title\":\"${SITE_TITLE}\"/g" ./docc-output/js/index.*.js
 
-      - name: Inject Open Graph meta into DocC shell
-        run: |
-          sed -i '' 's|<title>Documentation</title>|<title>Swift Institute</title><meta property="og:title" content="Swift Institute"/><meta property="og:description" content="The integrated Swift package ecosystem. Primitives, standards, and foundations."/><meta property="og:type" content="website"/><meta property="og:url" content="https://swift-institute.org/documentation/swift_institute/"/><meta name="twitter:card" content="summary"/><meta name="twitter:title" content="Swift Institute"/><meta name="twitter:description" content="The integrated Swift package ecosystem. Primitives, standards, and foundations."/><meta name="description" content="The integrated Swift package ecosystem. Primitives, standards, and foundations."/>|g' ./docc-output/documentation/swift_institute/index.html
+          # OG meta into DocC SPA shell
+          OG_TAGS="<title>${SITE_TITLE}</title>"
+          OG_TAGS+="<meta property=\"og:title\" content=\"${SITE_TITLE}\"/>"
+          OG_TAGS+="<meta property=\"og:description\" content=\"${SITE_DESCRIPTION}\"/>"
+          OG_TAGS+="<meta property=\"og:type\" content=\"website\"/>"
+          OG_TAGS+="<meta property=\"og:url\" content=\"${SITE_URL}\"/>"
+          OG_TAGS+="<meta name=\"twitter:card\" content=\"summary\"/>"
+          OG_TAGS+="<meta name=\"twitter:title\" content=\"${SITE_TITLE}\"/>"
+          OG_TAGS+="<meta name=\"twitter:description\" content=\"${SITE_DESCRIPTION}\"/>"
+          OG_TAGS+="<meta name=\"description\" content=\"${SITE_DESCRIPTION}\"/>"
+          sed -i '' "s|<title>Documentation</title>|${OG_TAGS}|g" ./docc-output/documentation/swift_institute/index.html
 
-      - name: Add root redirect + CNAME
-        run: |
-          cat > ./docc-output/index.html <<'HTML'
+          # Root redirect with OG meta
+          cat > ./docc-output/index.html <<REDIRECT
           <!DOCTYPE html>
           <html lang="en">
           <head>
             <meta charset="UTF-8">
             <meta http-equiv="refresh" content="0; url=/documentation/swift_institute/">
-            <link rel="canonical" href="https://swift-institute.org/documentation/swift_institute/">
-            <title>Swift Institute</title>
-            <meta property="og:title" content="Swift Institute"/>
-            <meta property="og:description" content="The integrated Swift package ecosystem. Primitives, standards, and foundations."/>
+            <link rel="canonical" href="${SITE_URL}">
+            <title>${SITE_TITLE}</title>
+            <meta property="og:title" content="${SITE_TITLE}"/>
+            <meta property="og:description" content="${SITE_DESCRIPTION}"/>
             <meta property="og:type" content="website"/>
-            <meta property="og:url" content="https://swift-institute.org/documentation/swift_institute/"/>
+            <meta property="og:url" content="${SITE_URL}"/>
             <meta name="twitter:card" content="summary"/>
-            <meta name="twitter:title" content="Swift Institute"/>
-            <meta name="twitter:description" content="The integrated Swift package ecosystem. Primitives, standards, and foundations."/>
-            <meta name="description" content="The integrated Swift package ecosystem. Primitives, standards, and foundations."/>
+            <meta name="twitter:title" content="${SITE_TITLE}"/>
+            <meta name="twitter:description" content="${SITE_DESCRIPTION}"/>
+            <meta name="description" content="${SITE_DESCRIPTION}"/>
           </head>
           <body>
-            <p>Redirecting to <a href="/documentation/swift_institute/">Swift Institute documentation</a>…</p>
+            <p>Redirecting to <a href="/documentation/swift_institute/">${SITE_TITLE}</a>…</p>
           </body>
           </html>
-          HTML
-          echo "swift-institute.org" > ./docc-output/CNAME
+          REDIRECT
+
+          # CNAME
+          echo "${SITE_DOMAIN}" > ./docc-output/CNAME
 
       - name: Configure Pages
         uses: actions/configure-pages@v6
