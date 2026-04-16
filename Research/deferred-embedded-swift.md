@@ -6,7 +6,7 @@
 
 Patterns and constraints for writing Swift packages compatible with Embedded Swift.
 
-> Note: Embedded Swift as a target is in development for the ecosystem (see <doc:Platform>). This article describes the patterns and toolchain mechanics that the ecosystem's Embedded work is tracking, drawn from upstream Embedded Swift itself. Package-level Embedded support will ship with the platform milestone.
+> Note: Embedded Swift as a target is in development for the ecosystem (see the <doc:FAQ>). This article describes the patterns and toolchain mechanics that the ecosystem's Embedded work is tracking, drawn from upstream Embedded Swift itself. Package-level Embedded support will ship with the platform milestone.
 
 ## Overview
 

@@ -14,22 +14,6 @@ Specifications are stable documents; the packages that implement them change rar
 
 ---
 
-## Specifications as namespaces
-
-Types mirror the specifications that define them. The specification identifier is the namespace; the type name matches the concept defined in the specification.
-
-```swift
-import RFC_3986
-import RFC_4122
-
-let endpoint: RFC_3986.URI     // RFC 3986 — Uniform Resource Identifier
-let id: RFC_4122.UUID          // RFC 4122 — A Universally Unique IDentifier URN Namespace
-```
-
-When a consumer reads a type name like `RFC_3986.URI`, the authoritative definition is three clicks away (RFC Editor → RFC 3986). There is no ambiguity about which document governs the type's behaviour.
-
----
-
 ## Per-authority organizations
 
 Standards are distributed across GitHub organizations, one per authority body:
@@ -71,4 +55,4 @@ Even single-spec concepts benefit from the pattern. When a specification is revi
 
 ## Foundation independence
 
-Standards do not import Foundation. Specifications define their concepts in terms of octets, integers, and structured data — not in terms of any Swift framework. The layer preserves that purity. See <doc:Platform> for target matrix details.
+Standards do not import Foundation. Specifications define their concepts in terms of octets, integers, and structured data — not in terms of any Swift framework. The layer preserves that purity. See the <doc:FAQ> for the current platform matrix.

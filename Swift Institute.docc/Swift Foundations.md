@@ -26,17 +26,6 @@ The distinction between Standards and Foundations is composition.
 
 ---
 
-## Design principles
-
-Foundations inherit the discipline of lower layers:
-
-- **Typed throws.** Fallible operations declare their concrete error type. Consumers get exhaustive switches, not catch-all blocks.
-- **No Foundation import.** Timestamps, paths, data buffers, and string processing come from primitives and standards, not `Foundation.Date`/`URL`/`Data`.
-- **Cross-platform by default.** Code is designed to be portable; platform-specific behaviour is isolated. See <doc:Platform> for current support.
-- **Granular packaging.** Each package answers one question well. Consumers depend on what they need.
-
----
-
 ## Choosing dependencies
 
 There is no umbrella foundation package. Each package is a standalone Swift package; consumers add individual dependencies:

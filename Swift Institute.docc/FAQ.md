@@ -6,33 +6,9 @@
 
 Frequently asked questions about Swift Institute architecture, packaging, and usage.
 
-## How do I depend on one of these packages?
-
-Each repository in the ecosystem is a standalone Swift package. Add it as a dependency directly in your `Package.swift`:
-
-```swift
-dependencies: [
-    .package(url: "https://github.com/{org}/{package}", from: "0.1.0"),
-]
-```
-
-> Packages are being released incrementally. `swift package resolve` against a not-yet-public repository returns a 404 until its release tag lands.
-
-There is no umbrella package to import. The superrepos (`swift-primitives`, `swift-standards`, `swift-foundations`) are git submodule aggregators for browsing the ecosystem. They are not meant to be consumed as dependencies.
-
----
-
-## What's the license?
-
-Every repository carries its own `LICENSE.md` file. Layering gives licensing flexibility — foundational substrate can be permissively licensed for maximum embeddability, while higher layers where policy accumulates have room for different terms. See <doc:Architecture> for the rationale.
-
----
-
 ## What's the current state of the ecosystem?
 
-This is an early public release. The primitives, standards, and foundations layers have active repositories; the components and applications layers exist in the design but have no released packages yet.
-
-Documentation, research, and the blog workflow are all available now. The Swift packages themselves are being released repository by repository; some links in the documentation may resolve only as release tags land.
+All repositories are currently private. The ecosystem spans three layers — primitives, standards, and foundations — which are under active development. Documentation, research, and the blog are public now. Packages will be published as they reach release quality.
 
 ---
 
@@ -45,21 +21,16 @@ Documentation, research, and the blog workflow are all available now. The Swift 
 | Embedded Swift | Coming soon |
 | Windows | Coming soon |
 
-All layers are Foundation-independent by design, which makes the entire ecosystem portable across the full Swift target matrix.
+All layers are Foundation-independent by design, which makes the entire ecosystem portable across the full Swift target matrix. Consumer code writes one import (`import Kernel`) and the right platform is wired automatically — platform conditionals are concentrated at the boundary, not in consumer code.
 
 ---
 
-## Why can I not use Apple's Foundation framework?
+## Why is Apple's Foundation framework not used?
 
-Foundation (`Date`, `URL`, `Data`, `String` bridging) introduces dependencies that prevent deployment in several environments:
+Two primary reasons:
 
-- Embedded Swift has no Foundation runtime
-- Kernel extensions cannot afford the overhead
-- Behavior drifts between Darwin and swift-corelibs-foundation on Linux
-
-Keeping Foundation out of every layer lets the whole ecosystem deploy across the Swift target matrix without modification. The ecosystem provides its own timestamps, paths, data buffers, and string processing — all Foundation-free.
-
-See <doc:Architecture> for the reasoning behind this choice.
+- **Cross-platform and faster iteration.** Foundation's behaviour drifts between Darwin and swift-corelibs-foundation on Linux. Building on Swift directly lets the ecosystem iterate without waiting for Foundation's release cycle.
+- **Embedded Swift.** Embedded Swift has no Foundation runtime. Keeping Foundation out of every layer means the same packages compile for baremetal targets.
 
 ---
 
@@ -84,7 +55,7 @@ Ask these questions in order:
 2. Do standards need it but not define it? If it is a prerequisite for standards, it belongs at the primitives layer.
 3. Does it compose standards and primitives into a reusable domain abstraction? It belongs at the foundations layer.
 
-See <doc:Architecture> for the full decision model.
+See the Layers section on the main page for the full decision model.
 
 ---
 

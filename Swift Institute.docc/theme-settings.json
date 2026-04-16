@@ -1,0 +1,110 @@
+{
+    "meta": {
+        "title": "Swift Institute"
+    },
+    "theme": {
+        "border-radius": "8px",
+        "code": {
+            "border-radius": "6px"
+        },
+        "color": {
+            "link": {
+                "light": "#C93A25",
+                "dark": "#FF6E56"
+            },
+            "fill-blue": {
+                "light": "#F05138",
+                "dark": "#FF6E56"
+            },
+            "eyebrow": {
+                "light": "#D84727",
+                "dark": "#FF6E56"
+            },
+
+            "documentation-intro-fill": {
+                "light": "#FBF8F6",
+                "dark": "#2C2523"
+            },
+            "documentation-intro-accent": {
+                "light": "#1D1D1F",
+                "dark": "#F5F5F7"
+            },
+            "documentation-intro-eyebrow": {
+                "light": "#D84727",
+                "dark": "#FF6E56"
+            },
+            "documentation-intro-figure": {
+                "light": "#F05138",
+                "dark": "#FF6E56"
+            },
+            "documentation-intro-title": {
+                "light": "#1D1D1F",
+                "dark": "#F5F5F7"
+            },
+
+            "button-background": {
+                "light": "#F05138",
+                "dark": "#F05138"
+            },
+            "button-background-hover": {
+                "light": "#D84727",
+                "dark": "#D84727"
+            },
+            "button-background-active": {
+                "light": "#C03D20",
+                "dark": "#C03D20"
+            },
+            "button-text": {
+                "light": "#FFFFFF",
+                "dark": "#FFFFFF"
+            },
+            "call-to-action-background": {
+                "light": "#F05138",
+                "dark": "#2C2523"
+            },
+
+            "nav-current-link": {
+                "light": "#F05138",
+                "dark": "#FF6E56"
+            },
+            "nav-link-color-hover": {
+                "light": "#F05138",
+                "dark": "#FF6E56"
+            },
+            "nav-dark-current-link": "#FF6E56",
+            "nav-dark-link-color-hover": "#FF6E56",
+
+            "navigator-item-hover": {
+                "light": "rgba(240, 81, 56, 0.08)",
+                "dark": "rgba(255, 110, 86, 0.12)"
+            },
+
+            "focus-color": {
+                "light": "rgba(240, 81, 56, 0.6)",
+                "dark": "rgba(255, 110, 86, 0.6)"
+            },
+            "focus-border-color": {
+                "light": "#F05138",
+                "dark": "#FF6E56"
+            },
+
+            "code-background": {
+                "light": "#F9F6F4",
+                "dark": "#2C2926"
+            },
+            "inline-code-background": {
+                "light": "#F5F0ED",
+                "dark": "#3A3532"
+            },
+
+            "fill-orange-secondary": {
+                "light": "rgba(240, 81, 56, 0.12)",
+                "dark": "rgba(255, 110, 86, 0.16)"
+            }
+        },
+        "typography": {
+            "html-font": "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif",
+            "html-font-mono": "'SF Mono', SFMono-Regular, ui-monospace, 'DejaVu Sans Mono', Menlo, Consolas, monospace"
+        }
+    }
+}
