@@ -587,6 +587,24 @@ Plus 3 swift-standards test sub-packages and the stale `swift-rfc-template/Packa
 - **Files**: ~50 source files, ~10 test files across 6 packages + 2 downstream files
 - **Subject**: 7 types named "Fixed" with bounded-buffer semantics; 2 types named "Inline" at collection level where convention is "Static"
 
+### Triage (2026-04-16)
+
+| Finding | Disposition | Reason |
+|---------|-------------|--------|
+| #1 Queue.Fixed → .Bounded | **EXECUTE** | Now strictly worse than 2026-03-25: `Queue.Static<let capacity: Int>` exists alongside `Queue.Fixed`, so "Fixed" is actively misleading (Static IS the truly fixed variant). Doc rot: `Queue.Fixed.swift` already references nonexistent `Queue<Int>.Bounded(capacity:)` API. |
+| #2 Queue.DoubleEnded.Fixed → .Bounded | **EXECUTE** | Same; `Queue.DoubleEnded.Static<N>` exists. |
+| #3 Queue.Linked.Fixed → .Bounded | **EXECUTE** | Same; `Queue.Linked.Bounded` already exists at `Queue Linked Primitives/Queue.Linked.Bounded.swift` as a separate struct with the correct name — `Queue.Linked.Fixed` is now a duplicate semantic. |
+| #4 Heap.Fixed → .Bounded | **EXECUTE** | Same; `Heap.Static<N>` exists, `Heap.swift` doc overview already lists "Heap/Fixed: Fixed capacity, heap-allocated" + "Heap/Static: Compile-time capacity". |
+| #5 Heap.MinMax.Fixed → .Bounded | **EXECUTE** | Same; `Heap.MinMax.Static<N>` exists. |
+| #6 Set.Ordered.Fixed → .Bounded | **EXECUTE** | Same; `Set.Ordered.Static<N>` exists. |
+| #7 Bitset.Fixed → .Bounded | **EXECUTE** | Same; `Bitset.Static<wordCount>` exists. |
+| #8 List.Linked.Inline<N> → .Static<N> | **EXECUTE** | Diverges from established collection-level convention (Queue/Heap/Set/Bitset all use Static). `List.Linked.Bounded` already exists separately; this rename is purely the collection/storage layer naming distinction (variant-naming-audit §3). |
+| #9 Tree.N.Inline<N> → .Static<N> | **EXECUTE** | Same as #8; `Tree.N.Bounded` already exists with full directory + 14 files. |
+
+**Severity unchanged: HIGH.** All 9 dispositions are EXECUTE; none warrant DEFER or WONTFIX. The audit's existing per-package sed + `git mv` plan (above) remains the correct execution path. The `variant-naming-audit.md` research doc (v2.0.0, 2026-03-24) provides the academic justification and full inventory; the taxonomy is stable.
+
+**Pre-execution risk**: Findings #1–7 require renaming the underlying `struct Fixed` declaration, not just files. Sed pattern `s/struct Fixed/struct Bounded/g` is safe inside the 6 affected packages (no other "Fixed" struct declarations there) but will not match `Array.Fixed` (in `swift-array-primitives`), which must remain. Safety constraint #1 in the existing plan ("Never touch swift-array-primitives") covers this.
+
 ### Partial Progress (2026-04-16 re-verification)
 
 The execution plan below describes a binary `Fixed → Bounded` and `Inline → Static` rename. Re-verification on 2026-04-16 shows the ecosystem has instead evolved a tripartite taxonomy:
