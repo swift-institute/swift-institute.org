@@ -26,16 +26,16 @@
                 "dark": "#2C2523"
             },
             "documentation-intro-accent": {
-                "light": "#1D1D1F",
-                "dark": "#F5F5F7"
+                "light": "#F05138",
+                "dark": "#FF6E56"
             },
             "documentation-intro-eyebrow": {
                 "light": "#D84727",
                 "dark": "#FF6E56"
             },
             "documentation-intro-figure": {
-                "light": "#F05138",
-                "dark": "#FF6E56"
+                "light": "#1D1D1F",
+                "dark": "#F5F5F7"
             },
             "documentation-intro-title": {
                 "light": "#1D1D1F",
