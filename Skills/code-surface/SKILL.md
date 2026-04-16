@@ -64,6 +64,45 @@ NonBlockingSelector    // Compound name - FORBIDDEN
 
 ---
 
+### [API-NAME-001a] Single-Type-No-Namespace Rule
+
+**Statement**: A namespace that contains only one type is not a namespace — it is a *variant label* — and MUST nest under its parent type rather than existing as a top-level domain. [API-NAME-001]'s Decision test determines whether X belongs under Y; this rule determines whether Y should exist as a namespace at all.
+
+**Decision procedure**:
+
+| Ask | If yes → | If no → |
+|-----|---------|---------|
+| Does this namespace (or proposed namespace) have, or plausibly will have, two or more distinct types that co-inhabit it as siblings? | Keep it as a namespace | It is a variant label; nest under the parent type whose variants it represents |
+
+**Correct** — single-type labels nested under their parent:
+
+| Wrong shape | Correct shape | Why |
+|-------------|---------------|-----|
+| `Cooperative` (top-level, one type) | `Executor.Cooperative` | `Cooperative` has no siblings outside the `Executor` variants |
+| `Main` (top-level, one type) | `Executor.Main` | Same reasoning — `Main` is one variant of `Executor` |
+| `Scheduled<Base>` (top-level generic) | `Executor.Scheduled<Base>` | The `Scheduled` label describes an `Executor` variant, not a standalone domain |
+| `Kernel.Thread.Polling.Executor` | `Kernel.Thread.Executor.Polling` | `Polling` has no siblings outside `Executor`-variants under `Kernel.Thread` |
+
+**Correct** — genuine namespaces (multiple sibling types):
+
+| Shape | Siblings | Why it IS a namespace |
+|-------|---------|------------------------|
+| `Kernel.Thread` | `Handle`, `Executor`, `Pool`, `Worker`, … | Multiple co-inhabitants; genuine domain |
+| `RFC_4122` | `UUID`, `UUID.Variant`, `UUID.Version`, … | Spec-defined domain with multiple types |
+| `File.Directory` | `Walk`, `Walk.Options`, `Listing`, … | Multiple concepts under one subdomain |
+
+**Why this rule exists**: [API-NAME-001] (`Nest.Name`) gives the shape of nested namespaces. It does NOT prevent the author from creating an empty or single-inhabitant namespace that is really just a variant label. Without [API-NAME-001a], sessions discover this case-by-case and bikeshed each instance; the rule collapses the class into one decision.
+
+**When speculative namespace creation is tempting**: when three related types might eventually exist under a label but only one exists today, the rule says: nest the single type under its parent now, and promote the label to a namespace when the second type actually arrives. The promotion is a mechanical rename; the speculative namespace is a permanent wrong shape.
+
+**Rationale**: A namespace containing one type is vocabulary overhead without vocabulary payoff. `Executor.Cooperative` reads as "the Cooperative variant of Executor" — natural. `Cooperative.Executor` reads as "the Executor type in the Cooperative namespace" — suggesting there is more to the Cooperative domain than there is. Naming follows structure; structure follows what types actually exist.
+
+**Provenance**: Reflection `2026-04-15-swift-executors-toolkit-taxonomy.md`.
+
+**Cross-references**: [API-NAME-001], [API-NAME-003]
+
+---
+
 ### [API-NAME-002] No Compound Identifiers
 
 Methods and properties MUST NOT use compound names. Use nested accessors.

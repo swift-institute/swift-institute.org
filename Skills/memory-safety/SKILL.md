@@ -166,13 +166,14 @@ Every declaration plays one of three roles:
 
 **Scope**: All `@unchecked Sendable` conformances.
 
-**Statement**: `@unchecked Sendable` conformances MUST be classified into one of three semantic categories. The correct annotation depends on the category.
+**Statement**: `@unchecked Sendable` conformances MUST be classified into one of four semantic categories. The correct annotation depends on the category.
 
 | Category | Semantics | Annotation | Safety invariant |
 |----------|-----------|------------|-----------------|
 | **A: Synchronized** | Internal mutex, atomic, or lock | `@unsafe @unchecked Sendable` | Document synchronization mechanism |
 | **B: Ownership transfer** | `~Copyable` prevents sharing; Sendable enables move | `@unsafe @unchecked Sendable` | Document `~Copyable` ownership guarantee |
 | **C: Thread-confined** | Single-thread access; `@unchecked Sendable` used to cross one boundary | **Should be `~Sendable`** (SE-0518) | DEFER until `~Sendable` stabilizes |
+| **D: Structural workaround** | Type is value-like and safe, but compiler inference cannot prove Sendable due to a structural limitation | `@unsafe @unchecked Sendable` | Document which inference gap the annotation bridges |
 
 **Category A** — synchronized:
 ```swift
@@ -202,9 +203,41 @@ final class Ring: ~Sendable { ... }
 
 Category C types MUST adopt `~Sendable` instead of `@unchecked Sendable`. Adding `@unsafe` to a thread-confined type is a bandaid — the real fix is expressing confinement at the type level.
 
+**Category D** — structural workaround (three recognized subpatterns):
+
+Category D covers sites where the type is structurally value-like and concurrency-safe, but Swift's compiler cannot synthesize `Sendable` automatically because of a specific structural limitation. The annotation compensates for the inference gap; the safety invariant is inherent to the type's shape, not to a synchronization mechanism.
+
+| Subpattern | Structure | Why inference fails |
+|-----------|-----------|---------------------|
+| **SP-2: `@_rawLayout` bridges** | Type uses `@_rawLayout` attribute to specify explicit memory layout (e.g., atomics storage) | `@_rawLayout` types are not eligible for Sendable synthesis; the annotation bridges the gap for types that are provably safe by layout |
+| **SP-4: Non-Sendable generic parameter** | Type is generic over a parameter that cannot be constrained `: Sendable` (e.g., protocols like `AsyncIteratorProtocol`, closure types) but the type's actual use never exposes the parameter in a racy way | The generic parameter is structurally non-Sendable, but the type's API wraps it safely; the annotation is the only way to express the composite type's Sendable contract |
+| **SP-5: Pointer-backed Copyable** | Value-like wrapper over a pointer where the pointer's referent is immutable / by-construction uniquely owned | The pointer is a reference type as far as Sendable inference is concerned; the annotation declares the wrapper's value semantics |
+
+**Required doc form for Category D**:
+
+```swift
+/// ## Safety Invariant (Category D — structural workaround)
+/// SP-N subpattern: {explanation of the inference gap}.
+/// Why safe: {the structural property that makes this concurrency-safe}.
+extension MyType: @unsafe @unchecked Sendable {}
+```
+
+**What Category D is NOT**:
+
+| Mistaken use | Correct classification |
+|--------------|-----------------------|
+| "My type has synchronization and I find D's explanation easier" | A |
+| "My type is `~Copyable` and owns a resource" | B |
+| "My type is thread-confined but I don't want to adopt `~Sendable`" | C (pending SE-0518) |
+| "I didn't think through the invariant and D seems permissive" | Stop and classify properly |
+
+Category D is the narrow escape hatch for provable-safe types the compiler cannot verify, not a bucket for unclassified annotations.
+
 **Enablement**: `~Sendable` is available via `.enableExperimentalFeature("TildeSendable")` in Swift 6.3.
 
-**Reference**: `swift-institute/Research/tilde-sendable-semantic-inventory.md`
+**Reference**: `swift-institute/Research/tilde-sendable-semantic-inventory.md`; ecosystem audit finding 35 sites (16% of 218) across three subpatterns — `swift-institute/Audits/unsafe-audit-findings.md` "Category D Adjudication" section.
+
+**Provenance**: Category A/B/C originally per tilde-sendable-semantic-inventory. Category D added per reflection `2026-04-15-ecosystem-unsafe-audit.md`, where 35 existing `@unchecked Sendable` sites were found to be none of A/B/C and resolved into three coherent subpatterns (SP-2, SP-4, SP-5). Two candidate subpatterns (SP-1, SP-8) were reclassified to B by the governing principle ("ownership transfer is the primary invariant; value-generic is incidental").
 
 **Cross-references**: [MEM-SEND-001], [MEM-SEND-002], [MEM-SAFE-020]
 
@@ -398,6 +431,60 @@ enum File {
 ```
 
 **Cross-references**: [PATTERN-014]
+
+---
+
+### [MEM-COPY-001a] Deinit Immutability for ~Copyable Structs
+
+**Statement**: `deinit` on a `~Copyable` struct grants *immutable* access to `self` and its stored fields — the same access level as `borrowing`. `consuming func` grants *mutable* access. These are different in exactly one way: any operation that requires mutation of a field (notably `Optional.take()`) compiles in `consuming` and fails in `deinit` with "cannot use mutating member on immutable value: 'self' is immutable."
+
+**Access level table**:
+
+| Context | Access to `self` | Access to fields | `Optional.take()` |
+|---------|------------------|------------------|-------------------|
+| `borrowing` | Immutable | Immutable | Fails |
+| `deinit` | Immutable | Immutable | Fails |
+| `mutating` | Mutable | Mutable | Works |
+| `consuming` | Mutable (ownership) | Mutable | Works |
+
+**Correct** — read-only pattern match in deinit:
+```swift
+struct Scope: ~Copyable {
+    private var _token: Shutdown.Token?
+
+    deinit {
+        // deinit has immutable access — check presence, do not extract
+        guard case .some = _token else { return }
+        // Field is consumed by the compiler when self is destroyed
+    }
+
+    consuming func close() {
+        // consuming grants mutation — extract is allowed
+        if let token = _token.take() {
+            token.fire()
+        }
+    }
+}
+```
+
+**Incorrect** — `.take()` in deinit:
+```swift
+deinit {
+    if let token = _token.take() { token.fire() }   // ❌ self is immutable
+}
+```
+
+**Key insight**: both `consuming` and `deinit` destroy the value, but they grant different access levels. `consuming` is like `mutating` + destruction; `deinit` is like `borrowing` + destruction. The asymmetry matters when extracting values from Optional fields: `.take()` requires mutation and only works in `consuming`. In `deinit`, fields are consumed by the compiler as part of the value's destruction — you only need to *check presence* for any side effects you need to run, not extract.
+
+**Canonical nil-check idiom for `Optional<~Copyable>` in deinit**: `guard case .some = _optionalField else { return }`. This reads the discriminator without touching the payload. The payload itself is destroyed when the struct is destroyed.
+
+**When you need to run a side effect on the payload before destruction**: the side effect MUST be performed via a `consuming func` before the natural destruction path. If a type must always run a side effect on its resource, pair a `consuming func close()` with a `deinit` that traps on a non-closed state (the linear-type pattern per [MEM-LINEAR-001]).
+
+**Rationale**: The deinit immutability asymmetry is a recurring surprise when moving code between `consuming` methods and `deinit`. It is not a bug — `self` being immutable in `deinit` matches the semantic model: the value is about to cease to exist, so the compiler forbids you from observing it in an intermediate mutated state. The canonical idiom (read-only presence check) preserves the safety model while letting the destructor take local decisions based on whether the Optional is populated.
+
+**Provenance**: Reflection `2026-04-13-scope-mutex-removal-deinit-immutability.md`.
+
+**Cross-references**: [MEM-COPY-001], [MEM-LINEAR-001], [MEM-OWN-001], [MEM-OWN-002]
 
 ---
 

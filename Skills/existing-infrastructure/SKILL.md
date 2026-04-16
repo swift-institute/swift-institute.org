@@ -758,6 +758,63 @@ Ten integration modules currently exist:
 
 ---
 
+### [INFRA-003a] Atomic Round-Robin — `Atomic<Ordinal.Protocol>.advance(within:)`
+
+**Package**: `Ordinal Primitives Standard Library Integration` (tier 4, extension on `Synchronization.Atomic`)
+
+**Statement**: When implementing an atomic round-robin counter (e.g., sharded executor dispatch, cursor that advances modulo a capacity), use `Atomic<Tagged<Tag, Ordinal>>.advance(within:)` directly. Do NOT introduce a named wrapper type (`Cyclic.Counter`, `Round.Robin`) — the composition IS the construct. Do NOT write the CAS loop at the call site.
+
+**Signature**:
+```swift
+extension Synchronization.Atomic where Value: Ordinal.Protocol & AtomicRepresentable,
+                                       Value.AtomicRepresentation == UInt.AtomicRepresentation {
+    /// Atomically advance self and return the advanced position modulo `bound`.
+    /// Lock-free; preserves the invariant that the returned position is always `< bound`.
+    public func advance(within bound: some Cardinal.Protocol) -> Value
+}
+```
+
+**Correct** (sharded dispatch):
+```swift
+let cursor: Atomic<Index<Kernel.Thread>> = .init(.zero)
+let count: Index<Kernel.Thread>.Count = workers.count
+
+func enqueue(_ job: consuming UnownedJob) {
+    workers[cursor.advance(within: count)].enqueue(consume job)
+}
+```
+
+**Incorrect** (CAS loop at call site, or hand-rolled wrapper):
+```swift
+// ❌ Mechanism, not intent:
+let raw = cursor.wrappingAdd(1, ordering: .relaxed).oldValue
+let position = Ordinal(raw % count.rawValue)
+
+// ❌ Invented type for a pure composition:
+struct Cyclic.Counter<Tag> { ... }   // No academic grounding
+```
+
+**Semantics**:
+
+| Property | Guarantee |
+|----------|-----------|
+| Concurrency | Lock-free; CAS-loop under contention |
+| Invariant | Returned value `< bound` always holds (modulo-correct) |
+| Progress | Wait-free for the single-thread case; lock-free for the multi-thread case |
+| Wraparound | Handled inside; callers never see a value `>= bound` |
+
+**Constraint note**: `Value.AtomicRepresentation == UInt.AtomicRepresentation` constrains the extension to `Ordinal`-family types that share the host's word-width atomic representation. Most typed ordinals (`Index<T>`, `Memory.Address`) satisfy this because `Ordinal`'s raw is `UInt`.
+
+**When to invent a type instead**: if you find yourself adding three or more methods to `Atomic<Ordinal.Protocol>` that all compose the same underlying primitive differently, the composition has become a vocabulary. At that point extract a named type whose documentation cites the academic construct (e.g., Treiber stack, Michael-Scott queue). Round-robin dispatch alone is not such a vocabulary — it is one method.
+
+**Rationale**: Hardware has "ring counter"; software has "round-robin counter"; neither is a formal construct. The composition is the construct. Naming it (`Cyclic.Counter`) adds vocabulary without adding semantics and isolates the resulting type from the generic `Ordinal.Protocol` / `Atomic` abstractions. Extending `Atomic` with a named method preserves compositional power; call sites read `cursor.advance(within: count)` — intent over mechanism per [IMPL-INTENT].
+
+**Provenance**: Reflection `2026-04-15-executor-audit-cleanup-atomic-ordinal.md`.
+
+**Cross-references**: [INFRA-100], [INFRA-101], [INFRA-102], [IMPL-INTENT]
+
+---
+
 ### [INFRA-004] Affine Integration — Pointer Arithmetic
 
 **Statement**: When doing pointer offset arithmetic, check this module first.

@@ -182,6 +182,34 @@ migration_date: YYYY-MM-DD        # Optional
 
 ---
 
+### [SKILL-CREATE-006a] Internal Consistency Pass
+
+**Statement**: Between authoring a skill ([SKILL-CREATE-006]) and integrating it ([SKILL-CREATE-007]), the author MUST run an internal consistency pass against the following checklist. Template adherence alone does NOT catch these issues — they are semantic, visible only when the skill is read as a coherent whole.
+
+**Required checks**:
+
+| Check | What to verify |
+|-------|---------------|
+| (a) Cross-reference range correctness | Every `[PREFIX-N]` cross-reference resolves to an ID that actually exists in the target skill at the stated range; ranges like `[SUPER-001]–[SUPER-016]` match the authored IDs |
+| (b) Terminology collisions across requirements | The same noun or phrase does not name two different concepts across adjacent requirements (e.g., "Task boundaries" meaning both scope field and temporal checkpoints) |
+| (c) ID divergence between predecessor research and shipped skill | If the skill was drafted via a research doc's "Skill Translation" table, the shipped IDs match the predicted IDs (or the research doc is updated to match the shipped IDs before integration) |
+| (d) Ghost references to undefined files or concepts | Every mentioned template, helper file, or referenced concept (e.g., `SUPERVISE.md`, a cited sub-field name) is either defined within the skill or resolves to an existing artifact |
+
+**Procedure**:
+
+1. Complete the authoring pass per [SKILL-CREATE-006].
+2. Re-read the SKILL.md top-to-bottom as if you were an unfamiliar reader, running each check above.
+3. Fix defects in place (targeted edits, not rewrites).
+4. Proceed to [SKILL-CREATE-007] integration only after all four checks pass.
+
+**Rationale**: The supervise-skill creation session revealed that a template-adherent skill can still carry nine semantic defects (cross-reference range errors, terminology collisions, ID drift between research draft and shipped skill, ghost references). These defects are invisible when the author reads section-by-section during authoring — they only surface on a coherent-whole read. A dedicated consistency pass between authoring and integration closes this gap. The pass is cheap (one read) and catches a class of defect that no later step catches systematically.
+
+**Provenance**: Reflection `2026-04-15-supervise-skill-creation-from-handoff.md`.
+
+**Cross-references**: [SKILL-CREATE-005], [SKILL-CREATE-006], [SKILL-CREATE-007]
+
+---
+
 ## Phase 3: Integration
 
 ### [SKILL-CREATE-007] swift-institute-core Updates
@@ -423,6 +451,47 @@ applies_to:
 3. Update the Skill Index in `Skills/swift-institute-core/SKILL.md` (remove A, ensure B's prefixes are listed)
 4. Update repo-level CLAUDE.md routing where present (optional, repo-internal)
 5. Run the sync script to update symlinks
+
+---
+
+## Phase 8: Cluster Review
+
+### [SKILL-LIFE-030] Cluster Review Triggers
+
+**Statement**: When two or more skills compose — cross-reference each other, co-load in routine workflows, or share a problem domain that no single skill fully covers — the cluster MUST be reviewed as a cluster (not only as individual skills) when ANY of these conditions hold:
+
+| Trigger | Example |
+|---------|---------|
+| Cluster reaches stability (last member of the cluster has passed its first [SKILL-LIFE-010] review) | `handoff` + `supervise` + `reflect-session` + `skill-lifecycle` all have clean individual reviews |
+| 90 days have elapsed since the cluster was first assembled | Regardless of individual skill `last_reviewed` dates |
+| A new skill joins an existing cluster | A fifth agent-workflow skill is created |
+| A composition defect surfaces in production use | A `/handoff` is deleted while its supervisor block is unverified because `[REFL-009]` didn't enumerate that case |
+
+**Rationale**: Individual-skill review catches intra-skill drift. Cluster-level drift — cross-reference rot, terminology collisions across skills, composition gaps — accumulates silently between individual reviews. The agent-workflow cluster audit (2026-04-15) demonstrated the value: 26 findings on a freshly-shipped four-skill cluster, with seven HIGH-severity composition gaps that neither skill's self-review had surfaced.
+
+**Cross-references**: [SKILL-LIFE-010], [SKILL-LIFE-031], [AUDIT-019]
+
+---
+
+### [SKILL-LIFE-031] Cluster Review Procedure
+
+**Statement**: Cluster review MUST be performed via independent cross-skill audit per [AUDIT-019] (`/audit cluster {skill-1} {skill-2} ...`). The author of any individual skill in the cluster SHOULD NOT run the cluster audit on their own cluster — independence is load-bearing for catching composition gaps invisible to the author's mental model.
+
+**Procedure**:
+
+1. Dispatch an independent audit agent (or human reviewer) with the `/audit cluster` invocation per [AUDIT-019].
+2. The audit produces a `## Cluster:` section in `swift-institute/Audits/audit.md` with findings grouped by severity.
+3. Work findings in severity-batched order: trivial → terminology canonicalization → design → edge-case procedural → remaining polish. Pause at the design batch if user input is required on a composition-level choice.
+4. Each batch cites the cluster audit as its [SKILL-LIFE-002] provenance.
+5. Update each affected skill's `last_reviewed` date on completion.
+
+**Cadence after first review**: re-review the cluster every 180 days or when a new composition gap surfaces, whichever comes first.
+
+**Rationale**: Independent audit catches what self-review cannot — single-skill mental models cannot see composition gaps the way a fresh reader of the cluster can. Severity-batching the fix pass keeps user attention on the design-level decisions that need it and keeps mechanical fixes from stealing focus. The 2026-04-15 agent-workflow cluster audit demonstrated both: independent agent found 26 issues self-review missed, five-batch fix cadence resolved 25 of them with one user gate.
+
+**Provenance**: Reflection `2026-04-15-agent-workflow-cluster-audit-and-fixes.md`.
+
+**Cross-references**: [SKILL-LIFE-002], [SKILL-LIFE-030], [AUDIT-019]
 
 ---
 

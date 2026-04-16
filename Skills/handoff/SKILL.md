@@ -14,6 +14,7 @@ applies_to:
   - session-management
 
 last_reviewed: 2026-04-15
+last_updated: 2026-04-15
 ---
 
 # Handoff
@@ -298,6 +299,167 @@ Read {absolute-path-to-HANDOFF-{topic-kebab}.md} — it contains a focused inves
 ````
 
 **Rationale**: Eliminates friction in the handoff — the user copies one block instead of manually composing instructions for the new agent.
+
+---
+
+### [HANDOFF-013] Prior Research Check for Branching Investigations
+
+**Statement**: Before writing findings to a branching handoff's Findings Destination (or any new document under `Research/`), the investigating agent MUST grep the target repo's `Research/` directory for prior related documents. Findings that contradict or duplicate prior research without acknowledging it are a defect.
+
+**Procedure**:
+
+```bash
+# From the target repo root:
+ls Research/
+grep -r "<topic-keyword>" Research/
+```
+
+Keyword selection: the investigation's core concepts (type names, feature names, bug class, design question). At least three distinct keywords drawn from the Issue and Scope sections of the branching brief.
+
+**If a prior doc exists**: read it before writing. The new findings MUST either (a) cite the prior doc and extend it, (b) cite the prior doc and explain why it is superseded, or (c) consolidate with it per the corpus-meta-analysis supersession protocol.
+
+**Example (correct)**:
+```
+Step 1: Read HANDOFF-public-api-review.md
+Step 2: ls Research/ — discover Research/tier-0-consumer-api-review.md
+Step 3: Read the prior doc; it addresses half the questions in the brief
+Step 4: Cite it and extend rather than draft parallel spec
+```
+
+**Example (defect)**:
+```
+Step 1: Read HANDOFF-public-api-review.md
+Step 2: Draft Research/public-api-spec.md from scratch
+Step 3: Reviewer discovers prior tier-0-consumer-api-review.md contradicting the new spec
+Step 4: Delete the new spec; re-do the work
+```
+
+**Rationale**: The 2026-04-07 swift-io session produced a public-API spec that duplicated and contradicted a pre-existing `tier-0-consumer-api-review.md` from the day before. A subagent's fresh-eyes review caught it with one grep. The discipline is cheap (seconds) and the cost of skipping it is high (deleted work + reviewer friction + contradictory docs live simultaneously). Research-heavy repos (swift-io has 7+ research docs) carry high duplicate-likelihood.
+
+**Provenance**: 2026-04-07-actor-state-inline-fallback-visibility.md
+
+**Cross-references**: [HANDOFF-005] Branching Template, [HANDOFF-010] Resume Protocol, corpus-meta-analysis supersession protocol
+
+---
+
+### [HANDOFF-014] Pre-Existing Code in Scope
+
+**Statement**: When a handoff's scope extends beyond what the underlying investigation directly examined (e.g., investigation scoped to one module, plan applies to the whole package; fix scoped to one subsystem, refactor applies across the repo), the handoff MUST include a `## Pre-Existing Code in Scope` section enumerating files or modules the plan does NOT directly modify, with their intended treatment.
+
+**Applies to**: sequential handoffs where the Goal/Next Steps imply a broader refactor than the investigation covered. For investigation-only branching handoffs (no refactor implied), this section is not required.
+
+**Treatment labels**:
+
+| Label | Meaning |
+|-------|---------|
+| Preserved | Stays as-is; no changes planned |
+| Refactored in Phase N | Scheduled work; cite the phase |
+| Deleted | Removed as part of this plan |
+| Moved | Relocated to another package/module; cite the destination |
+
+**Template snippet** (added to the sequential template from [HANDOFF-004] when required):
+
+```markdown
+## Pre-Existing Code in Scope
+{Files or modules the plan does NOT directly modify this session but
+that live within the plan's broader scope. One line per entry:
+path — treatment (Preserved / Refactored in Phase N / Deleted / Moved to {destination}).}
+```
+
+**Example (correct)**:
+```markdown
+## Pre-Existing Code in Scope
+Sources/IO_Events/Channel.swift — Moved to swift-sockets (Phase 2)
+Sources/IO_Events/Selector.swift — Refactored in Phase 2 (retain as package-scope)
+Sources/IO_Completions/Queue.swift — Preserved
+Sources/IO_Completions/Runtime.swift — Refactored in Phase 3
+```
+
+**Example (defect)**:
+A handoff whose Goal is "redesign full IO public API" but whose investigation was scoped to the blocking subsystem. 100 files of pre-existing `IO.Event.*` / `IO.Completion.*` runtime code treated as "Phase 2/3 roadmap items" with no enumeration of their pre-existing status or intended treatment. Fresh-perspective review catches the elision; without the review, Phase 2 collides with production code at execution time.
+
+**Rationale**: The 2026-04-14 swift-io handoff elided ~100 files of pre-existing runtime code because the originating investigation had narrow scope and the plan scope widened without re-inventorying the workspace. The pattern recurs whenever investigation-scope and plan-scope diverge. Forcing enumeration surfaces the gap at handoff-writing time rather than execution time.
+
+**Provenance**: 2026-04-14-io-design-review-cycle.md
+
+**Cross-references**: [HANDOFF-004] Sequential Template, [HANDOFF-006] Auto-Population
+
+---
+
+### [HANDOFF-015] Audit Handoff Naming
+
+**Statement**: When a handoff's purpose is to run a systematic audit (compliance check, readiness review, phased perfection check) rather than to continue task work, the filename MUST use the `AUDIT-` prefix instead of `HANDOFF-`. This distinguishes audit artifacts from task-continuation artifacts and prevents namespace collision with gitignore rules that treat `HANDOFF-*.md` as transient working files.
+
+**Filename table** (extends [HANDOFF-008]):
+
+| Mode | Artifact purpose | Filename | Example |
+|------|------------------|----------|---------|
+| Sequential | Task continuation | `HANDOFF.md` | `HANDOFF.md` |
+| Branching | Task investigation | `HANDOFF-{topic}.md` | `HANDOFF-sendable-conformance.md` |
+| Branching | Systematic audit / compliance check | `AUDIT-{topic}.md` | `AUDIT-phase-3-newcomer-simulation.md` |
+
+**When to use `AUDIT-`**:
+- The handoff dispatches a `/audit` invocation or equivalent compliance sweep
+- The handoff dispatches a release-readiness check, perfection check, or phased-review pass
+- The Findings Destination is `Research/audit.md` or an audit-phase document (not a task's HANDOFF.md)
+
+**When to use `HANDOFF-`**:
+- The handoff dispatches an investigation that may or may not produce a fix
+- The handoff continues task work or spins off a focused sub-task
+- The artifact is expected to be short-lived and consumed by the next session
+
+**Rationale**: The 2026-04-15 swift-institute perfection-check cycle ran three audit phases producing 69 findings across integrity, CI/OSS-norms, and content-correctness. Distinguishing audit artifacts from task artifacts (a) allows differential gitignore treatment — audit history stays in the repo, task handoffs churn — and (b) helps reviewers scan filenames and route audits to the audit skill's tooling. Absent the convention, `HANDOFF-*.md` matches both audits and task handoffs, triggering the audit skill's in-place-update behavior on files never meant for it.
+
+**Provenance**: 2026-04-15-three-phase-perfection-check-and-supervision.md
+
+**Cross-references**: [HANDOFF-008] File Location and Naming, audit skill [AUDIT-*]
+
+---
+
+### [HANDOFF-016] Proposal Staleness vs Work Staleness
+
+**Statement**: On resume, the new agent MUST verify two distinct kinds of staleness. Work staleness: Next Steps already done, Current State drifted forward. Proposal staleness: prescriptions in the handoff (branch name, API signature, tool choice, module layout) were written under assumptions about repo state or ecosystem convention that no longer hold.
+
+**Staleness axes**:
+
+| Axis | What is stale | How to check | On discovery |
+|------|---------------|--------------|--------------|
+| Work staleness | Completed items, superseded state, resolved Dead Ends | Compare Next Steps to git log / build output / test results | Remove done items from Next Steps; forward Current State |
+| Proposal staleness | Branch name, API signature, tool/pattern choice, module name | Compare prescriptions against current `main` (`git log`, `git diff origin/main`) and current skill conventions loaded for the task | Surface the mismatch before acting; if the prescription is stale, propose the current-state alternative and ask (do not silently substitute) |
+
+**Common loci of proposal staleness**:
+
+- **Branch names**: a handoff prescribing `git checkout -b topic-branch` when `main` has moved 16+ commits ahead and is itself the working branch — the topic branch adds friction without value
+- **API signatures**: a handoff prescribing `Result<T, E>` when the ecosystem has since converged on `() throws(E) -> T` thunks
+- **Tool choices**: a handoff prescribing a helper that has since been deleted, renamed, or moved to a different package
+- **Module layout**: a handoff prescribing a target/module that has since been split, merged, or relocated per modularization skill updates
+
+**Example (correct)**:
+```
+Handoff says: "Branch: polling-error-result in both repos"
+Agent checks: main in swift-executors is 16 commits ahead of origin;
+              user has been using main as working branch
+Agent surfaces: "The handoff prescribes a topic branch, but main is
+                already the working branch. Shall I continue on main?"
+User confirms: "why checkout?"
+Agent proceeds on main.
+```
+
+**Example (defect)**:
+```
+Handoff says: "Change tick parameter to Result<T, E>"
+Agent applies the edit without checking /implementation for current
+conventions on callback outcome signatures.
+User intervenes mid-edit: "we should use LANGUAGE SEMANTICS so throws
+see /implementation. dont use Result."
+Partial edit must be rolled back and redone with throws(E) thunk.
+```
+
+**Rationale**: [HANDOFF-010] Resume Protocol covers work staleness through state verification. Proposal staleness is a distinct failure mode: the listed state is correct, but the recommended approach is not. A prior-session author encoded their best understanding at the time; hours later, repo state, ecosystem conventions, or skill updates may have invalidated those specific prescriptions even though the overall task remains valid. Treating handoffs as inputs-to-a-current-state-check, not binding specifications, prevents compounding the first author's now-stale decisions into the resuming session's output.
+
+**Provenance**: 2026-04-15-polling-tick-throws-thunk-over-result.md
+
+**Cross-references**: [HANDOFF-009] Progressive Capture, [HANDOFF-010] Resume Protocol
 
 ---
 

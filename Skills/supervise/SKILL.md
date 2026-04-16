@@ -221,16 +221,35 @@ then continues without telling the subordinate why the edit happened.
 
 **Format**: Acceptance criteria are an enumerated checklist. Each criterion is testable from disk, git, or a build/test command — not from subordinate attestation alone.
 
+**Three positive verification sources**: each criterion MUST resolve against at least one of the following, and the principal MUST name which source verifies each criterion:
+
+| Source | What it proves | How the principal checks |
+|--------|---------------|--------------------------|
+| **Disk / git state** | Files exist (or are absent), paths resolve, commits landed | Read the current file contents, run `git status` / `git log` / `git diff`, list directories |
+| **Build / test output** | Code compiles, tests pass, benchmarks hold | Run `swift build` / `swift test` / benchmark harnesses in the principal's own context and read the output |
+| **Current file state** | A specific invariant holds at this moment (annotations applied, rule codified, cross-reference fixed) | Re-read the file the principal expects to have changed and verify the invariant without relying on the subordinate's diff summary |
+
 **Example**:
 ```
 Acceptance:
   1. swift test green on macOS for the new Listener events strategy.
+     (verified via: build/test output — principal runs `swift test` locally)
   2. swift test green on Linux Docker for blocking + events + completions.
+     (verified via: build/test output — principal runs Docker test in its own shell)
   3. No diffs to swift-kernel-primitives or swift-linux-standard.
+     (verified via: disk/git state — `git diff --stat` on those packages)
   4. Phase 3A research note written at Research/sockets-phase-3-plan.md.
+     (verified via: current file state — principal reads the file)
 ```
 
-**Rationale**: Subordinate "I'm done" reports are not acceptance. The handoff research's ATC read-back pattern applies here: the principal MUST verify against criteria the principal authored, not against the subordinate's self-report.
+**Forbidden verification sources**:
+
+| Source | Why forbidden |
+|--------|---------------|
+| Subordinate attestation ("I verified this") | Attestation is self-report, not verification; the principal's job is independent check |
+| Principal assumption ("this must have worked because everything else did") | Assumption is inference, not evidence; structurally identical to attestation without the report |
+
+**Rationale**: Subordinate "I'm done" reports are not acceptance. The handoff research's ATC read-back pattern applies here: the principal MUST verify against criteria the principal authored, not against the subordinate's self-report. Naming the positive source per criterion makes the verification step concrete — the principal cannot skip verification by inferring it happened. The three sources are exhaustive for code-bearing supervision; document-only supervision uses only the disk/git-state and current-file-state rows.
 
 ---
 

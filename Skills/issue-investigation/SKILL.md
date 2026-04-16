@@ -17,7 +17,8 @@ applies_to:
   - silgen-bug
   - sil-optimizer-bug
 
-last_reviewed: 2026-03-31
+last_reviewed: 2026-04-15
+last_updated: 2026-04-15
 ---
 
 # Issue Investigation
@@ -79,6 +80,68 @@ has prevented hours of unnecessary compiler source analysis in multiple sessions
 **Cross-references**: [ISSUE-010], [ISSUE-001]
 
 **Provenance**: 2026-03-31-se0499-contextual-lookup-misdiagnosis.md
+
+---
+
+## Step 0.75: Surface Shape Constraints Before Designing
+
+### [ISSUE-022] Ask Before Designing the Fix
+
+**Statement**: When an issue investigation will produce a design proposal (not just a reproducer or a tactical workaround), the investigating agent MUST surface the user's *shape* preference for the fix before drafting the proposal. A fix-shape preference is distinct from the constraint list given in the brief — briefs typically enumerate forbidden approaches (no atomics, no existentials, typed throws required) but rarely enumerate aesthetic preferences (additive vs subtractive, runtime vs compile-time, new types vs deletion).
+
+**Clarifying-question axes**:
+
+| Axis | Options | Example question |
+|------|---------|------------------|
+| Additive vs subtractive | Add new types / methods vs remove existing ones | "Should the fix introduce new types, or should it remove/relocate existing state?" |
+| Runtime vs compile-time | Atomics / checks at runtime vs type-system invariants | "Are runtime checks acceptable, or must the invariant be compile-time?" |
+| New types vs relocation | Introduce new primitives vs move existing ones | "Do you prefer new primitives for this, or refactoring existing ones?" |
+| Workaround vs refactor | Localized patch vs structural change | "Is a localized workaround acceptable for this release, or do we want the structural fix now?" |
+
+**Procedure**: Ask one clarifying question that narrows the design space before writing more than a paragraph of proposal. The question should present two or three shape-options so the user's answer is a recognition task, not a composition task.
+
+**Example (correct)**:
+```
+Brief says: "Design a structural fix. No atomics, no nonisolated(unsafe),
+             no existentials. Type-system enforced."
+
+Before writing: "Before I draft this — are you picturing (a) new types
+                 that encode the invariant (e.g., ~Copyable tokens),
+                 (b) removing the field entirely and accepting a looser
+                 contract, or (c) something else? I can take either
+                 direction, but they lead to very different proposals."
+```
+
+**Example (defect)**:
+```
+Brief says: "Design a structural fix. No atomics, no nonisolated(unsafe),
+             no existentials."
+
+Agent writes: 32 KB proposal introducing ~Copyable AdmissionSlip type
+              plus Synchronization atomics on Loop.
+
+User rejects in under a sentence: "I'd rather NOT add new checks,
+                                    and instead fix the structure."
+
+Proposal is discarded. 90% of the design work was wasted on a shape
+the user was never going to accept.
+```
+
+**Applies when**:
+- The brief asks for a "design proposal" or "structural fix"
+- The investigation produces a writeup larger than ~500 words
+- Multiple reasonable shapes exist and the brief does not explicitly rule any in or out
+
+**Does not apply when**:
+- The fix is a localized tactical workaround ([ISSUE-008] "apply workaround, document")
+- The bug has a single obvious shape (e.g., compiler fix matching a TODO comment)
+- The brief explicitly prescribes the shape ("add a new case to the enum", "delete the field")
+
+**Rationale**: The 2026-04-08 swift-io actor-state investigation produced a 32 KB proposal (`~Copyable AdmissionSlip`) that was rejected with one sentence because the user wanted *deletion*, not *addition*. The brief's explicit constraints (no atomics, no existentials, type-system enforced) were satisfied by the proposal — what the proposal missed was an implicit shape preference. A 30-second clarifying question would have redirected the effort before the 32 KB was written. Surfacing aesthetic constraints up front is the lowest-cost insurance against proposal-shape mismatch.
+
+**Provenance**: 2026-04-08-actor-state-fix-deferred-structural-vs-runtime.md
+
+**Cross-references**: [ISSUE-010] Bug Classification, [ISSUE-008] Resolution Paths
 
 ---
 
@@ -165,6 +228,59 @@ Required ingredients (removing any one makes it pass):
 ---
 
 ## Step 3: Diagnose
+
+### [ISSUE-023] Debug-Prints-First Ladder for Release-Mode-Only Bugs
+
+**Statement**: When debug mode passes and release mode fails, the first diagnostic tool MUST be `print()` statements on the suspect code path, NOT source-reading or SIL inspection. Theorizing about what the compiler *might* do with optimizations is strictly worse than observing what the binary *actually* does. Only after prints confirm the divergence point should source-reading or SIL analysis begin.
+
+**The ladder** (ascending cost, descending need for creativity):
+
+| Step | Tool | Cost | Signal |
+|------|------|------|--------|
+| 1 | `print()` statements on suspect path | ~90 seconds (edit + rebuild) | Definitive — observes ground truth values and control flow |
+| 2 | Minimal standalone experiment | ~30 minutes | Confirms the bug is in Swift/compiler, not our code |
+| 3 | `-emit-sil -O` inspection | ~1 hour | Definitive on compiler output |
+| 4 | Compiler source reading per [ISSUE-012] | hours | Root cause in the optimizer |
+
+**Procedure**: Start at step 1. Advance only when the current step's signal is insufficient for the next action. Skipping step 1 to start at step 3 or 4 is the anti-pattern this requirement prevents.
+
+**What to print**:
+- Entry/exit of the suspect function (confirms control flow reached the site)
+- Values of fields read or written at the suspect operation (confirms state)
+- Thread or executor identity if cross-thread visibility is suspected (confirms isolation)
+- Timestamps or sequence counters if ordering is suspected (confirms happens-before)
+
+**Example (correct)**:
+```
+Symptom: three shutdown tests fail in release, pass in debug.
+Step 1: Add three prints to Runtime.shutdown() and Runtime.register():
+        DEBUG: shutdown called, state = running
+        DEBUG: shutdown set state = .shuttingDown
+        DEBUG: register called, state = running   ← stale read
+Diagnosis time: 90 seconds. The output pins the visibility failure
+to the cross-thread read after shutdown joined the executor.
+```
+
+**Example (defect)**:
+```
+Symptom: three shutdown tests fail in release, pass in debug.
+Step 3 (skipped 1+2): Read Runtime source, theorize about lost-wakeup
+race between drainJobs and poll. Confidently call it a bug.
+20 minutes later: realize the kernel buffers EVFILT_USER until consumed,
+closing the window. Theory was wrong. Walk it back.
+Net effect: 20 minutes of wasted time + degraded user trust + original
+bug still undiagnosed.
+```
+
+**Why release-mode-only bugs specifically**: the debug/release divergence narrows the suspect space to (a) compiler optimization, (b) memory ordering, or (c) UB that debug builds happen to hide. None of those three is visible from source reading — the source is the same in both modes. Only observed binary behavior distinguishes them.
+
+**Rationale**: The 2026-04-07 swift-io session spent ~20 minutes source-reading and building theories about why the admission check wasn't catching shutdown. Three `print()` statements immediately revealed that `Runtime.register()` was reading `state = running` after `Runtime.shutdown()` had written `state = .shuttingDown`. The cost of prints (90s) vs the cost of theorizing (20min+) makes prints the correct first reach — and the print output pinned the cross-thread visibility failure more precisely than any source-reading could have.
+
+**Provenance**: 2026-04-07-actor-state-inline-fallback-visibility.md
+
+**Cross-references**: [ISSUE-005] SIL Dump Analysis, [ISSUE-006] Hypothesis Discipline, [ISSUE-013] Variable Isolation for Context-Sensitive Bugs
+
+---
 
 ### [ISSUE-005] SIL Dump Analysis
 

@@ -104,6 +104,41 @@ Sequence: (1) Identify uncertainty, (2) create minimal experiment, (3) run — s
 
 ---
 
+### [EXP-011a] First Clean Signal Is The Result
+
+**Statement**: An experiment's first clean signal — positive OR negative — IS the result. Subsequent variants MUST test a different hypothesis, not repeat the same hypothesis with more pressure. Adding minor variations (more iterations, larger inputs, slightly different code shape) to a variant that already returned a definitive signal is asking the same question louder, not testing something new.
+
+**The rule**:
+
+| After V1 produces | V2 MUST |
+|-------------------|---------|
+| Clean CONFIRMED (hypothesis validated, evidence captured) | Test a different hypothesis, or stop |
+| Clean REFUTED (hypothesis invalidated) | Test a different hypothesis (what else could cause the observed behavior?), or stop |
+| Ambiguous / flaky signal | First stabilize the experiment (see [EXP-004] reduction, [EXP-004a] construction), not add variants |
+
+**What counts as "the same hypothesis with more pressure"**:
+- 1000 iterations when 10 iterations already showed the pattern clearly
+- Adding unused code or state that does not exercise a new mechanism
+- Running the same test under a slightly different optimization flag (-Onone → -O) without a specific reason to expect it to matter
+- Scaling up variables (buffer size, thread count) without a theoretical basis for the scaling to trigger something new
+
+**What counts as "testing a different hypothesis"** (legitimate continuation):
+- Adding a feature or interaction the initial variant did not exercise (concurrency, lifetime-scoped access, a specific language feature)
+- Testing whether a refuted hypothesis rules out a broader class (if memory ordering is NOT the cause, is it code motion? inlining? WMO?)
+- Reducing toward a smaller reproducer after an initial positive signal ([EXP-004])
+
+**Context-sensitive bugs caveat**: when production fails but all variants pass, the hypothesis "the bug is reproducible in isolation from this simple shape" has been refuted. That IS the result. The next step is to accept the negative result and narrow from the production side (add production code incrementally per [EXP-004a]), not to keep enlarging the isolated variant.
+
+**Documenting a negative result**: an experiment that refutes a hypothesis is valuable and MUST be written up as a finding, not hidden or treated as a failure. The header note SHOULD state the specific hypothesis refuted and what that rules out about the production bug's shape.
+
+**Rationale**: The 2026-04-08 actor-state investigation ran V1–V5 testing essentially the same "actor state read stale via inline fallback" hypothesis, then concluded (correctly) that the bug could not be reproduced from the minimal shape. V2–V5 added nothing V1 had not established; they consumed time that a different-hypothesis variant (or an early stop) would have saved. The retrospective lesson is structural: experiments have a finite number of hypotheses to discriminate among, and variants must advance the discrimination, not repeat it.
+
+**Provenance**: Reflection `2026-04-08-actor-state-fix-deferred-structural-vs-runtime.md`.
+
+**Cross-references**: [EXP-004], [EXP-004a], [EXP-006], [EXP-011]
+
+---
+
 ### [EXP-018] Experiment Consolidation
 
 **Statement**: When an investigation produces 5 or more experiments exploring related aspects of the same bug, feature, or design question, they SHOULD be consolidated into thematically coherent groups before further investigation. Each consolidated experiment groups variants by the specific hypothesis they test, with a shared `EXPERIMENT.md` documenting the relationships between variants.

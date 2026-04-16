@@ -236,11 +236,13 @@ We added a clamping initializer but then changed to typed parameters instead.
 
 **"Future work" verification**: When classifying an action item as "future work" or "deferred," verify the classification is not masking a straightforward mechanical fix. Ask: "Does the type already support the capability?" If yes, the fix is likely mechanical, not a design question. Over-analysis of obvious steps can serve as procrastination disguised as caution.
 
-**Rationale**: Shallow reflections (Pappas 2010) generate documentation but not learning. Deep reflections generate the insights that improve skills.
+**Re-verify after edit**: When a finding or action item requires converting, renaming, or removing all instances of X in a file (all plural pronouns, all compound identifiers, all references to a deprecated API), the session MUST re-run the detection pass (grep, search, or whatever originally surfaced the instances) against the full file *after all edits are complete*, not only after each individual edit. Partial inventories collected during the audit phase can miss instances at lines the editor did not touch; a final detection pass against the whole file closes the gap. This applies to any "convert-all-X" task, not just editing — including cleanup passes, terminology sweeps, and rule-propagation edits.
+
+**Rationale**: Shallow reflections (Pappas 2010) generate documentation but not learning. Deep reflections generate the insights that improve skills. The re-verify rule addresses a distinct class of failure: the edits were correct but incomplete, and the incompleteness was invisible because the detection pass was not re-run at the end. Re-grep-after-edit makes the completeness check mechanical.
 
 **Cross-references**: [REFL-002], [REFL-004]
 
-**Provenance**: 2026-03-31-se0499-ecosystem-audit-completion.md
+**Provenance**: 2026-03-31-se0499-ecosystem-audit-completion.md; re-verify-after-edit added per 2026-04-15-phase3-perfection-audit-and-fix-cycle.md
 
 ---
 

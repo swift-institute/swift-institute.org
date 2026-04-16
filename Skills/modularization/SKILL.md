@@ -399,6 +399,48 @@ import Sequence_Primitives_Core
 
 ---
 
+### [MOD-015a] Narrow-Imports Exception for Shadow Disambiguation
+
+**Statement**: `public import X` in a narrow product `Y` makes X's *types* visible to Y's consumers but does NOT promote Y to "declares X" status for the purpose of module-qualification. When a consumer needs `Module.Namespace` syntax to disambiguate a shadowed name (e.g., the primitives `Executor` namespace shadowed by stdlib's `_Concurrency.Executor` in a type that conforms to `SerialExecutor`), the consumer MUST import a module that *declares* the namespace — typically the umbrella product — not a narrow product that merely re-exports it.
+
+**Structural reason**: Swift module qualification is about declaration, not visibility. `Module.TypeName` resolves only when `Module` is the module that actually declares `TypeName`. `public import X` in module Y makes X's types visible through Y but Y is a conduit, not a declaring owner. Consumers writing `Y.TypeName` will fail to resolve; they must write `X.TypeName`.
+
+**Correct** (umbrella for shadow disambiguation):
+```swift
+// In a type that conforms to SerialExecutor (brings _Concurrency.Executor in scope):
+import Executor_Primitives           // umbrella — declares Executor namespace via Core
+
+let queue: Executor_Primitives.Executor.Job.Queue = ...   // disambiguates from _Concurrency.Executor
+```
+
+**Incorrect** (narrow product cannot be qualified):
+```swift
+import Executor_Job_Queue_Primitives    // narrow — re-exports Executor via public import of Core
+
+let queue: Executor_Job_Queue_Primitives.Executor.Job.Queue = ...
+// ❌ Does not resolve: Executor is declared in Executor Primitives Core, not in this module
+```
+
+**Decision procedure for consumers**:
+
+| Situation | Import |
+|-----------|--------|
+| No name shadow, no need for module-qualified syntax | Narrow variant product per [MOD-015] |
+| Name shadow exists AND disambiguation needs `Module.Namespace` prefix | Umbrella product (or whichever product's module declares the namespace) |
+| Types live in a shared Core target that is NOT itself a product | Umbrella product (Core is not importable; umbrella re-exports Core and can be qualified as a proxy because its target has `@_exported public import` of Core) |
+
+**Why this is not a [MOD-015] violation**: [MOD-015] prohibits umbrella imports to avoid paying compile-time cost for unused variants. Shadow disambiguation is a distinct need — the consumer needs a module *identity* for qualification, not broader visibility. When the shadow is real and narrow-import qualification fails structurally, the umbrella is the smallest import that resolves the disambiguation; this is the case the narrow-imports rule does not cover.
+
+**Alternative (rejected)**: making Core a product. Making Core publishable would fix the qualification path but defeats the Core-is-internal invariant per [MOD-001]. The umbrella pathway preserves Core's internal role while giving consumers a declared-module anchor.
+
+**Rationale**: The narrow-imports preference is correct in the common case and reduces compile-time coupling. The shadow-disambiguation case is an exception, not a violation — the same reasoning that makes narrow imports preferable does not account for the structural difference between visibility and declaration in Swift's module system. Codifying this exception prevents consumers from fighting the compiler when stdlib-conforming types bring stdlib namespaces into scope.
+
+**Provenance**: Reflection `2026-04-15-completion-loop-proactor-reactor-boundary.md`.
+
+**Cross-references**: [MOD-001], [MOD-005], [MOD-006], [MOD-015]
+
+---
+
 ## Decision Guides
 
 ### [MOD-008] Split Decision Criteria

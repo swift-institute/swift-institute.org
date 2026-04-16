@@ -683,6 +683,105 @@ extension Kernel.File.Open.Options {
 
 ---
 
+### [PLAT-ARCH-015] Per-L2 Platform-Native Typed Values
+
+**Statement**: When a type's raw representation genuinely differs per platform (thread IDs, process-level identifiers, scheduler tokens), the type MUST be defined per L2 platform package with the native integer width, expressed in Swift stdlib types (`Int32`, `UInt32`, `UInt64`) so the C typedef does not leak across the L2 boundary. A uniform L1 type that normalizes the values (e.g., widening every platform to `UInt64`) MUST NOT be introduced — it is lossy and misrepresents the platform reality.
+
+**Correct** — per-L2 with native int widths:
+
+| L2 package | Type | Underlying C | Swift stdlib | Rationale |
+|-----------|------|--------------|--------------|-----------|
+| `swift-darwin-standard` | `Darwin.Kernel.Thread.ID` | `mach_port_t` | `UInt32` | Mach kernel port concept |
+| `swift-linux-standard` | `Linux.Kernel.Thread.ID` | `pid_t` (tid) | `Int32` | Linux tid namespace |
+| `swift-windows-standard` | `Windows.Kernel.Thread.ID` | `DWORD` | `UInt32` | Win32 scheduler concept |
+
+```swift
+// swift-darwin-standard
+extension Darwin.Kernel.Thread {
+    public struct ID: Sendable, Hashable {
+        public let rawValue: UInt32   // matches mach_port_t 1:1, no typedef leak
+        public init(rawValue: UInt32) { self.rawValue = rawValue }
+    }
+}
+```
+
+**Incorrect** — uniform L1 type:
+```swift
+// ❌ swift-kernel-primitives (L1)
+extension Kernel.Thread {
+    public struct ID: Sendable { public let rawValue: UInt64 }   // lossy
+}
+
+// ❌ Forces bit-pattern conversions at each platform:
+let tid = UInt64(truncatingIfNeeded: pid_t_value)     // loses signedness
+let tid = UInt64(bitPattern: Int64(pid_t_value))      // reintroduces it
+```
+
+**Decision test** — per-L2 native typed value is correct when:
+
+| Condition | Check |
+|-----------|-------|
+| Raw representation differs per platform (signedness, width, semantics) | Yes → per-L2 |
+| The concept has no equivalent on one platform | Per-L2 with `#if os()` exclusion on that package, not L1 stub |
+| The same bit pattern means different things per platform (e.g., mach_port_t vs pid_t) | Per-L2 — unification is lying |
+| Only the constants vary (universal concept, platform-specific values) | Use [PLAT-ARCH-013] Shell + Values, not per-L2 |
+
+**Contrast with [PLAT-ARCH-013]**: the Shell + Values OptionSet pattern is for universal concepts with platform-specific constants — the L1 shell exists because the *concept* is the same everywhere. [PLAT-ARCH-015] applies when even the concept differs: a Linux tid is not a mach_port_t is not a Win32 DWORD thread ID. No amount of aliasing unifies them without information loss.
+
+**Swift stdlib types over C typedefs**: the raw value MUST use `Int32`/`UInt32`/`UInt64` (stdlib) rather than `pid_t`/`mach_port_t`/`DWORD` (C typedefs imported from platform headers). The stdlib types match the native widths 1:1 and do not require consumers of the L2 module to import the platform's C module to use the type.
+
+**Rationale**: Platform-native ABI fidelity is stronger than uniform portable types for values that genuinely differ per platform. The instinct to unify (UInt64 everywhere) hides real differences: `mach_port_t` is a Mach kernel concept, `pid_t` is the Linux tid namespace, `DWORD` is a Win32 scheduler concept. Forcing them into one type via bit-pattern conversion is lossy AND misrepresents the platform reality. Per-L2 definition with native int widths honors both the platform and the type-system hygiene rules.
+
+**Provenance**: Reflection `2026-04-14-strict-mission-thread-layer-refactor.md`.
+
+**Cross-references**: [PLAT-ARCH-001], [PLAT-ARCH-004], [PLAT-ARCH-013]
+
+---
+
+### [PLAT-ARCH-016] `checkIsolated` for Thread-Owning SerialExecutors
+
+**Statement**: Custom `SerialExecutor` types that own a dedicated OS thread AND invoke user code from that thread outside `runSynchronously(on:)` MUST implement both `isIsolatingCurrentContext()` and `checkIsolated()`. This is the designed bridge between "the thread owns this code" and "a Swift Task owns this code" — the Swift concurrency runtime's fallback chain calls these protocol members precisely when the per-Task executor tracking has no entry for the current code (tick callbacks, run-loop invocations, main-thread callbacks).
+
+**When required**:
+
+| Pattern | Required? |
+|---------|-----------|
+| Executor invokes user closures from its own thread outside `runSynchronously(on:)` (e.g., tick, run-loop hook) | Yes |
+| Executor is main-thread anchored and user code can run on the main thread without going through `runSynchronously` | Yes (pattern: `DispatchMainExecutor`) |
+| Executor is `TaskExecutor` only (never `SerialExecutor`) | No — TaskExecutor has no isolation assertion path |
+| Executor delegates to a base executor for all invocations | No — base's implementation carries |
+
+**Implementation shape** (pthread-backed executor):
+
+```swift
+extension Kernel.Thread.Executor.Polling: SerialExecutor {
+    public func isIsolatingCurrentContext() -> Bool? {
+        threadHandle?.isCurrent
+    }
+
+    public func checkIsolated() {
+        precondition(
+            isIsolatingCurrentContext() == true,
+            "Called from thread not owned by Polling executor"
+        )
+    }
+}
+```
+
+**Why both members**: `isIsolatingCurrentContext()` is the fast-path predicate (returns `Bool?`); `checkIsolated()` is the backstop called by the runtime when the predicate returns `nil`. Implementing only one leaves `assumeIsolated` with no correct behavior in the fallback case. Apple's `DispatchMainExecutor` in `swift-platform-executors` implements both via `_dispatchAssertMainQueue()` — this pattern is sanctioned, not a workaround.
+
+**Runtime reference**: the fallback chain is defined in `swiftlang/swift/stdlib/public/Concurrency/Actor.cpp:497-557`. `_taskIsCurrentExecutor` consults `isIsolatingCurrentContext()` first; on `nil`, it falls through to `checkIsolated()`. Without these protocol members, `assumeIsolated` on custom executors traps with "Unexpected isolation context" for code that is in fact correctly isolated at the thread level.
+
+**What this is NOT**: `nonisolated(unsafe)` is not the answer for cross-thread actor-state visibility in a thread-owning executor. The actor is isolated to the executor; the executor owns the thread; `isIsolatingCurrentContext` bridges the type system's isolation model to the runtime's thread identity. Using `nonisolated(unsafe)` on the actor's state papers over the isolation contract that the executor is structurally set up to honor.
+
+**Rationale**: Swift tracks isolation per-Task via task-local state set by `runSynchronously(on:)`. Custom executors that own threads and invoke user code outside that entry point need a way to self-certify when code runs on their thread. The protocol extension point exists; our ecosystem missed it historically because custom executors were first used via actor pinning (every access came through a dispatched job). Tick callbacks (synchronous callbacks from a run loop) bypass the per-Task model — the gap was in our implementation not keeping up with a new consumption pattern, not in Swift's design.
+
+**Provenance**: Reflection `2026-04-15-polling-tick-isolation-checkisolated-landing.md`; research doc `swift-io/Research/polling-tick-isolation-checkisolated.md`.
+
+**Cross-references**: [PLAT-ARCH-001], [MEM-SEND-001]
+
+---
+
 ## Platform Compilation
 
 ### [PATTERN-001] C Shim Layer Structure

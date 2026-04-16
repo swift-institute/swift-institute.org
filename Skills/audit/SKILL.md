@@ -436,6 +436,89 @@ Files found at wrong scope levels are consolidated into the target scope's `Rese
 
 ---
 
+### [AUDIT-017] Parking Destination for Deferred Investigations
+
+**Statement**: `/audit` MAY be used as a parking destination for investigations that cannot land in the current session. A finding of the form "we verified this defect, we know the constraints, we do not have a fix yet" is a valid first-class audit output, recorded as `DEFERRED — {reason + investigation pointer}` per [AUDIT-004]. The destination is structurally preferable to leaving the investigation in a `HANDOFF-*.md` because `audit.md` is durable, indexed via `Research/_index.md`, lives next to the code it concerns, and carries the severity/status format that survives re-audits.
+
+**When parking via audit is correct**:
+
+| Condition | Action |
+|-----------|--------|
+| Defect is reproducible or structurally identified, but the fix requires a decision outside the current session's authority | Park as DEFERRED with the decision surface recorded |
+| Investigation surfaced multiple design options and the user chose to defer rather than land | Park as DEFERRED with the option set summarized and a pointer to the proposal doc |
+| A rule violation is known but remediation is coupled to other unlanded work | Park as DEFERRED with the coupling described |
+
+**Required for DEFERRED parking**:
+
+1. Rule ID — what requirement the finding violates (same column as an OPEN finding)
+2. Location — file/line or subsystem
+3. Reason — why this is deferred, not fixed
+4. Investigation pointer — path to the research doc, proposal, or linked reflection that captured the design space, so a future session can pick up without re-investigation
+
+**Distinguishing from fix-now audits**: A DEFERRED finding is not a lesser OPEN finding. Re-audits per [AUDIT-005] preserve DEFERRED findings with their original reason until either the violation no longer exists (drop) or the deferral condition resolves (upgrade to OPEN or mark RESOLVED).
+
+**Rationale**: Before this rule, investigations that could not land produced `HANDOFF-*.md` artifacts that accumulate context-trap weight on future sessions. Channeling them into `audit.md` reuses a durable indexed destination and unifies "found a violation" and "found something worth parking" under one artifact. The audit scope per [AUDIT-011] still requires a requirement ID; parking-via-audit is not a license to record research — it is the correct destination for findings-against-rules that happen to be DEFERRED.
+
+**Provenance**: Reflection `2026-04-08-parent-side-deletion-vs-addition.md`.
+
+**Cross-references**: [AUDIT-004], [AUDIT-005], [AUDIT-011], [HANDOFF-005]
+
+---
+
+### [AUDIT-018] Receipts-Model Integrity Check
+
+**Statement**: Audits of published content (blog posts, documentation, and other reader-facing artifacts that link to "receipts" — code samples, experiments, or reference files that evidence a claim) MUST include a receipts-model integrity check. For each receipt link, the auditor MUST open the target, read it, and verify that the target actually demonstrates what the linking paragraph claims.
+
+**Procedure**:
+
+1. Enumerate receipt links in scope (any link from prose to a code file, experiment, or reference whose purpose is to evidence a claim).
+2. For each link: open the target.
+3. Read the linking paragraph and determine the specific claim being made.
+4. Read the target and verify the claim is actually demonstrated.
+5. Report mismatches as findings; the severity is at least MEDIUM when the target contradicts the paragraph, and CRITICAL when the contradicted claim is a flagship recommendation.
+
+**What mismatches look like**:
+
+| Mismatch | Example |
+|---------|---------|
+| Target demonstrates a different variant than the paragraph claims | Paragraph recommends approach X; linked receipt demonstrates approach Y |
+| Target contradicts the paragraph's recommendation | Paragraph argues against pattern P; linked receipt uses pattern P |
+| Target is stale or missing the claimed element | Paragraph claims the fix is at line N; target no longer contains it |
+
+**Rationale**: Structural audits ("does the file exist?") and content-hygiene audits ("does it leak paths?") do not catch claim-to-evidence mismatches. Only a semantic check — reading both the source paragraph and the target file and evaluating whether they agree — surfaces this class of defect. This is the lens that caught the flagship blog post's receipt-claim inversion in the Phase 3 perfection audit; no prior phase ran this check because the phases preceding it did not ask whether linked targets demonstrate what the prose claims.
+
+**Provenance**: Reflection `2026-04-15-phase3-perfection-audit-and-fix-cycle.md`.
+
+**Cross-references**: [AUDIT-003], [AUDIT-004], [AUDIT-006]
+
+---
+
+### [AUDIT-019] Skill-vs-Skill Cluster Consistency Mode
+
+**Statement**: `/audit cluster {skill-1} {skill-2} ...` is a first-class audit mode that checks inter-skill consistency across a cluster of composing skills. The output MUST be written to `Research/audit.md` per [AUDIT-001] with a section titled `## Cluster: {skill-1}+{skill-2}+... — {YYYY-MM-DD}`, following the standard Scope/Findings/Summary structure per [AUDIT-003].
+
+**Scope**: a cluster audit MUST target two or more skills that compose (cross-reference each other or are expected to interoperate). It checks requirement IDs, not code. Findings include:
+
+| Category | Example |
+|---------|---------|
+| Cross-reference range errors | `[SUPER-001]` cites `[SUPER-013]` but should cite `[SUPER-015]` |
+| Terminology collisions across skills | Both `/handoff` and `/supervise` use "Task boundaries" to mean different things |
+| ID divergence between predecessor research and shipped skill | Research doc's Skill Translation table predicts 15 IDs; shipped skill has 17 |
+| Composition gaps | `[SUPER-014a]` references an absentia case no other skill documents |
+| Ghost references | A skill mentions a template file or concept that is not defined anywhere in the cluster |
+
+**Distinguishing from code audits** (per [AUDIT-011]): a cluster audit is still a compliance audit — the requirement IDs being checked are the skills themselves (their stated rules), not code. The inputs are SKILL.md files; the output is a findings table in `audit.md`. This is different from Discovery research ([RES-012]), which has no requirement IDs to check against.
+
+**When to invoke**: skill clusters that co-load routinely (e.g., `handoff` + `supervise` + `reflect-session` + `skill-lifecycle` as the agent-workflow cluster) accumulate inter-skill drift faster than individual skills. A cluster audit is appropriate when the cluster reaches stability, after ~90 days of co-evolution, or when a new skill joins an existing cluster.
+
+**Rationale**: Self-review of a single skill is bounded by the author's own mental model. An independent cross-skill audit reads the cluster as a whole and catches the composition gaps that single-skill review cannot see by construction. The agent-workflow cluster audit demonstrated this — 26 findings on a freshly-shipped four-skill cluster, including all the high-value composition gaps. Previously such audits had no home in the canonical infrastructure; codifying this as `/audit cluster` unifies them with the single-skill audit machinery (section-per-cluster, update-in-place, index integration).
+
+**Provenance**: Reflection `2026-04-15-agent-workflow-cluster-audit-and-fixes.md`.
+
+**Cross-references**: [AUDIT-001], [AUDIT-003], [AUDIT-011], [RES-012]
+
+---
+
 ## Relationship to Other Skills
 
 | Skill | Relationship |

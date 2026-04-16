@@ -568,6 +568,56 @@ Per [eatonphil](https://notes.eatonphil.com/2024-04-10-what-makes-a-great-tech-b
 
 ---
 
+## Swift Institute conventions
+
+Conventions specific to Swift Institute blog posts, layered on top of the general guidance above.
+
+### Singular first person for author reflection
+
+**Statement**: When a post reflects personal experience, use singular "I" — not plural "we." "We" is reserved for collective actions taken by Swift Institute (or a project team) as an entity.
+
+| Correct | Incorrect |
+|---------|-----------|
+| "I discovered the shim was a semantic boundary, not a bridge." | "We discovered the shim was a semantic boundary, not a bridge." |
+| "I chose `Nest.Name` over compound identifiers." | "We chose `Nest.Name` over compound identifiers." |
+| "Swift Institute treats conventions as compiler-enforceable invariants." | _(collective — "Swift Institute" or "we" is fine here)_ |
+
+Posts where multiple contributors converge on a finding may use "we" — but default to "I" for first-person observation.
+
+### Superrepo, not monorepo
+
+**Statement**: Refer to `swift-primitives`, `swift-standards`, `swift-foundations`, and other multi-package Swift Institute repositories as **superrepos**, not monorepos. The distinction is load-bearing: each package within a superrepo is an independent distribution target with its own `Package.swift` and versioning, whereas a monorepo typically implies a single distributable unit.
+
+### No whimsy
+
+**Statement**: Avoid whimsical framing, jokey asides, clever subheadings, and emoji decoration. Technical posts earn their engagement through useful content, not performed personality. If a sentence feels like it's winking at the reader, rewrite it straight.
+
+| Avoid | Prefer |
+|-------|--------|
+| "Buckle up — this is where Swift gets spicy." | "Swift 6.3 changed the ownership model here. The details matter." |
+| "The compiler had opinions 😤" | "The compiler rejected this pattern. The fix was structural." |
+| "Enter our hero: the `~Copyable` type." | "A `~Copyable` type resolves the ambiguity." |
+
+### Direct prose
+
+**Statement**: Each sentence should carry information. Remove scaffolding ("It is worth noting that...", "At the end of the day...", "As we saw earlier..."). Each paragraph's topic sentence should be defensible as a standalone claim.
+
+### No internal skill references in published text
+
+**Statement**: Do not cite requirement IDs ([IMPL-*], [HANDOFF-*], etc.) or skill filenames in published blog posts. These are internal conventions for contributors. If a post relies on a skill's rule, state the rule in the post's own voice and cite the public reference (Swift Evolution proposal, compiler source, external paper) if applicable.
+
+**Rationale**: External readers lack access to Swift Institute's skill system. A post that hinges on "per [MEM-COPY-007]" is opaque and fails the standalone-comprehension test.
+
+### Reasoning sentences follow logically
+
+**Statement**: When a paragraph claims one sentence follows from another ("therefore", "so", "this means"), the logical connection must be explicit and defensible. Avoid "therefore" as a rhetorical softener for claims that do not strictly follow.
+
+**Correct**: "The verifier rejects `load [take]` on a trivial type. Therefore the workaround is to avoid `load [take]` on trivial types — either by boxing the value or by disabling the pass."
+
+**Incorrect**: "The verifier rejects this pattern. Therefore Swift's ownership model is fundamentally broken." (The conclusion does not follow from the premise.)
+
+---
+
 ## Quick reference
 
 ### Pre-submission checklist

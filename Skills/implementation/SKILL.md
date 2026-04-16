@@ -20,7 +20,7 @@ applies_to:
   - primitives
   - standards
   - foundations
-last_reviewed: 2026-04-01
+last_reviewed: 2026-04-15
 ---
 
 # Implementation
@@ -531,11 +531,13 @@ Rules absorbed from former `anti-patterns` and `design` skills. Rules whose cano
 | ID | Statement | Cross-ref |
 |----|-----------|-----------|
 | [PATTERN-012] | Canonical implementation for type transformations MUST live in initializers or static methods on the target type | — |
-| [PATTERN-013] | Protocols MUST NOT be designed before having 3+ concrete conformers | — |
+| [PATTERN-013] | Protocols MUST NOT be designed before having 3+ concrete conformers; even with 3+ conformers, if unification would force axis-divergent signatures to lose information, concrete sibling types are preferred (lossy-unification criterion) | [IMPL-084], [IMPL-090] |
 | [PATTERN-016] | Code violating a pattern MAY be acceptable when intentional, documented (`// WORKAROUND:`, `// WHY:`, `// WHEN TO REMOVE:`, `// TRACKING:`), bounded, and has specific removal criteria | — |
 | [PATTERN-017] | `.rawValue` and `.position` MUST be confined to extension initializers and same-package implementations | [IMPL-002], [CONV-001] |
 | [PATTERN-019] | Extensions on `Tagged where RawValue == T` MUST NOT provide public `init` — bypasses bounded invariants | [IMPL-001] |
 | [PATTERN-020] | A throwing init on a wrapper MUST NOT validate only the base type's invariant when the wrapper specializes to stricter types | [PATTERN-019] |
+| [PATTERN-054] | When tempted to invent a named type for a composition, verify academic grounding; if the composition has no standard construct, extend an existing primitive with a named method rather than minting a new type | [IMPL-INTENT], [IMPL-060], [PATTERN-013] |
+| [PATTERN-055] | `@usableFromInline` property paired with `internal import` of the property's type is a compile error — downgrade visibility or make the import `public` / `package` | [PATTERN-052] |
 
 ### [PATTERN-022] ~Copyable Nested Types in Separate Files
 
@@ -1048,6 +1050,363 @@ static func max(_ a: consuming Self, _ b: consuming Self) -> Self {
 
 ---
 
+### [IMPL-084] Single-Inhabitant Namespaces
+
+**Statement**: A namespace enum containing exactly one type is not a namespace — it is a variant label. The type MUST be collapsed into the namespace, or the namespace MUST be removed. Corollary of [PATTERN-013] (no protocol before 3+ conformers) applied at the namespace level: no namespace before 2+ inhabitants.
+
+**Resolution procedure**: When a namespace `Outer.Middle` has a single inhabitant `Outer.Middle.Only`:
+
+1. If `Middle` has no siblings and exists only to qualify `Only`, remove `Middle` — rename `Only` to `Outer.Middle` (the type IS the namespace).
+2. If `Middle` is a variant label under a larger domain (e.g., `Executor.Cooperative` where `Executor` has siblings `Stealing`, `Scheduled`, etc.), keep the nesting — `Cooperative` is a variant, not a namespace.
+
+**Correct** — namespace collapsed into the type:
+```swift
+public struct IO.Blocking { /* the driver */ }            // ✓ one thing, one name
+public struct Executor.Cooperative { /* the executor */ } // ✓ variant under a sibling-having parent
+```
+
+**Incorrect** — empty namespace with single inhabitant:
+```swift
+public enum IO.Blocking {}                                // ✗ namespace with one thing
+extension IO.Blocking { public struct Driver { ... } }    // ✗ Driver IS the namespace
+public enum IO.Failure {}                                 // ✗ namespace with one thing
+extension IO.Failure { public struct Work { ... } }       // ✗ Work IS the namespace
+```
+
+**Rationale**: Empty namespaces with single inhabitants signal premature abstraction — the author expected siblings that never arrived. The namespace adds a segment to every call site and a type-decl boundary for no compositional benefit. Collapsing them always simplifies; re-introducing the namespace when a second sibling arrives is mechanical.
+
+**Diagnostic question**: *"What is the other type that would live here?"* If the answer is "none, actually," the namespace is the premature abstraction.
+
+**Provenance**: `swift-io/Research/Reflections/2026-04-08-architectural-simplification-and-api-consolidation.md` — `IO.Blocking.Driver` → `IO.Blocking`, `IO.Failure.Work` → extracted. Also `swift-foundations/Research/Reflections/2026-04-15-swift-executors-toolkit-taxonomy.md` — "single-type-no-namespace" rule.
+
+**Cross-references**: [PATTERN-013], [API-NAME-001], [IMPL-INTENT]
+
+---
+
+### [IMPL-085] Prefer `sending` + `nonisolated(unsafe)` Over `@unchecked Sendable` for Locked Transfer
+
+**Statement**: When transferring a value across region boundaries and a lock provides the synchronization, the value MUST be passed with `sending` (at the API boundary) and stored behind `nonisolated(unsafe)` (inside the synchronized container). `@unchecked Sendable` on the transferred type MUST NOT be used as a substitute.
+
+**Why `@unchecked Sendable` loses**: Granting `@unchecked Sendable` to a type makes it freely shareable across ALL isolation boundaries, at all call sites, forever — regardless of whether the lock is present. The assertion is about the type; the safety is about a specific site. `sending` + `nonisolated(unsafe)` scopes the unsafe promise to the exact transfer point where the lock dominates, preserving the type's unsendability elsewhere.
+
+**Correct** — scoped unsafe promise, lock-enforced:
+```swift
+final class Slot<Value: ~Copyable> {
+    private let mutex: Mutex<()>
+    nonisolated(unsafe) private var _value: Value?     // ✓ unsafe scope bounded by mutex
+    func fulfill(_ value: sending Value) {             // ✓ sending at the boundary
+        mutex.withLock { self._value = value }
+    }
+}
+```
+
+**Incorrect** — type-wide unsafe promise:
+```swift
+struct Handle: @unchecked Sendable {                   // ✗ asserts safety everywhere
+    let value: Value                                    //   even where no lock exists
+}
+```
+
+**Rationale**: `@unchecked Sendable` is rank 5 in the isolation hierarchy ([IMPL-069]) — strictly the last resort. `sending` + `nonisolated(unsafe)` is the region-based transfer (rank 3) with a narrowly scoped unsafe assertion. When a lock already provides synchronization, the region transfer can be honestly expressed without elevating the type's shareability.
+
+**Provenance**: `swift-io/Research/Reflections/2026-04-08-architectural-simplification-and-api-consolidation.md` — `Handle.Slot` rendezvous pattern replaced initial `@unchecked Sendable` design.
+
+**Cross-references**: [IMPL-066], [IMPL-068], [IMPL-069], [IMPL-076]
+
+---
+
+### [IMPL-086] Deletion-First Structural Fix
+
+**Statement**: When a bug is in a runtime-checked invariant, the first question MUST be "is the invariant itself load-bearing?" — not "how do I enforce this invariant via the type system?" If the invariant exists because we wrote it (not because it is semantically required), deleting the check, the code that maintains it, and the tests that exercise it is often the right structural fix. Language-level enforcement is the answer only when the invariant is semantically load-bearing.
+
+**Decision procedure**:
+
+1. Identify the runtime check failing (the invariant).
+2. Ask: *"What breaks if I delete the check and everything that depends on its correctness?"*
+3. If the answer is "a test and a looser contract," deletion is the structural fix.
+4. Only if the answer is "memory safety / correctness / user-facing contract," escalate to type-system enforcement (`~Copyable`, `~Escapable`, capability tokens).
+
+**Correct** — delete the invariant when it is not load-bearing:
+```swift
+// Before: actor tracks state enum + runtime checks on every access
+// After: state enum removed, checks removed, tests asserting "throws after shutdown" removed.
+// The actor's post-shutdown contract is now "undefined"; no runtime-visible regression.
+```
+
+**Incorrect** — escalate to type-system enforcement without questioning the invariant:
+```swift
+// Proposed fix cycle: ~Copyable → scope methods → Channel API change → idempotency contract.
+// Each proposal adds structure to maintain an invariant that was never load-bearing.
+```
+
+**Rationale**: Swift's type system does not have to defend every invariant. Invariants fall into two classes: (1) load-bearing — deleting them breaks memory safety, user contracts, or compositional correctness, and (2) author-imposed — we wrote the check because it seemed tidy, but the looser contract produces acceptable behavior. Class 2 is surprisingly common in actor-based designs where state machines accumulate.
+
+**Diagnostic signal**: If proposals to fix a bug keep iterating on "add more structure" (slip pattern → L1 scope methods → L2 Channel API → idempotency), and each iteration surfaces new latent issues, the structural fix is probably deletion, not addition. Addition-fatigue is evidence.
+
+**Provenance**: `swift-io/Research/Reflections/2026-04-08-parent-side-deletion-vs-addition.md` — actor-state visibility fix where 5 proposal iterations of "add structure" preceded the realization that deletion was the right move.
+
+**Cross-references**: [IMPL-COMPILE], [IMPL-063], [PATTERN-016]
+
+---
+
+### [IMPL-087] Question Whether the Component Needs to Exist
+
+**Statement**: Before designing how a component should work, ask whether it needs to exist at all. This is [IMPL-000] (call-site-first design) applied at the architectural level: the right first question is *"does this need to exist?"*, not *"how should this be implemented?"*. A component that has no data-contract consumer, or whose work is already performed by an existing component, MUST NOT be built on the assumption that the conventional pattern requires it.
+
+**Decision procedure** — for any proposed new component:
+
+1. Identify the specific operation the component must perform.
+2. Identify the specific consumer that will invoke that operation.
+3. Ask: *"Is there an existing component that already runs at the right time with the right resources?"*
+4. If yes, piggyback — add the operation to the existing component.
+5. If no, ask: *"Is this component required by the paradigm, or by convention copied from other frameworks?"*
+6. Build only what the paradigm requires, not what the convention suggests.
+
+**Correct** — the component is not built because it is not required:
+```swift
+// io_uring completions discoverable via eventfd + epoll.
+// The existing IO.Event.Loop already blocks on epoll.
+// → No IO.Completion.Loop with its own poll thread.
+// → Completion discovery is a free piggyback on the existing blocking wait.
+```
+
+**Incorrect** — the component is built because every framework has one:
+```swift
+// IO.Completion.Loop with its own OS thread, its own executor, its own shutdown machinery.
+// Reasoning: "io_uring is a backend, backends need poll threads."
+// Root cause: convention from frameworks that predated eventfd integration.
+```
+
+**Rationale**: Every IO framework tutorial starts with "create an event loop." This creates the implicit premise that every backend needs one. Modern kernel interfaces (io_uring's shared-memory rings, IOCP's completion port semantics, eventfd notification) were designed specifically to invalidate that premise. Building on the inherited convention reproduces the constraints of older paradigms inside a newer one.
+
+**The architectural corollary of [IMPL-000]**: at call sites, "write the ideal expression first; improve the infrastructure if it doesn't compile." At the architecture level, "write the ideal system first; question the component if it does not serve a consumer." Same principle, different scope.
+
+**Provenance**: `swift-io/Research/Reflections/2026-04-09-io-uring-no-separate-loop.md` — `IO.Completion.Loop` proposed, then deleted after recognizing that io_uring + eventfd requires no separate poll thread.
+
+**Cross-references**: [IMPL-000], [IMPL-INTENT], [IMPL-060], [IMPL-074]
+
+---
+
+### [IMPL-088] Lock-Ordering Analysis for Multi-Lock Compositions
+
+**Statement**: Any composition that may hold two locks simultaneously MUST document a total ordering — lock A is always acquired before lock B — or MUST NOT hold both at once. The default posture is separate lock scopes. Acquiring lock B while holding lock A without a documented global ordering is an ABBA-deadlock candidate.
+
+**Decision procedure**:
+
+1. For each method, enumerate the locks held at each point in its body.
+2. For each type that holds a lock and calls a method on another lock-holding type, check whether the callee may acquire its own lock.
+3. If the call sequence produces "A then B" in one method and "B then A" in another (same types or across types), that is an ABBA deadlock.
+4. Prefer separating lock scopes: acquire A, release A, then acquire B. Store the value extracted under A as a local; use it under B.
+
+**Correct** — separated lock scopes:
+```swift
+func dispatch(_ job: Job) {
+    let worker = cursor.advance(within: count)       // no lock held
+    workers[worker].enqueue(job)                     // worker's lock acquired in isolation
+}
+```
+
+**Incorrect** — ABBA via nested locks:
+```swift
+func trySteal(from other: Worker) {
+    self.lock.withLock {                             // A acquired
+        other.lock.withLock {                        // B acquired while holding A
+            // if another thread simultaneously does other.trySteal(from: self)
+            // with B first then A, both deadlock.
+        }
+    }
+}
+```
+
+**Rationale**: Lock ordering deadlocks are invisible in pseudo-code that describes lock scopes via indentation. They surface only when two threads encounter the cross-lock interaction simultaneously. A "lock ordering" column in any design table forces the interaction to be analyzed before implementation. Separated scopes are the default because they require no global ordering invariant — the fewer invariants the architecture depends on, the fewer ways it can fail.
+
+**Provenance**: `swift-institute/Research/Reflections/2026-04-15-executor-primitives-l1-and-l3-compositions.md` — ABBA deadlock in Stealing's `trySteal` under own lock; `Scheduled`'s `base.enqueue` under scheduled lock. Both fixed by separating lock scopes.
+
+**Cross-references**: [IMPL-063], [IMPL-069], [IMPL-COMPILE]
+
+---
+
+### [IMPL-089] Foundation-Free String Scanning Defaults to UTF-8 Byte View
+
+**Statement**: At L1/L2 (primitives and standards), string scanning operations MUST default to iterating `content.utf8` (UTF-8 code unit view) with O(1) index arithmetic, not `Character` iteration. Grapheme-cluster semantics MUST be reserved for operations that explicitly require them, and the operation's doc comment MUST state the byte-literal semantics when UTF-8 scanning is used.
+
+**Why**: `Character` iteration + `distance(from:to:)` produces O(n²) complexity on every re-index. Grapheme cluster boundary analysis on each iteration is 10-1000× slower than byte comparison. For the vast majority of foundation-free scans (newline discovery, substring search, percent decoding, path component splitting), byte-literal matching is the correct semantics — and the only semantics that does not require a Unicode table dependency.
+
+**Correct** — UTF-8 byte scan:
+```swift
+// Find next newline using byte view — O(n) single pass, no allocation.
+extension StringProtocol where UTF8View.Index == Index {
+    func nextNewline(from start: Index) -> Index? {
+        utf8[start...].firstIndex(of: 0x0A)
+    }
+}
+```
+
+**Incorrect** — Character iteration with per-step re-indexing:
+```swift
+// O(n²) — distance(from:to:) walks grapheme boundaries on every iteration.
+for (i, ch) in content.enumerated() where ch == "\n" {
+    let idx = content.index(content.startIndex, offsetBy: i + 1)  // ✗ O(n) per iter
+}
+```
+
+**Doc-comment requirement**: When converting a Character-semantic API to byte-literal, the doc comment MUST record the semantic change:
+```swift
+/// Returns the range of the first occurrence of `substring`, matched byte-literal
+/// against `self.utf8`. To match by grapheme-cluster equivalence, normalize both
+/// sides (e.g., NFC) before calling.
+```
+
+**Rationale**: At L1/L2, byte-level is the right abstraction unless grapheme semantics are explicitly required. Foundation-free types cannot carry Unicode tables; pretending to provide Character equivalence without those tables either produces wrong results or reaches through to the stdlib's Unicode data, which is a hidden dependency. Byte-literal matching is explicit, O(n), and correct for the use cases where it applies.
+
+**Provenance**: `swift-institute/Research/Reflections/2026-04-15-utf8-perf-and-string-primitives-shadow-fix.md` — `StringProtocol.range(of:)` and `Parsers.Diagnostic.Source.init` converted from O(n²) Character scans to UTF-8 byte scans. External trigger: tuist/FileSystem#325.
+
+**Cross-references**: [IMPL-060], [IMPL-INTENT], [PRIM-FOUND-001]
+
+---
+
+### [IMPL-090] Abstraction-Seam Validity Requires Data-Contract Alignment
+
+**Statement**: Before unifying two runtime patterns behind a shared abstraction (executor, driver, shell), verify that the consumer of each pattern would consume the abstraction's core data contract. If the consumer ignores the shell's core data output, the shared abstraction is at the wrong layer — unify at the primitives layer (shared types), not at the shell layer (shared runtime structure). Surface-shape similarity is NOT evidence of a valid seam.
+
+**Decision procedure**:
+
+1. Identify the candidate abstraction's core data output (what does its `tick` / `run` / `step` emit?).
+2. For each prospective consumer, ask: *"Does the consumer's handler consume this data, or discard it?"*
+3. If all consumers consume — valid seam; unify.
+4. If any consumer discards the core output and consumes a parallel data source — invalid seam; the consumer needs a different shell.
+
+**Correct** — seam at the primitives layer:
+```swift
+// Reactor (IO.Event.Loop) and Proactor (IO.Completion.Loop) share types:
+//   Kernel.Event.Source, Kernel.Completion.Source, Executor.Job.Queue, Shutdown.Flag.
+// But NOT run-loop shape — they each own their own 3-phase / 5-phase loop.
+// The seam is types (primitives), not shell (Polling executor).
+```
+
+**Incorrect** — seam at the shell layer:
+```swift
+// Proposal: Completion.Loop adapter-wraps its notification eventfd in Kernel.Event.Source
+//           so Polling can own both reactor and proactor run loops.
+// Problem: Polling's tick emits Kernel.Events. Completion.Loop's handler ignores the
+//          event (it already knows an eventfd fired) and runs flush → drain → dispatch.
+// The consumer discards the shell's core output. Seam is invalid.
+```
+
+**Rationale**: An abstraction seam's validity is measured by data flow, not by surface shape. Two patterns can have matching method signatures ("both are executors with a run loop") while having non-overlapping data contracts (one emits events, the other consumes CQEs from a separate ring). Forcing the mismatched pair through a shared shell produces code where the core data contract is ignored — the shell's promise ("I hand you the important data") is broken at the seam.
+
+**Surface-shape checklist (NOT sufficient evidence for unification)**:
+- Both types have a `run()` method.
+- Both types block on a primitive and wake via notification.
+- Both types produce work for a dispatcher.
+
+**Data-contract checklist (sufficient evidence for unification)**:
+- Both consumers read the shell's core output with identical semantics.
+- Both consumers handle the shell's core failure modes identically.
+- Both consumers respect the shell's phase ordering (e.g., flush-before-wait) identically.
+
+**Provenance**: `swift-io/Research/Reflections/2026-04-15-completion-loop-proactor-reactor-boundary.md` — Polling (reactor) and IO.Completion.Loop (proactor) cannot share the run loop because proactor requires flush-before-wait, and the reactor shell's tick emits data the proactor consumer ignores.
+
+**Cross-references**: [PATTERN-013], [IMPL-074], [API-LAYER-001], [IMPL-060]
+
+---
+
+### [IMPL-091] Materialise Before Crossing Region Boundaries
+
+**Statement**: When a task-isolated closure parameter must produce a value consumed inside an actor-isolated `assumeIsolated` region, the closure MUST be invoked OUTSIDE the actor-isolated region, its result bound to `Sendable` local variables, and those locals consumed INSIDE the region. Invoking the closure inside the region triggers region-analysis errors that are compile-time artifacts, not runtime safety violations.
+
+**The pattern**:
+```swift
+// Task-isolated tick parameter, actor-isolated handler.
+executor.run { [weak self] wait in                    // wait: task-isolated
+    guard let self else { return .halt }
+
+    // Materialise: call the closure OUTSIDE assumeIsolated.
+    let events: UnsafeBufferPointer<Kernel.Event>
+    let waitError: Driver.Error?
+    do throws(Driver.Error) {
+        events = try wait()                           // ✓ called at tick scope
+        waitError = nil
+    } catch {
+        events = UnsafeBufferPointer(start: nil, count: 0)
+        waitError = error
+    }
+
+    // Cross: consume Sendable locals INSIDE assumeIsolated.
+    self.assumeIsolated { isolated in
+        if let waitError { isolated.handleFailure(waitError) }
+        else              { isolated.dispatchEvents(events) }
+    }
+}
+```
+
+**Why the naive form fails**:
+```swift
+// ✗ sending 'wait' risks causing data races — region analysis rejects this.
+self.assumeIsolated { isolated in
+    let events = try wait()                            // closure crosses actor boundary
+    isolated.dispatchEvents(events)
+}
+```
+
+**Rationale**: Region analysis operates on types and closure annotations at compile time. It sees a task-isolated closure parameter passed into an actor-isolated closure body and treats the call as a boundary crossing — even when the runtime executor identity means no boundary is actually crossed. The runtime verifies via `isIsolatingCurrentContext` ([IMPL-083]); the compile-time analysis verifies via regions. Both systems must be satisfied, because they operate at different abstraction levels. Materialising the result into `Sendable` locals is the generic bridge: the locals cross the region boundary freely, and the closure body only reads them.
+
+**Constraints on the locals**: they MUST be `Sendable`. `UnsafeBufferPointer<T> where T: Sendable` qualifies. For ~Copyable intermediates, the closure body must do the entire work inside the outer scope; only Sendable primitives / pointers may cross the boundary.
+
+**Provenance**: `swift-io/Research/Reflections/2026-04-15-polling-tick-isolation-checkisolated-landing.md` — `IO.Events.Actor` tick rewrite; `Polling.swift:220-228` is the internal precedent.
+
+**Cross-references**: [IMPL-066], [IMPL-069], [IMPL-083], [IMPL-COMPILE]
+
+---
+
+### [IMPL-092] `throws(E)` Thunk Parameters Over `Result<T, E>` for Callback Outcomes
+
+**Statement**: For callback APIs that deliver one-of (value, error) to a consumer closure, the outcome MUST be expressed as a `() throws(E) -> T` thunk parameter, not as a `Result<T, E>` value. Internal storage of the outcome (where throws cannot express a not-yet-resolved value — e.g., before the thunk is invoked) MAY use `Optional`, a private enum, or a Result-shaped struct; the consumer-facing interface remains typed throws.
+
+**Correct** — thunk parameter at the interface:
+```swift
+// Executor supplies the outcome as a thunk; consumer invokes with `try`.
+let tick: @Sendable (
+    () throws(Kernel.Event.Driver.Error) -> UnsafeBufferPointer<Kernel.Event>
+) -> Outcome
+
+// At the consumer:
+loop.runInTick { wait in
+    do throws(Kernel.Event.Driver.Error) {
+        let events = try wait()                      // typed throws — language semantics
+        self.dispatch(events)
+        return .continue
+    } catch {
+        return self.handleFailure(error)              // error is Kernel.Event.Driver.Error
+    }
+}
+```
+
+**Incorrect** — Result value at the interface:
+```swift
+// ✗ Consumer switches on the Result instead of using `try` / `catch`.
+let tick: @Sendable (Result<UnsafeBufferPointer<Kernel.Event>, Driver.Error>) -> Outcome
+
+loop.runInTick { result in
+    switch result {
+    case .success(let events): self.dispatch(events); return .continue
+    case .failure(let error):  return self.handleFailure(error)
+    }
+}
+```
+
+**Internal storage is unaffected**: executor materialises the outcome into `let count: Int` and `let error: Error?` before constructing the thunk closure. That internal representation is private; the consumer interface is `throws(E)`.
+
+**Rationale**: `[API-ERR-001]` prescribes typed throws for functions that throw. The analogous rule for a callback *parameter* that delivers an outcome is the thunk form — it uses the language's primitive error-propagation mechanism (`try` / `catch`) instead of adding a type-level ADT. Consumer code reads as intent ([IMPL-INTENT]): "try wait; handle error." A `Result` value forces the consumer to switch on cases explicitly, which is mechanism.
+
+**When to use `Result` instead**: when the outcome must be stored, inspected multiple times, passed across a non-throwing API boundary (e.g., into `AsyncStream.yield`), or pattern-matched in a switch that tests additional conditions besides success/failure. Storage-shape needs are legitimate — interface-shape should still be throws.
+
+**Provenance**: `swift-io/Research/Reflections/2026-04-15-polling-tick-throws-thunk-over-result.md` — Polling tick signature migrated from `Result<T, E>` proposal to `() throws(E) -> T` thunk after user override: "use LANGUAGE SEMANTICS so throws see /implementation."
+
+**Cross-references**: [API-ERR-001], [IMPL-040], [IMPL-075], [IMPL-INTENT]
+
+---
+
 ## Post-Implementation Checklist
 
 Before presenting code as complete, verify EACH item:
@@ -1059,6 +1418,7 @@ Before presenting code as complete, verify EACH item:
 - [ ] Ecosystem types used where available — no ad-hoc reimplementations [IMPL-060]
 - [ ] Property.View used for verb-as-property patterns — no hand-rolled structs [IMPL-020/021]
 - [ ] Bounded indices for static-capacity types [IMPL-050]
+- [ ] Foundation-free string scans use `content.utf8`, not `Character` iteration [IMPL-089]
 
 **Compiler-enforced strictness**:
 - [ ] Types default to `~Copyable` unless Copyable is justified [IMPL-064]
@@ -1069,6 +1429,15 @@ Before presenting code as complete, verify EACH item:
 - [ ] Concurrency mechanism selected by isolation hierarchy rank [IMPL-069]
 - [ ] ~Copyable ownership transfer uses coroutine accessor or Layer 1 abstractions [IMPL-070]
 - [ ] Interior-mutable views use `nonmutating _modify`, not plain `_modify` [IMPL-071]
+- [ ] Lock scopes separated unless a total ordering is documented [IMPL-088]
+- [ ] Values crossing actor regions materialised as `Sendable` locals before `assumeIsolated` [IMPL-091]
+
+**Design**:
+- [ ] No namespace enum containing a single inhabitant [IMPL-084]
+- [ ] `sending` + `nonisolated(unsafe)` preferred over `@unchecked Sendable` for locked transfer [IMPL-085]
+- [ ] Runtime-checked invariants verified as load-bearing before type-system enforcement [IMPL-086]
+- [ ] Component existence justified by a consumer's data contract, not by framework convention [IMPL-087]
+- [ ] Callback outcomes expressed as `() throws(E) -> T` thunks, not `Result<T, E>` [IMPL-092]
 
 If ANY item fails, fix before presenting.
 

@@ -219,9 +219,12 @@ no `_index.md`, a missing index MUST be flagged during meta-analysis.
 ### [META-011] Reflections Triage Status
 
 **Statement**: Meta-analysis MUST check `Research/Reflections/` for pending (unprocessed)
-entries and flag them for triage per the **reflections-processing** skill.
+entries and flag them for triage per the **reflections-processing** skill. Meta-analysis
+MUST NOT process, triage, or execute outcomes on reflection entries — invoke
+`/reflections-processing` separately. This requirement exists only to detect when the
+triage pipeline has stalled.
 
-**Cross-references**: [REFL-PROC-*]
+**Cross-references**: [REFL-PROC-001], [REFL-PROC-002]
 
 ---
 
