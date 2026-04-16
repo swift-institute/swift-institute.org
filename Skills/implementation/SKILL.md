@@ -1024,6 +1024,30 @@ static func max(_ a: consuming Self, _ b: consuming Self) -> Self {
 
 ---
 
+### [IMPL-083] Custom-Executor-to-Actor Bridge Pattern
+
+**Statement**: When a custom `SerialExecutor` owns an OS thread running a synchronous event loop and the tick callback must reach actor-isolated state, the bridge MUST use the SE-0424 mechanism — `isIsolatingCurrentContext()` override on the executor + `assumeIsolated` in the tick body — combined with a local weak-box class captured by the tick to break the definite-init trap. The SE-0424 pieces are designed bridges, NOT workarounds; the weak-box is the minimum-viable workaround for Swift 6.3's DI rule.
+
+**The triad**:
+
+| Piece | Classification |
+|-------|---------------|
+| `isIsolatingCurrentContext() -> Bool?` returning "is current thread the executor's thread" on the executor class | Designed bridge (SE-0424) |
+| `assumeIsolated { isolated in … }` inside the tick body | Designed bridge (SE-0424) |
+| Local `Handle` class with `weak var actor: MyActor?`, captured by tick, tail-assigned `handle.actor = self` after the executor is initialized | Minimum-viable workaround |
+
+**Why Handle is required**: the executor is a stored property being assigned in the actor's init. The tick closure literal is the RHS of that assignment. Self-capture in the RHS (`[weak self]`, `[self]`, bare `self`) is rejected by Swift 6.3's DI rule because `self.executor` is not yet initialized. A local `let handle = Handle()` captured by the tick (not self) sidesteps DI — the closure captures the local binding, and the tail `handle.actor = self` runs after all stored properties are assigned.
+
+**Closed avenues on Swift 6.3** (see `swift-foundations/Experiments/`): `sending @escaping` at init, `@isolated(any)` sync or async tick, `var polling: Polling! = nil` default, `Unmanaged.passUnretained(self)` during init, stored-Handle captured by name (compiles but provides no structural improvement), polling-as-actor (actor cannot be its own executor), alternative custom SerialExecutor patterns (SE-0424 IS the canonical pattern), macro-based Handle synthesis (expands to equivalent binary), Swift 6.4+ DI relaxation (no evidence in swiftlang/swift tree as of 2026-03-16 snapshot).
+
+**Only known elimination path on Swift 6.3**: two-phase executor API — `init(source:)` + `public func start(tick:)`. Adds one public method to the executor. Requires explicit owner approval given the API surface growth. See `swift-foundations/Experiments/polling-two-phase-api/` (CONFIRMED).
+
+**Reference implementation**: `swift-executors/Sources/Executors/Kernel.Thread.Executor.Polling.swift` (executor with SE-0424 hooks + `sending @escaping` tick + `@safe` class); `swift-io/Sources/IO Events/IO.Events.Actor.swift` (actor using the bridge); `swift-io/Sources/IO Events/IO.Events.Actor.Handle.swift` (weak-box).
+
+**Cross-references**: [IMPL-066], [IMPL-069], [IMPL-COMPILE], [PATTERN-016], SE-0424
+
+---
+
 ## Post-Implementation Checklist
 
 Before presenting code as complete, verify EACH item:
