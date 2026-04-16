@@ -1086,7 +1086,7 @@ struct Handle: @unchecked Sendable {                   // ✗ asserts safety eve
 
 **Rationale**: `@unchecked Sendable` is rank 5 in the isolation hierarchy ([IMPL-069]) — strictly the last resort. `sending` + `nonisolated(unsafe)` is the region-based transfer (rank 3) with a narrowly scoped unsafe assertion. When a lock already provides synchronization, the region transfer can be honestly expressed without elevating the type's shareability.
 
-**Provenance**: `swift-io/Research/Reflections/2026-04-08-architectural-simplification-and-api-consolidation.md` — `Handle.Slot` rendezvous pattern replaced initial `@unchecked Sendable` design.
+**Provenance**: `swift-foundations/swift-io/Research/Reflections/2026-04-08-architectural-simplification-and-api-consolidation.md` — `Handle.Slot` rendezvous pattern replaced initial `@unchecked Sendable` design.
 
 **Cross-references**: [IMPL-066], [IMPL-068], [IMPL-069], [IMPL-076], [MEM-SAFE-024] (Category D: `@unchecked Sendable` as structural workaround — when sending+nonisolated(unsafe) is not applicable)
 
@@ -1120,7 +1120,7 @@ struct Handle: @unchecked Sendable {                   // ✗ asserts safety eve
 
 **Diagnostic signal**: If proposals to fix a bug keep iterating on "add more structure" (slip pattern → L1 scope methods → L2 Channel API → idempotency), and each iteration surfaces new latent issues, the structural fix is probably deletion, not addition. Addition-fatigue is evidence.
 
-**Provenance**: `swift-io/Research/Reflections/2026-04-08-parent-side-deletion-vs-addition.md` — actor-state visibility fix where 5 proposal iterations of "add structure" preceded the realization that deletion was the right move.
+**Provenance**: `swift-foundations/swift-io/Research/Reflections/2026-04-08-parent-side-deletion-vs-addition.md` — actor-state visibility fix where 5 proposal iterations of "add structure" preceded the realization that deletion was the right move.
 
 **Cross-references**: [IMPL-COMPILE], [IMPL-063], [PATTERN-016], [AUDIT-017] (when deletion authority is not present in the current session, park the investigation as DEFERRED rather than forcing a fix)
 
@@ -1158,7 +1158,7 @@ struct Handle: @unchecked Sendable {                   // ✗ asserts safety eve
 
 **The architectural corollary of [IMPL-000]**: at call sites, "write the ideal expression first; improve the infrastructure if it doesn't compile." At the architecture level, "write the ideal system first; question the component if it does not serve a consumer." Same principle, different scope.
 
-**Provenance**: `swift-io/Research/Reflections/2026-04-09-io-uring-no-separate-loop.md` — `IO.Completion.Loop` proposed, then deleted after recognizing that io_uring + eventfd requires no separate poll thread.
+**Provenance**: `swift-foundations/swift-io/Research/Reflections/2026-04-09-io-uring-no-separate-loop.md` — `IO.Completion.Loop` proposed, then deleted after recognizing that io_uring + eventfd requires no separate poll thread.
 
 **Cross-references**: [IMPL-000], [IMPL-INTENT], [IMPL-060], [IMPL-074]
 
@@ -1282,7 +1282,7 @@ for (i, ch) in content.enumerated() where ch == "\n" {
 - Both consumers handle the shell's core failure modes identically.
 - Both consumers respect the shell's phase ordering (e.g., flush-before-wait) identically.
 
-**Provenance**: `swift-io/Research/Reflections/2026-04-15-completion-loop-proactor-reactor-boundary.md` — Polling (reactor) and IO.Completion.Loop (proactor) cannot share the run loop because proactor requires flush-before-wait, and the reactor shell's tick emits data the proactor consumer ignores.
+**Provenance**: `swift-foundations/swift-io/Research/Reflections/2026-04-15-completion-loop-proactor-reactor-boundary.md` — Polling (reactor) and IO.Completion.Loop (proactor) cannot share the run loop because proactor requires flush-before-wait, and the reactor shell's tick emits data the proactor consumer ignores.
 
 **Cross-references**: [PATTERN-013], [IMPL-074], [API-LAYER-001], [IMPL-060]
 
@@ -1330,7 +1330,7 @@ self.assumeIsolated { isolated in
 
 **Constraints on the locals**: they MUST be `Sendable`. `UnsafeBufferPointer<T> where T: Sendable` qualifies. For ~Copyable intermediates, the closure body must do the entire work inside the outer scope; only Sendable primitives / pointers may cross the boundary.
 
-**Provenance**: `swift-io/Research/Reflections/2026-04-15-polling-tick-isolation-checkisolated-landing.md` — `IO.Events.Actor` tick rewrite; `Polling.swift:220-228` is the internal precedent.
+**Provenance**: `swift-foundations/swift-io/Research/Reflections/2026-04-15-polling-tick-isolation-checkisolated-landing.md` — `IO.Events.Actor` tick rewrite; `Polling.swift:220-228` is the internal precedent.
 
 **Cross-references**: [IMPL-066], [IMPL-069], [IMPL-083], [IMPL-COMPILE]
 
@@ -1378,7 +1378,7 @@ loop.runInTick { result in
 
 **When to use `Result` instead**: when the outcome must be stored, inspected multiple times, passed across a non-throwing API boundary (e.g., into `AsyncStream.yield`), or pattern-matched in a switch that tests additional conditions besides success/failure. Storage-shape needs are legitimate — interface-shape should still be throws.
 
-**Provenance**: `swift-io/Research/Reflections/2026-04-15-polling-tick-throws-thunk-over-result.md` — Polling tick signature migrated from `Result<T, E>` proposal to `() throws(E) -> T` thunk after user override: "use LANGUAGE SEMANTICS so throws see /implementation."
+**Provenance**: `swift-foundations/swift-io/Research/Reflections/2026-04-15-polling-tick-throws-thunk-over-result.md` — Polling tick signature migrated from `Result<T, E>` proposal to `() throws(E) -> T` thunk after user override: "use LANGUAGE SEMANTICS so throws see /implementation."
 
 **Cross-references**: [API-ERR-001], [IMPL-040], [IMPL-075], [IMPL-INTENT]
 

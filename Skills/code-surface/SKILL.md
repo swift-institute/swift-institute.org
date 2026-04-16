@@ -194,7 +194,7 @@ public typealias Deadline = Clock.Suspending.Instant  // ❌ No domain behavior 
 
 **Rationale**: Namespace adoption makes a lower-layer concept first-class in the higher-layer domain, enabling natural nesting (e.g., `IO.Event.Channel`, `IO.Event.Selector`). Rename bridges add indirection without domain value.
 
-**Reference**: `swift-io/Research/io-event-namespace-typealias-vs-enum.md`
+**Reference**: `swift-foundations/swift-io/Research/io-event-namespace-typealias-vs-enum.md`
 
 **Cross-references**: [API-NAME-004], [API-NAME-001]
 
@@ -540,6 +540,168 @@ internal struct ReadResult { ... }  // ❌ Compound name now visible
 
 ---
 
+## Parameter Ordering
+
+### [API-IMPL-012] Closure Parameters Trail the Signature
+
+**Statement**: All closure parameters MUST occupy the final positions of a function or initializer signature. A non-closure parameter MUST NOT appear after a closure parameter. Typed-throws thunks per [IMPL-092] — `() throws(E) -> T` — are closures for the purpose of this rule.
+
+**Correct**:
+```swift
+public init(
+    id: ID,
+    interest: Interest,
+    flags: Options = [],
+    onEvent: @escaping (Event) -> Void
+)
+```
+
+**Incorrect**:
+```swift
+public init(
+    id: ID,
+    onEvent: @escaping (Event) -> Void,
+    flags: Options = []                    // ❌ non-closure after closure
+)
+```
+
+**Rationale**: Without closure-last ordering, SE-0286 forward-scan cannot match the closure to a trailing-closure call site, and the compiler silently disables trailing-closure syntax. Closure-last is the de-facto universal Swift convention across TSPL, the stdlib, and every surveyed ecosystem signature.
+
+**Scope**: Applies to all public and package-visible signatures. Private signatures SHOULD follow the rule; violations MUST be justified by a `// WHY:` comment per [PATTERN-016].
+
+**Cross-references**: [API-IMPL-013], [API-IMPL-014], [IMPL-092]
+
+**Provenance**: `swift-institute/Research/parameter-ordering-conventions.md` (2026-04-16)
+
+---
+
+### [API-IMPL-013] Multiple Closures Follow Lifecycle Order
+
+**Statement**: For signatures with two or more closure parameters, closures MUST be ordered by lifecycle: setup → body → completion/teardown. The primary body closure MAY be unlabeled; all subsequent closures MUST be labeled per SE-0279.
+
+Labels for secondary closures participate in the call-site surface (`… completion: { … }`, `… onError: { … }`) and MUST name the closure's *role* in the operation, not its Swift type — per [API-NAME-002] and the API Design Guidelines "roles over types" principle.
+
+**Correct** — validated at `swift-primitives/.../Kernel.Completion.Driver.swift:104`:
+```swift
+public init(
+    submit:        @escaping (Submission, borrowing Descriptor) throws(Error) -> Void,
+    flush:         @escaping () throws(Error) -> Submission.Count,
+    drain:         @escaping ((Event) -> Void) -> Event.Count,
+    close:         @escaping () -> Void,
+    overflowCount: @escaping () -> Event.Count = { .zero }
+)
+```
+
+Call site:
+```swift
+driver.operation { event in
+    handle(event)
+} completion: { result in
+    finish(result)
+}
+```
+
+**Incorrect**:
+```swift
+// ❌ completion before body — body loses trailing-closure position at call sites
+public func perform(
+    completion: @escaping (Result) -> Void,
+    body: @escaping () -> Void
+)
+```
+
+**Cross-references**: [API-IMPL-012], [API-NAME-002]
+
+**Provenance**: `swift-institute/Research/parameter-ordering-conventions.md` (2026-04-16)
+
+---
+
+### [API-IMPL-014] Configuration Parameter Placement
+
+**Statement**: Configuration-bearing parameters — `.Options`, `.Configuration`, `.Context`, or `OptionSet` types — MUST sit at one of two positions:
+
+1. **First**, labeled or unlabeled, when the configuration IS the primary input (the operation's identity or output is fully determined by the configuration).
+2. **Last in the non-closure portion of the signature**, labeled, with a default value, when the configuration modifies a primary operation.
+
+Middle placement — configuration between two unrelated domain parameters — is FORBIDDEN. Splitting configuration across sibling parameters when a struct would suffice is FORBIDDEN; bundle into the struct.
+
+**Decision test**: *Can the operation's purpose be stated with only the configuration parameter?* If yes → first. If the operation's purpose is stated with other parameters and the configuration only tunes it → last (before any closures).
+
+**Correct — configuration as primary input** (`swift-foundations/.../SVG.Context.swift:25`):
+```swift
+public init(_ configuration: Configuration = .default)
+```
+
+**Correct — configuration as modifier** (`swift-primitives/.../Kernel.Event.swift:53`):
+```swift
+public init(id: ID, interest: Interest, flags: Options = [])
+```
+
+**Correct — configuration modifier before closures**:
+```swift
+public func perform(
+    on target: Target,
+    options: Options = [],
+    body: @escaping () -> Void
+)
+```
+
+**Incorrect**:
+```swift
+public func perform(
+    on target: Target,
+    options: Options = [],                 // ❌ middle placement
+    mode: Mode,
+    body: @escaping () -> Void
+)
+
+public func perform(
+    with config: Configuration,
+    timeout: Duration,                     // ❌ configuration split across siblings
+    retryPolicy: RetryPolicy
+)
+```
+
+**Rationale**: Middle placement is not compatible with SE-0286 forward-scan when a closure trails, and hides the configuration's relationship to the operation. The first/last dichotomy maps onto the semantic role — primary input vs. modifier — and matches every surveyed ecosystem signature.
+
+**Cross-references**: [API-IMPL-012], [API-IMPL-015]
+
+**Provenance**: `swift-institute/Research/parameter-ordering-conventions.md` (2026-04-16)
+
+---
+
+### [API-IMPL-015] Struct Configuration Over Builder Closures
+
+**Statement**: Configuration surfaces MUST use explicit struct parameters (with defaults) rather than builder closures of the shape `(inout Options) -> Void` or `(ConfigBuilder) -> Void`.
+
+**Correct**:
+```swift
+public func perform(
+    options: Options = [],
+    body: @escaping () -> Void
+)
+
+// Composable at call sites:
+let base: Options = .default
+target.perform(options: base.with(\.flag, true)) { … }
+```
+
+**Incorrect**:
+```swift
+public func perform(
+    configure: (inout Options) -> Void = { _ in },   // ❌ builder closure
+    body: @escaping () -> Void
+)
+```
+
+**Rationale**: Struct parameters are inspectable at the call site, composable across calls, participate in typed-throws and `Sendable` analysis naturally, and preserve the compile-time constraint surface. Builder closures trade all of that for construction syntax sugar. The ecosystem survey found zero builder-closure configurations — this rule codifies the existing practice.
+
+**Cross-references**: [API-IMPL-014]
+
+**Provenance**: `swift-institute/Research/parameter-ordering-conventions.md` (2026-04-16)
+
+---
+
 ## Post-Implementation Checklist
 
 Before presenting code as complete, verify EACH item:
@@ -555,6 +717,10 @@ Before presenting code as complete, verify EACH item:
 - [ ] Type bodies contain only stored properties and canonical init — all methods in extensions [API-IMPL-008]
 - [ ] Protocol typealiases on generic types use hoisted protocol for declaring-module conformance [API-IMPL-009]
 - [ ] Access level widening has been audited for naming convention compliance [API-IMPL-010]
+- [ ] Closure parameters trail the signature — no non-closure parameter follows a closure [API-IMPL-012]
+- [ ] Multiple closures ordered by lifecycle (setup → body → completion); secondary closures labeled per SE-0279 [API-IMPL-013]
+- [ ] Configuration sits first (primary input) or last before closures (modifier with default) — never middle [API-IMPL-014]
+- [ ] Configuration uses struct parameters, not builder closures [API-IMPL-015]
 
 If ANY item fails, fix before presenting.
 

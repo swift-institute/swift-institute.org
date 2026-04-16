@@ -4,7 +4,7 @@ description: |
   Systematic compliance audit of code against skill requirement IDs.
   Apply when checking code for convention violations, running compliance checks,
   or when the user invokes /audit. Produces standardized findings tables in
-  Research/audit.md, updated in place.
+  Audits/audit.md, updated in place.
 
 layer: process
 
@@ -22,7 +22,7 @@ last_reviewed: 2026-03-26
 # Audit
 
 Systematic compliance audit of code against skill requirement IDs. Produces a
-standardized findings table in `Research/audit.md`, updated in place.
+standardized findings table in `Audits/audit.md`, updated in place.
 
 ## Invocation Quick Reference
 
@@ -43,7 +43,7 @@ loaded when the code warrants it:
 | Test files present and in scope | **testing** |
 | L1 package | **primitives** (Foundation-free, tier rules) |
 
-This produces one section per skill in the package's `Research/audit.md`. Each section
+This produces one section per skill in the package's `Audits/audit.md`. Each section
 is independently replaceable on re-audit.
 
 ---
@@ -245,7 +245,7 @@ Research/prompts/naming-audit.md   // ❌ Separate prompt
 
 ### [AUDIT-009] Index Entry
 
-**Statement**: `audit.md` MUST be listed in `Research/_index.md` with status reflecting the current state.
+**Statement**: `audit.md` MUST be listed in `Audits/_index.md` with status reflecting the current state.
 
 **Format**:
 ```markdown
@@ -260,7 +260,7 @@ Research/prompts/naming-audit.md   // ❌ Separate prompt
 | CLEAN | All findings resolved or no findings |
 | STALE | Needs re-audit (flagged by meta-analysis) |
 
-**Rationale**: Index integration per [RES-003c] ensures audit files are discoverable alongside other research documents.
+**Rationale**: Index integration ensures audit files are discoverable alongside other audit documents in the same scope. `Audits/_index.md` is the audit-scope counterpart to `Research/_index.md` per [RES-003c].
 
 **Cross-references**: [RES-003c], [AUDIT-010]
 
@@ -350,7 +350,7 @@ If output is non-empty and the section is >60 days old, the section is stale.
 
 ### [AUDIT-014] Broad-Then-Narrow Routing
 
-**Statement**: Superrepo-wide or ecosystem-wide audits MUST write synthesis to the appropriate scope-level `audit.md`. Per-package detail MUST be written to each package's `Research/audit.md` when a follow-up audit is scoped to that package, not upfront.
+**Statement**: Superrepo-wide or ecosystem-wide audits MUST write synthesis to the appropriate scope-level `audit.md`. Per-package detail MUST be written to each package's `Audits/audit.md` when a follow-up audit is scoped to that package, not upfront.
 
 **Workflow**: broad audit for triage → narrow audit for detail → fix code → re-audit to confirm.
 
@@ -367,7 +367,7 @@ If output is non-empty and the section is >60 days old, the section is stale.
 | swift-set-primitives | 0 | — | Clean |
 ```
 
-**Narrow follow-up** (e.g., `/audit regarding /implementation` scoped to swift-buffer-primitives) then creates `swift-buffer-primitives/Research/audit.md` with the full findings table for that package.
+**Narrow follow-up** (e.g., `/audit regarding /implementation` scoped to swift-buffer-primitives) then creates `swift-buffer-primitives/Audits/audit.md` with the full findings table for that package.
 
 **Rationale**: Creating hundreds of per-package files upfront is impractical. The triage table in the broad audit directs attention; the narrow audit provides actionable detail.
 
@@ -381,12 +381,12 @@ If output is non-empty and the section is >60 days old, the section is stale.
 
 **Procedure**:
 
-1. **Consolidate on contact** — check the target scope's `Research/` directory for old-style `*-audit*.md` files (any file containing "audit" in its name that is not `audit.md` itself). For each:
+1. **Consolidate on contact** — check the target scope's `Research/` and `Audits/` directories for old-style `*-audit*.md` files (any file containing "audit" in its name that is not `audit.md` itself). For each:
    a. Read the old file and extract substantive findings
-   b. Append as a legacy subsection in `Research/audit.md` (creating the file if needed)
+   b. Append as a legacy subsection in `Audits/audit.md` (creating the file if needed)
    c. Delete the old file
-   d. Remove the old file's entry from `_index.md`
-2. Read `Research/audit.md` at the target scope level
+   d. Remove the old file's entry from the relevant `_index.md`
+2. Read `Audits/audit.md` at the target scope level
 3. Note any DEFERRED findings for the target skill (carry forward per [AUDIT-005])
 4. Note systemic patterns from legacy sections relevant to the target skill
 5. Produce fresh findings informed by this context
@@ -422,11 +422,11 @@ Legacy subsections are removed one-by-one as fresh audits supersede them. When a
 
 | Step | Search Location | Pattern |
 |------|-----------------|---------|
-| 1 | Target scope's `Research/` | `*-audit*.md` (per [AUDIT-015]) |
-| 2 | Parent scope's `Research/` | `*{package-name}*audit*.md` |
-| 3 | `swift-institute/Research/` | `*{package-name}*audit*.md`, `*{package-name}*deep*.md` |
+| 1 | Target scope's `Research/` and `Audits/` | `*-audit*.md` (per [AUDIT-015]) |
+| 2 | Parent scope's `Research/` and `Audits/` | `*{package-name}*audit*.md` |
+| 3 | `swift-institute/Research/` and `swift-institute/Audits/` | `*{package-name}*audit*.md`, `*{package-name}*deep*.md` |
 
-Files found at wrong scope levels are consolidated into the target scope's `Research/audit.md` and deleted from the wrong location, following the same extraction procedure as [AUDIT-015].
+Files found at wrong scope levels are consolidated into the target scope's `Audits/audit.md` and deleted from the wrong location, following the same extraction procedure as [AUDIT-015].
 
 **Rationale**: Before the audit skill existed, audit files were placed at whichever scope the session happened to use. An automated staleness check per [AUDIT-010] that only examines the correct scope would miss these misplaced files entirely.
 
@@ -438,7 +438,7 @@ Files found at wrong scope levels are consolidated into the target scope's `Rese
 
 ### [AUDIT-017] Parking Destination for Deferred Investigations
 
-**Statement**: `/audit` MAY be used as a parking destination for investigations that cannot land in the current session. A finding of the form "we verified this defect, we know the constraints, we do not have a fix yet" is a valid first-class audit output, recorded as `DEFERRED — {reason + investigation pointer}` per [AUDIT-004]. The destination is structurally preferable to leaving the investigation in a `HANDOFF-*.md` because `audit.md` is durable, indexed via `Research/_index.md`, lives next to the code it concerns, and carries the severity/status format that survives re-audits.
+**Statement**: `/audit` MAY be used as a parking destination for investigations that cannot land in the current session. A finding of the form "we verified this defect, we know the constraints, we do not have a fix yet" is a valid first-class audit output, recorded as `DEFERRED — {reason + investigation pointer}` per [AUDIT-004]. The destination is structurally preferable to leaving the investigation in a `HANDOFF-*.md` because `audit.md` is durable, indexed via `Audits/_index.md`, lives next to the code it concerns, and carries the severity/status format that survives re-audits.
 
 **When parking via audit is correct**:
 

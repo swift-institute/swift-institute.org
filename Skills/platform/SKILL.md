@@ -776,7 +776,7 @@ extension Kernel.Thread.Executor.Polling: SerialExecutor {
 
 **Rationale**: Swift tracks isolation per-Task via task-local state set by `runSynchronously(on:)`. Custom executors that own threads and invoke user code outside that entry point need a way to self-certify when code runs on their thread. The protocol extension point exists; our ecosystem missed it historically because custom executors were first used via actor pinning (every access came through a dispatched job). Tick callbacks (synchronous callbacks from a run loop) bypass the per-Task model — the gap was in our implementation not keeping up with a new consumption pattern, not in Swift's design.
 
-**Provenance**: Reflection `2026-04-15-polling-tick-isolation-checkisolated-landing.md`; research doc `swift-io/Research/polling-tick-isolation-checkisolated.md`.
+**Provenance**: Reflection `2026-04-15-polling-tick-isolation-checkisolated-landing.md`; research doc `swift-foundations/swift-io/Research/polling-tick-isolation-checkisolated.md`.
 
 **Cross-references**: [PLAT-ARCH-001], [MEM-SEND-001]
 
