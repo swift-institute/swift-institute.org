@@ -50,6 +50,10 @@ jobs:
           sed -i '' 's/VUE_APP_TITLE:"Documentation"/VUE_APP_TITLE:"Swift Institute"/g' ./docc-output/js/index.*.js
           sed -i '' 's/"documentation":{"title":"Documentation"/"documentation":{"title":"Swift Institute"/g' ./docc-output/js/index.*.js
 
+      - name: Inject Open Graph meta into DocC shell
+        run: |
+          sed -i '' 's|<title>Documentation</title>|<title>Swift Institute</title><meta property="og:title" content="Swift Institute"/><meta property="og:description" content="The integrated Swift package ecosystem. Primitives, standards, and foundations."/><meta property="og:type" content="website"/><meta property="og:url" content="https://swift-institute.org/documentation/swift_institute/"/><meta name="twitter:card" content="summary"/><meta name="twitter:title" content="Swift Institute"/><meta name="twitter:description" content="The integrated Swift package ecosystem. Primitives, standards, and foundations."/><meta name="description" content="The integrated Swift package ecosystem. Primitives, standards, and foundations."/>|g' ./docc-output/documentation/swift_institute/index.html
+
       - name: Add root redirect + CNAME
         run: |
           cat > ./docc-output/index.html <<'HTML'
@@ -60,6 +64,14 @@ jobs:
             <meta http-equiv="refresh" content="0; url=/documentation/swift_institute/">
             <link rel="canonical" href="https://swift-institute.org/documentation/swift_institute/">
             <title>Swift Institute</title>
+            <meta property="og:title" content="Swift Institute"/>
+            <meta property="og:description" content="The integrated Swift package ecosystem. Primitives, standards, and foundations."/>
+            <meta property="og:type" content="website"/>
+            <meta property="og:url" content="https://swift-institute.org/documentation/swift_institute/"/>
+            <meta name="twitter:card" content="summary"/>
+            <meta name="twitter:title" content="Swift Institute"/>
+            <meta name="twitter:description" content="The integrated Swift package ecosystem. Primitives, standards, and foundations."/>
+            <meta name="description" content="The integrated Swift package ecosystem. Primitives, standards, and foundations."/>
           </head>
           <body>
             <p>Redirecting to <a href="/documentation/swift_institute/">Swift Institute documentation</a>…</p>
