@@ -1,7 +1,8 @@
-# Swift Institute
+# Layers
 
 @Metadata {
-    @TitleHeading("Layers")
+    @TitleHeading("Swift Institute")
+    @PageImage(purpose: card, source: "card-layers", alt: "Layers")
 }
 
 The ecosystem spans three layers. Each builds only on layers below.

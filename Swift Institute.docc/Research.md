@@ -2,6 +2,7 @@
 
 @Metadata {
     @TitleHeading("Swift Institute")
+    @PageImage(purpose: card, source: "card-research", alt: "Research")
 }
 
 Design rationale and trade-off analysis — why the ecosystem is shaped the way it is.

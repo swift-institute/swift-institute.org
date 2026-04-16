@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#F05138" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#F05138" stop-opacity="0.05"/>
+    </linearGradient>
+  </defs>
+  <rect width="640" height="360" fill="url(#g)"/>
+  <g opacity="0.3">
+    <g transform="translate(259, 167) scale(1.6)">
+      <rect x="9"  y="0"    width="6"  height="2.5" rx="0.5" fill="#D4A853"/>
+      <rect x="6"  y="4"    width="12" height="3"   rx="1"   fill="#F05138" opacity="0.5"/>
+      <rect x="3"  y="8.5"  width="18" height="3"   rx="1"   fill="#F05138" opacity="0.65"/>
+      <rect x="0"  y="13"   width="24" height="3"   rx="1"   fill="#F05138" opacity="0.8"/>
+    </g>
+    <text x="307" y="180" font-family="-apple-system, system-ui, sans-serif" font-size="40" font-weight="500" fill="#F05138" dominant-baseline="central">Blog</text>
+  </g>
+</svg>

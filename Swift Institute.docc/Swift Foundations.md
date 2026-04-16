@@ -2,6 +2,7 @@
 
 @Metadata {
     @TitleHeading("Swift Institute")
+    @PageImage(purpose: card, source: "card-swift-foundations", alt: "Swift Foundations")
 }
 
 Composed building blocks that integrate primitives and standards into reusable infrastructure.

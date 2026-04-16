@@ -2,6 +2,7 @@
 
 @Metadata {
     @TitleHeading("Swift Institute")
+    @PageImage(purpose: card, source: "card-faq", alt: "FAQ")
 }
 
 Frequently asked questions about Swift Institute architecture, packaging, and usage.

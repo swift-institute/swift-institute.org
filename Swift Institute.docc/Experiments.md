@@ -2,6 +2,7 @@
 
 @Metadata {
     @TitleHeading("Swift Institute")
+    @PageImage(purpose: card, source: "card-experiments", alt: "Experiments")
 }
 
 Runnable Swift packages that verify compiler and runtime behaviour — so claims are demonstrated, not asserted.

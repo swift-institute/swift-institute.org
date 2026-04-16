@@ -2,6 +2,7 @@
 
 @Metadata {
   @TitleHeading("Swift Institute Blog")
+  @PageImage(purpose: card, source: "blog-card", alt: "Swift Institute Blog")
 }
 
 My last post went up in July 2025. Since then I have written no blog posts and roughly 9,800 git commits. This is a short post about what happened in between, and why the next few posts will look different from what I've published before.

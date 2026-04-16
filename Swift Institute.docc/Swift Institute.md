@@ -4,16 +4,26 @@
   @DisplayName("Swift Institute")
   @TitleHeading("The integrated Swift package ecosystem")
   @CallToAction(url: "https://github.com/swift-institute", purpose: link, label: "View on GitHub")
+  @PageImage(purpose: icon, source: "hero-icon", alt: "Swift Institute layers")
 }
 
 Primitives encoded as Swift packages, standards built on shared primitives, each composed into foundational packages.
+
+@Options {
+  @TopicsVisualStyle(detailedGrid)
+}
+
+## Latest writing
+
+@Links(visualStyle: detailedGrid) {
+    - <doc:Restarting-the-Blog>
+}
 
 ## Topics
 
 ### Start reading
 
 - <doc:Blog>
-- <doc:Restarting-the-Blog>
 - <doc:FAQ>
 
 ### Layers

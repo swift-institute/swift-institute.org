@@ -2,6 +2,7 @@
 
 @Metadata {
     @TitleHeading("Swift Institute")
+    @PageImage(purpose: card, source: "card-swift-primitives", alt: "Swift Primitives")
 }
 
 The atomic building blocks of the ecosystem — types that standards require but do not define.

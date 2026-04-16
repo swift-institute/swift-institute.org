@@ -2,6 +2,7 @@
 
 @Metadata {
     @TitleHeading("Swift Institute")
+    @PageImage(purpose: card, source: "card-swift-standards", alt: "Swift Standards")
 }
 
 Faithful Swift implementations of external normative specifications — RFCs, ISO standards, W3C specifications, and the rest.
