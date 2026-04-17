@@ -3,6 +3,11 @@
 @Metadata {
     @TitleHeading("Swift Institute")
     @PageImage(purpose: card, source: "card-research", alt: "Research")
+    @CallToAction(
+        url: "/dashboard/#research",
+        purpose: link,
+        label: "Open Research Dashboard"
+    )
 }
 
 Design rationale and trade-off analysis — why the ecosystem is shaped the way it is.
@@ -15,7 +20,9 @@ Research documents are persistent and version-controlled. They are not internal 
 
 ## Where to browse
 
-Ecosystem-wide research is published in [swift-institute/Research](https://github.com/swift-institute/Research). The repository's [`_index.md`](https://github.com/swift-institute/Research/blob/main/_index.md) lists every document with its topic and status; [`Reflections/`](https://github.com/swift-institute/Research/tree/main/Reflections) holds shorter post-session notes captured at the time of the work.
+The full corpus is queryable in the [Research Dashboard](/dashboard/#research) — filter by status, tier, and scope; full-text search across titles and topics. Every row links to the source markdown.
+
+Ecosystem-wide research is published in [swift-institute/Research](https://github.com/swift-institute/Research); the dashboard's data is generated from that repository's [`_index.json`](https://github.com/swift-institute/Research/blob/main/_index.json). [`Reflections/`](https://github.com/swift-institute/Research/tree/main/Reflections) holds shorter post-session notes captured at the time of the work.
 
 Per-layer research lives alongside the code it concerns — in the `Research/` directory of each superrepo (primitives, standards, foundations).
 

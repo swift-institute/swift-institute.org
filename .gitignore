@@ -78,6 +78,7 @@ Thumbs.db
 !/Swift Institute.docc/
 !/build-docs.sh
 !/.swift-version
+!/dashboard/
 
 # Markdown content within the DocC catalog
 !**/Swift Institute.docc/**/*.md

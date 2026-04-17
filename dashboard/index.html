@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Swift Institute — Research & Experiments</title>
+<link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="site-header-inner">
+    <a class="site-title" href="/documentation/swift_institute/">Swift Institute</a>
+    <nav>
+      <a href="/documentation/swift_institute/" class="nav-link">Documentation</a>
+      <a href="#research" class="nav-link nav-link-active">Research</a>
+      <a href="#experiments" class="nav-link">Experiments</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="tabbed">
+    <div class="tabs">
+      <button class="tab tab-active" data-corpus="research">Research</button>
+      <button class="tab" data-corpus="experiments">Experiments</button>
+    </div>
+
+    <div class="corpus-header">
+      <h1 id="corpus-title">Research</h1>
+      <p id="corpus-count" class="count"></p>
+    </div>
+
+    <div class="controls">
+      <input
+        id="search"
+        type="search"
+        placeholder="Search title and body…"
+        autocomplete="off"
+        autocorrect="off"
+        autocapitalize="off"
+        spellcheck="false">
+
+      <div class="filter-group" id="status-filters">
+        <span class="filter-label">Status:</span>
+        <div class="pills" id="status-pills"></div>
+      </div>
+
+      <div class="filter-group" id="extra-filters">
+        <span class="filter-label" id="extra-label">Tier:</span>
+        <div class="pills" id="extra-pills"></div>
+      </div>
+
+      <button id="clear-filters" class="clear-btn" type="button">Clear filters</button>
+    </div>
+
+    <table id="results">
+      <thead id="results-head"></thead>
+      <tbody id="results-body"></tbody>
+    </table>
+
+    <p id="empty" class="empty" hidden>No results match the current filters.</p>
+  </section>
+</main>
+
+<footer>
+  <p>Local preview · Data from <code>Research/_index.json</code> and <code>Experiments/_index.json</code></p>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0/dist/fuse.min.js"></script>
+<script src="dashboard.js"></script>
+</body>
+</html>

@@ -3,6 +3,11 @@
 @Metadata {
     @TitleHeading("Swift Institute")
     @PageImage(purpose: card, source: "card-experiments", alt: "Experiments")
+    @CallToAction(
+        url: "/dashboard/#experiments",
+        purpose: link,
+        label: "Open Experiments Dashboard"
+    )
 }
 
 Runnable Swift packages that verify compiler and runtime behaviour — so claims are demonstrated, not asserted.
@@ -14,6 +19,8 @@ Each experiment is a standalone Swift package that isolates one hypothesis — a
 Experiments are the ecosystem's receipts. When a blog post claims "the compiler rejects this pattern," the experiment proves it. When a research document says "approach A compiles but approach B does not," the experiment shows both.
 
 ## Where to browse
+
+The full corpus is queryable in the [Experiments Dashboard](/dashboard/#experiments) — filter by status, category, and toolchain; full-text search across directories and purposes. Every row links to the source directory on GitHub.
 
 Ecosystem-wide experiments are published in [swift-institute/Experiments](https://github.com/swift-institute/Experiments). Each subdirectory is a standalone Swift package — clone the repository and run `swift build` (or `swift run`) inside the experiment of interest:
 
