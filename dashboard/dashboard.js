@@ -8,6 +8,8 @@ const CORPORA = {
     dataUrl: "research.json",
     entriesKey: "documents",
     title: "Research",
+    eyebrow: "Swift Institute",
+    lead: "Design rationale and trade-off analysis. When a decision has non-obvious alternatives, the reasoning is recorded as a research document. Each row links to the source markdown on GitHub.",
     githubBase: "https://github.com/swift-institute/Research/blob/main/",
     linkField: "file",
     searchKeys: [
@@ -30,6 +32,8 @@ const CORPORA = {
     dataUrl: "experiments.json",
     entriesKey: "experiments",
     title: "Experiments",
+    eyebrow: "Swift Institute",
+    lead: "Runnable Swift packages that verify compiler and runtime behaviour. Each row links to the experiment directory on GitHub — clone and run swift build inside any package to verify the claim.",
     githubBase: "https://github.com/swift-institute/Experiments/tree/main/",
     linkField: "directory",
     searchKeys: [
@@ -301,10 +305,14 @@ function applyAndRender() {
 
 async function switchCorpus(key) {
   currentCorpus = key;
+  const cfg = CORPORA[key];
   // Tab state
   document.querySelectorAll(".tab").forEach((t) => t.classList.toggle("tab-active", t.dataset.corpus === key));
-  // Title
-  document.getElementById("corpus-title").textContent = CORPORA[key].title;
+  // Intro band
+  document.getElementById("corpus-title").textContent = cfg.title;
+  document.getElementById("corpus-eyebrow").textContent = cfg.eyebrow;
+  document.getElementById("corpus-lead").textContent = cfg.lead;
+  document.title = `${cfg.title} — Swift Institute`;
   // Nav state
   document.querySelectorAll(".nav-link").forEach((a) => {
     const isActive = (key === "research" && a.getAttribute("href") === "#research") ||
@@ -316,6 +324,36 @@ async function switchCorpus(key) {
   // Reset search input value
   document.getElementById("search").value = state[key].search;
   applyAndRender();
+}
+
+// ---------- Theme ----------
+
+function currentScheme() {
+  return document.body.getAttribute("data-color-scheme") ||
+    (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+}
+
+function setScheme(scheme) {
+  if (scheme === "auto") {
+    document.body.removeAttribute("data-color-scheme");
+    localStorage.removeItem("swift-institute-scheme");
+  } else {
+    document.body.setAttribute("data-color-scheme", scheme);
+    localStorage.setItem("swift-institute-scheme", scheme);
+  }
+  updateThemeIcon();
+}
+
+function updateThemeIcon() {
+  const icon = document.getElementById("theme-toggle-icon");
+  if (!icon) return;
+  const scheme = currentScheme();
+  // Swap sun <-> moon
+  if (scheme === "dark") {
+    icon.innerHTML = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+  } else {
+    icon.innerHTML = '<circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4"/>';
+  }
 }
 
 // ---------- Utils ----------
@@ -333,6 +371,13 @@ function escapeHTML(s) {
 // ---------- Init ----------
 
 document.addEventListener("DOMContentLoaded", async () => {
+  // Restore scheme preference before first paint
+  const saved = localStorage.getItem("swift-institute-scheme");
+  if (saved === "dark" || saved === "light") {
+    document.body.setAttribute("data-color-scheme", saved);
+  }
+  updateThemeIcon();
+
   // Tab click
   document.querySelectorAll(".tab").forEach((btn) => {
     btn.addEventListener("click", () => switchCorpus(btn.dataset.corpus));
@@ -359,6 +404,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     st.search = "";
     document.getElementById("search").value = "";
     applyAndRender();
+  });
+  // Theme toggle: cycles light <-> dark
+  document.getElementById("theme-toggle").addEventListener("click", () => {
+    const next = currentScheme() === "dark" ? "light" : "dark";
+    setScheme(next);
   });
 
   // URL hash routing

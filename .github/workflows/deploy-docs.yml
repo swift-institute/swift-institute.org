@@ -102,6 +102,16 @@ jobs:
           # CNAME
           echo "${SITE_DOMAIN}" > ./docc-output/CNAME
 
+      - name: Copy dashboard
+        run: |
+          # The dashboard/ directory is a vanilla-JS SPA over the Research
+          # and Experiments _index.json manifests. Copy it as-is into the
+          # deployed site. The committed research.json / experiments.json
+          # snapshots are used; regenerate them locally by running
+          # `cp ../Research/_index.json dashboard/research.json` etc. when
+          # the sibling-repo corpora change.
+          cp -R dashboard ./docc-output/dashboard
+
       - name: Configure Pages
         uses: actions/configure-pages@v6
 
