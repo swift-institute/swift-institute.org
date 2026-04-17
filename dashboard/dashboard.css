@@ -224,6 +224,12 @@ code {
   fill: var(--c-accent);
 }
 
+/* Opacity ramp matches Swift Institute.docc/Resources/card-layers.svg —
+   base most prominent, tiers fade toward the capstone. */
+.pyramid-tier-1 { opacity: 1; }
+.pyramid-tier-2 { opacity: 0.8; }
+.pyramid-tier-3 { opacity: 0.6; }
+
 .pyramid-capstone {
   fill: var(--c-capstone);
 }
