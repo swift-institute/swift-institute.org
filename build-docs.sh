@@ -20,4 +20,7 @@ sed -i '' 's/"documentation":{"title":"Documentation"/"documentation":{"title":"
 # Post-process: OG meta into DocC shell
 sed -i '' 's|<title>Documentation</title>|<title>Swift Institute</title><meta property="og:title" content="Swift Institute"/><meta property="og:description" content="The integrated Swift package ecosystem. Primitives, standards, and foundations."/><meta property="og:type" content="website"/><meta property="og:url" content="https://swift-institute.org/documentation/swift_institute/"/><meta name="twitter:card" content="summary"/><meta name="twitter:title" content="Swift Institute"/><meta name="twitter:description" content="The integrated Swift package ecosystem. Primitives, standards, and foundations."/><meta name="description" content="The integrated Swift package ecosystem. Primitives, standards, and foundations."/>|g' /tmp/si-docs/documentation/swift_institute/index.html
 
+# Copy dashboard/ into the built site, matching the deploy workflow.
+cp -R dashboard /tmp/si-docs/dashboard
+
 echo "Built to /tmp/si-docs"
