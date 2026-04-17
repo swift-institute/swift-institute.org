@@ -35,6 +35,7 @@ Primitives encoded as Swift packages, standards built on shared primitives, each
 
 ### Go deeper
 
+- <doc:Whitepaper>
 - <doc:Research>
 - <doc:Experiments>
 
