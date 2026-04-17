@@ -67,7 +67,9 @@ jobs:
           OG_TAGS+="<meta name=\"twitter:title\" content=\"${SITE_TITLE}\"/>"
           OG_TAGS+="<meta name=\"twitter:description\" content=\"${SITE_DESCRIPTION}\"/>"
           OG_TAGS+="<meta name=\"description\" content=\"${SITE_DESCRIPTION}\"/>"
+          GOATCOUNTER='<script data-goatcounter="https://swift-institute.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>'
           sed -i '' "s|<title>Documentation</title>|${OG_TAGS}|g" ./docc-output/documentation/swift_institute/index.html
+          sed -i '' "s|</head>|${GOATCOUNTER}</head>|g" ./docc-output/documentation/swift_institute/index.html
 
           # Root redirect with OG meta
           cat > ./docc-output/index.html <<REDIRECT
