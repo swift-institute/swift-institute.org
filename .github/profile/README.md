@@ -32,19 +32,19 @@ plus additional per-authority organizations for other standards bodies.
 
 | If you want to... | Go to |
 |-------------------|-------|
-| Understand the architecture, read conventions, or browse research | [swift-institute/swift-institute](https://github.com/swift-institute/swift-institute) — the meta-repository |
+| Understand the architecture, read conventions, or browse research | [swift-institute.org](https://github.com/swift-institute/swift-institute.org) — the website + meta-repository, with companion repos [Research](https://github.com/swift-institute/Research) and [Experiments](https://github.com/swift-institute/Experiments) |
 | Use atomic primitives | [swift-primitives](https://github.com/swift-primitives) |
 | Consume an RFC or ISO specification | [swift-ietf](https://github.com/swift-ietf), [swift-iso](https://github.com/swift-iso), or the relevant per-authority org |
 | Use composed building blocks | [swift-foundations](https://github.com/swift-foundations) |
-| Read the blog | [swift-institute/swift-institute/tree/main/Blog](https://github.com/swift-institute/swift-institute/tree/main/Blog) |
+| Read the blog | [swift-institute.org/tree/main/Blog](https://github.com/swift-institute/swift-institute.org/tree/main/Blog) |
 | Report an issue or contribute | Open an issue or pull request on the relevant repository |
-| Report a security vulnerability | [Private security advisory](https://github.com/swift-institute/swift-institute/security/advisories/new) |
+| Report a security vulnerability | [Private security advisory](https://github.com/swift-institute/swift-institute.org/security/advisories/new) |
 
 ## Status
 
 Initial public alpha. The meta-repository
-([swift-institute/swift-institute](https://github.com/swift-institute/swift-institute))
-is public. The package layers it describes are being released repository by
+([swift-institute/swift-institute.org](https://github.com/swift-institute/swift-institute.org))
+is public, alongside companion repos [swift-institute/Research](https://github.com/swift-institute/Research) and [swift-institute/Experiments](https://github.com/swift-institute/Experiments). The package layers they describe are being released repository by
 repository on a rolling basis.
 
 Maintained by [Coen ten Thije Boonkkamp](https://github.com/coenttb).

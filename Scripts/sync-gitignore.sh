@@ -16,7 +16,9 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 INSTITUTE_ROOT="$(dirname "$SCRIPT_DIR")"
-DEVELOPER_DIR="$(dirname "$INSTITUTE_ROOT")"
+# INSTITUTE_ROOT is .../swift-institute/swift-institute.org; the org dir is
+# its parent (.../swift-institute), and DEVELOPER_DIR is one level above that.
+DEVELOPER_DIR="$(dirname "$(dirname "$INSTITUTE_ROOT")")"
 
 DRY_RUN=false
 if [[ "$1" == "--dry-run" ]]; then

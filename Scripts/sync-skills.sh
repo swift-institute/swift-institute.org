@@ -20,13 +20,25 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 INSTITUTE_ROOT="$(dirname "$SCRIPT_DIR")"
-DEVELOPER_DIR="$(dirname "$INSTITUTE_ROOT")"
+# INSTITUTE_ROOT is .../swift-institute/swift-institute.org; the org dir is
+# its parent (.../swift-institute), and DEVELOPER_DIR is one level above that.
+DEVELOPER_DIR="$(dirname "$(dirname "$INSTITUTE_ROOT")")"
 
 # Repos that self-manage skills via submodule are excluded from REPOS.
 # They are still scanned for skill DISCOVERY (source of truth) but not synced to.
 SELF_MANAGING="swift-institute swift-primitives swift-foundations"
 REPOS="swift-standards"
 ALL_REPOS="$SELF_MANAGING $REPOS"
+
+# Path lookup: swift-institute is an org-style directory holding sub-repos;
+# the actual website repo lives at swift-institute/swift-institute.org.
+# All other ecosystem repos remain flat under DEVELOPER_DIR.
+get_repo_path() {
+  case "$1" in
+    swift-institute) echo "$DEVELOPER_DIR/swift-institute/swift-institute.org" ;;
+    *) echo "$DEVELOPER_DIR/$1" ;;
+  esac
+}
 
 # ── Phase 1: Discover all skills ─────────────────────────────────────────────
 # Write discovered skills to a temp file: name<TAB>path
@@ -36,7 +48,7 @@ trap "rm -f '$SKILL_LIST'" EXIT
 
 # Repo-level skills (institute first, then others — first discovered wins)
 for repo in $ALL_REPOS; do
-  repo_path="$DEVELOPER_DIR/$repo"
+  repo_path="$(get_repo_path "$repo")"
   [ -d "$repo_path" ] || continue
   [ -d "$repo_path/Skills" ] || continue
 
@@ -53,7 +65,7 @@ done
 
 # Package-level skills (monorepos)
 for repo in $ALL_REPOS; do
-  repo_path="$DEVELOPER_DIR/$repo"
+  repo_path="$(get_repo_path "$repo")"
   [ -d "$repo_path" ] || continue
 
   for package_dir in "$repo_path"/swift-*/; do
@@ -121,7 +133,7 @@ sync_target() {
 }
 
 for repo in $REPOS; do
-  repo_path="$DEVELOPER_DIR/$repo"
+  repo_path="$(get_repo_path "$repo")"
   if [ ! -d "$repo_path" ]; then
     echo "Skipping $repo (not found)"
     continue
