@@ -213,8 +213,8 @@ code {
 .site-title:hover { text-decoration: none; color: var(--c-fg); }
 
 .site-title-mark {
-  width: 22px;
-  height: 22px;
+  width: 28px;
+  height: 28px;
   display: inline-block;
   flex-shrink: 0;
   overflow: visible;
@@ -482,8 +482,15 @@ main {
   font-variant-numeric: tabular-nums;
 }
 
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: var(--radius-base);
+}
+
 table {
   width: 100%;
+  min-width: 720px;
   border-collapse: collapse;
   table-layout: fixed;
 }
@@ -499,14 +506,39 @@ thead th {
   border-bottom: 1px solid var(--c-border);
   user-select: none;
   background: var(--c-bg);
+  position: sticky;
+  top: 52px; /* matches site-header height */
+  z-index: 5;
 }
 
-thead th.sortable { cursor: pointer; }
-thead th.sortable:hover { color: var(--c-fg); }
+thead th.sortable {
+  cursor: pointer;
+  transition: color 120ms ease;
+}
+
+thead th.sortable::after {
+  content: attr(data-sort-hint);
+}
+
+thead th.sortable:hover {
+  color: var(--c-accent);
+}
 
 thead th .sort-arrow {
-  opacity: 0.3;
+  opacity: 0.55;
   margin-left: 4px;
+  font-size: 11px;
+  display: inline-block;
+  transition: opacity 120ms ease, color 120ms ease, transform 120ms ease;
+}
+
+thead th.sortable:hover .sort-arrow {
+  opacity: 0.9;
+  color: var(--c-accent);
+}
+
+thead th.sorted {
+  color: var(--c-fg);
 }
 
 thead th.sorted .sort-arrow {
@@ -722,10 +754,20 @@ table.experiments colgroup col:nth-child(5) { width: 12%; }
   .site-header-inner { padding: 0 14px; height: 48px; }
   .site-header nav { gap: 14px; }
   .nav-link { font-size: 13px; }
+  .site-title-mark { width: 22px; height: 22px; }
+  .site-title { font-size: 15px; }
   main { padding: 16px 14px 40px; }
   .intro { padding: 20px 20px 18px; }
   .intro h1 { font-size: 24px; }
   .controls { padding: 12px; }
   #search { flex-basis: 100%; min-width: 0; }
   thead th, tbody td { padding: 10px 8px; font-size: 13px; }
+  thead th { top: 48px; }
+  /* Always surface sort arrows on touch — hover state is unavailable. */
+  thead th .sort-arrow { opacity: 0.75; }
+  /* Hint the table can scroll horizontally */
+  .table-scroll {
+    margin: 0 -14px;
+    padding: 0 14px;
+  }
 }
