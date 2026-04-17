@@ -148,6 +148,7 @@ OVERRIDES
 # Institute directories
 !/Audits/
 !/Blog/
+!/Deferred/
 !/Documentation.docc/
 !/Scripts/
 !/Swift Evolution/
@@ -155,6 +156,7 @@ OVERRIDES
 # Additional markdown whitelists
 !**/Audits/**/*.md
 !**/Blog/**/*.md
+!**/Deferred/**/*.md
 !**/Documentation.docc/**/*.md
 !**/Swift Evolution/**/*.md
 OVERRIDES

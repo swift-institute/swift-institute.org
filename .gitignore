@@ -77,6 +77,7 @@ Thumbs.db
 # Institute directories
 !/Audits/
 !/Blog/
+!/Deferred/
 !/Scripts/
 !/Swift Evolution/
 !/Swift Institute.docc/
@@ -84,6 +85,7 @@ Thumbs.db
 # Additional markdown whitelists
 !**/Audits/**/*.md
 !**/Blog/**/*.md
+!**/Deferred/**/*.md
 !**/Swift Evolution/**/*.md
 !**/Swift Institute.docc/**/*.md
 
