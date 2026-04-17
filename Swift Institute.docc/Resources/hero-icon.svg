@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <!-- Mathematically proportioned: 25%, 50%, 75%, 100% width -->
+  <rect x="110" y="76"  width="36"  height="16" rx="3" fill="#D4A853" opacity="0.7"/>
+  <rect x="92"  y="100" width="72"  height="18" rx="4" fill="currentColor" opacity="0.15"/>
+  <rect x="74"  y="126" width="108" height="18" rx="4" fill="currentColor" opacity="0.25"/>
+  <rect x="56"  y="152" width="144" height="18" rx="4" fill="currentColor" opacity="0.35"/>
+</svg>

@@ -1,0 +1,123 @@
+name: Deploy DocC
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+env:
+  SITE_TITLE: "Swift Institute"
+  SITE_DESCRIPTION: "The integrated Swift package ecosystem. Primitives, standards, and foundations."
+  SITE_URL: "https://swift-institute.org/documentation/swift_institute/"
+  SITE_DOMAIN: "swift-institute.org"
+
+jobs:
+  build:
+    name: Build DocC
+    runs-on: macos-26
+    # Gate workflow_dispatch: only main can trigger a deploy, even manually.
+    # Push events are already gated by `branches: [main]` above; this covers
+    # manual dispatch from other refs.
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install Swift 6.3
+        uses: swift-actions/setup-swift@v3
+        with:
+          swift-version: "6.3"
+
+      - name: Show toolchain
+        run: |
+          swift --version
+          xcrun docc --version || true
+
+      - name: Build symbol graphs
+        run: |
+          swift build --target "Swift Institute" \
+            -Xswiftc -emit-symbol-graph \
+            -Xswiftc -emit-symbol-graph-dir \
+            -Xswiftc "$(pwd)/.build/symbol-graphs"
+
+      - name: Convert DocC catalog
+        run: |
+          xcrun docc convert "Swift Institute.docc" \
+            --additional-symbol-graph-dir .build/symbol-graphs \
+            --transform-for-static-hosting \
+            --output-path ./docc-output
+
+      - name: Post-process
+        run: |
+          # Nav title (baked into DocC renderer JS)
+          sed -i '' "s/VUE_APP_TITLE:\"Documentation\"/VUE_APP_TITLE:\"${SITE_TITLE}\"/g" ./docc-output/js/index.*.js
+          sed -i '' "s/\"documentation\":{\"title\":\"Documentation\"/\"documentation\":{\"title\":\"${SITE_TITLE}\"/g" ./docc-output/js/index.*.js
+
+          # OG meta into DocC SPA shell
+          OG_TAGS="<title>${SITE_TITLE}</title>"
+          OG_TAGS+="<meta property=\"og:title\" content=\"${SITE_TITLE}\"/>"
+          OG_TAGS+="<meta property=\"og:description\" content=\"${SITE_DESCRIPTION}\"/>"
+          OG_TAGS+="<meta property=\"og:type\" content=\"website\"/>"
+          OG_TAGS+="<meta property=\"og:url\" content=\"${SITE_URL}\"/>"
+          OG_TAGS+="<meta name=\"twitter:card\" content=\"summary\"/>"
+          OG_TAGS+="<meta name=\"twitter:title\" content=\"${SITE_TITLE}\"/>"
+          OG_TAGS+="<meta name=\"twitter:description\" content=\"${SITE_DESCRIPTION}\"/>"
+          OG_TAGS+="<meta name=\"description\" content=\"${SITE_DESCRIPTION}\"/>"
+          GOATCOUNTER='<script data-goatcounter="https://swift-institute.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>'
+          sed -i '' "s|<title>Documentation</title>|${OG_TAGS}|g" ./docc-output/documentation/swift_institute/index.html
+          sed -i '' "s|</head>|${GOATCOUNTER}</head>|g" ./docc-output/documentation/swift_institute/index.html
+
+          # Root redirect with OG meta. JS in <head> runs before paint so the
+          # body never flashes; <meta refresh> is the no-JS fallback.
+          cat > ./docc-output/index.html <<REDIRECT
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="UTF-8">
+            <script>window.location.replace('/documentation/swift_institute/');</script>
+            <meta http-equiv="refresh" content="0; url=/documentation/swift_institute/">
+            <link rel="canonical" href="${SITE_URL}">
+            <title>${SITE_TITLE}</title>
+            <meta property="og:title" content="${SITE_TITLE}"/>
+            <meta property="og:description" content="${SITE_DESCRIPTION}"/>
+            <meta property="og:type" content="website"/>
+            <meta property="og:url" content="${SITE_URL}"/>
+            <meta name="twitter:card" content="summary"/>
+            <meta name="twitter:title" content="${SITE_TITLE}"/>
+            <meta name="twitter:description" content="${SITE_DESCRIPTION}"/>
+            <meta name="description" content="${SITE_DESCRIPTION}"/>
+          </head>
+          <body></body>
+          </html>
+          REDIRECT
+
+          # CNAME
+          echo "${SITE_DOMAIN}" > ./docc-output/CNAME
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v6
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: ./docc-output
+
+  deploy:
+    name: Deploy to Pages
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v5
