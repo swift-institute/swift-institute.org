@@ -32,6 +32,7 @@
   --c-accent-focus: rgba(240, 81, 56, 0.6);
   --c-link: #c93a25;                /* link light */
   --c-eyebrow: #d84727;
+  --c-capstone: #d4a017;            /* four-layer pyramid gold capstone */
 
   /* Status palette — tuned to read native alongside swift-institute-orange */
   --s-positive-fg: #0f6b3a;
@@ -67,6 +68,7 @@
     --c-accent-focus: rgba(255, 110, 86, 0.6);
     --c-link: #ff6e56;
     --c-eyebrow: #ff6e56;
+    --c-capstone: #f2c94c;           /* dark-mode gold */
 
     --s-positive-fg: #5ad28b;
     --s-positive-bg: rgba(90, 210, 139, 0.15);
@@ -102,6 +104,7 @@ body[data-color-scheme="dark"] {
   --c-accent-focus: rgba(255, 110, 86, 0.6);
   --c-link: #ff6e56;
   --c-eyebrow: #ff6e56;
+  --c-capstone: #f2c94c;
   --s-positive-fg: #5ad28b;
   --s-positive-bg: rgba(90, 210, 139, 0.15);
   --s-negative-fg: #ff8a7f;
@@ -134,6 +137,7 @@ body[data-color-scheme="light"] {
   --c-accent-focus: rgba(240, 81, 56, 0.6);
   --c-link: #c93a25;
   --c-eyebrow: #d84727;
+  --c-capstone: #d4a017;
   --s-positive-fg: #0f6b3a;
   --s-positive-bg: #e6f2ea;
   --s-negative-fg: #a42318;
@@ -212,17 +216,16 @@ code {
   width: 22px;
   height: 22px;
   display: inline-block;
-  border-radius: 5px;
-  background: var(--c-accent);
-  position: relative;
   flex-shrink: 0;
+  overflow: visible;
 }
-.site-title-mark::after {
-  content: "";
-  position: absolute;
-  inset: 5px;
-  background: var(--c-bg);
-  clip-path: polygon(15% 50%, 50% 100%, 85% 50%, 50% 0);
+
+.pyramid-tier {
+  fill: var(--c-accent);
+}
+
+.pyramid-capstone {
+  fill: var(--c-capstone);
 }
 
 .site-header nav {
