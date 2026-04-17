@@ -32,21 +32,28 @@ The per-authority organizations include [swift-ietf](https://github.com/swift-ie
 
 ## Repository Contents
 
-| Directory | Contents |
-|-----------|----------|
-| [`Audits/`](Audits) | Repository- and ecosystem-level audit reports |
-| [`Blog/`](Blog) | Blog posts (drafts, published), the ideas index, style guide, and series plans |
-| [`Skills/`](Skills) | Development conventions — naming, errors, memory safety, testing, modularization. Each skill is the canonical source for its conventions |
-| [`Swift Evolution/`](Swift%20Evolution) | Draft proposals for Swift Evolution |
+This repository hosts the public-facing website only — the DocC catalog, build script, and deploy workflow.
+
+| Path | Contents |
+|------|----------|
 | [`Swift Institute.docc/`](Swift%20Institute.docc) | Public-facing DocC documentation — architecture, platform, per-layer articles, blog |
-| [`Scripts/`](Scripts) | Scripts used by the institute's own processes (see [Scripts/README.md](Scripts/README.md)) |
+| [`Sources/`](Sources) | Stub Swift target used to generate the DocC symbol graph |
+| [`build-docs.sh`](build-docs.sh) | Local DocC build script |
+| [`.github/workflows/deploy-docs.yml`](.github/workflows/deploy-docs.yml) | CI deploy to swift-institute.org |
 
 ## Related Repositories
 
+The institute is split across several focused repositories under the [swift-institute](https://github.com/swift-institute) GitHub organization:
+
 | Repository | Contents |
 |------------|----------|
-| [swift-institute/Research](https://github.com/swift-institute/Research) | Design rationale, trade-off analyses, and investigation notes (includes `Reflections/` for post-session reflections). Non-normative |
-| [swift-institute/Experiments](https://github.com/swift-institute/Experiments) | Minimal reproductions — each experiment is a standalone Swift package testing one claim, used as receipts for blog posts |
+| [Skills](https://github.com/swift-institute/Skills) | Development conventions — naming, errors, memory safety, testing, modularization. Each skill is the canonical source for its conventions |
+| [Research](https://github.com/swift-institute/Research) | Design rationale, trade-off analyses, and investigation notes (includes `Reflections/` for post-session reflections). Non-normative |
+| [Experiments](https://github.com/swift-institute/Experiments) | Minimal reproductions — each experiment is a standalone Swift package testing one claim, used as receipts for blog posts |
+| [Blog](https://github.com/swift-institute/Blog) | Blog drafts, ideas index, style guide, and series plans (published posts ship as part of this repo's DocC catalog) |
+| [Swift-Evolution](https://github.com/swift-institute/Swift-Evolution) | Draft proposals for Swift Evolution |
+| [Audits](https://github.com/swift-institute/Audits) | Repository- and ecosystem-level audit reports |
+| [Scripts](https://github.com/swift-institute/Scripts) | Workspace-wide tooling used by the institute's own processes |
 
 ## Where to start
 
@@ -54,7 +61,7 @@ The per-authority organizations include [swift-ietf](https://github.com/swift-ie
 |---------------|------|
 | Evaluating whether this is worth your time | [FAQ](Swift%20Institute.docc/FAQ.md) |
 | Trying to understand the architecture | [Architecture](Swift%20Institute.docc/Architecture.md) |
-| Looking for conventions to adopt | [Skills/](Skills) |
+| Looking for conventions to adopt | [swift-institute/Skills](https://github.com/swift-institute/Skills) |
 | Here from a blog post's receipt link | [swift-institute/Experiments](https://github.com/swift-institute/Experiments) — each subdirectory is a standalone Swift package exercising one investigation; multi-variant packages address related claims through separate targets |
 | Curious why a decision was made a particular way | [swift-institute/Research](https://github.com/swift-institute/Research) — design rationale and trade-off analyses |
 
