@@ -1,7 +1,7 @@
 <!--
 ---
 id: BLOG-IDEA-031
-title: The associated type trap: when your protocol's Body meets SwiftUI's Body
+title: The associated type trap: why Swift merges same-named associated types across unrelated protocols
 slug: associated-type-trap
 category: Lessons Learned
 date_drafted: 2026-04-14
@@ -19,17 +19,15 @@ tags:
 ---
 -->
 
-# The associated type trap: when your protocol's Body meets SwiftUI's Body
+# The associated type trap: why Swift merges same-named associated types across unrelated protocols
 
-**You named your protocol's associated type `Body`. SwiftUI does too. The compiler now refuses to let your type be both — and no import trick, module selector, or experimental flag can save you.**
+When a type conforms to two protocols that each declare an associated type with the same name, Swift unconditionally unifies them into a single binding. Both protocols' constraints must be satisfied by one concrete type. If they can't be, the conformance is unsatisfiable — and no import trick, module selector, or experimental attribute can split them apart.
 
-If you've ever built a `View`-shaped protocol — an HTML DSL, a PDF composition layer, a terminal UI, any tree-structured renderer — you probably copied SwiftUI's shape. An `associatedtype Body`, a `var body: Body { get }`, a trailing-closure builder. It reads naturally, it teaches easily, and it plays well with result builders. This post walks through the failure that shape produces when it meets `SwiftUI.View`, the wrong theories I tested before finding the real cause, and the rename that resolves it.
-
-The cause is structural. The fix is a single rename — once you know which name to change.
+I hit this building an HTML rendering framework. The framework has a `View` protocol with an `associatedtype Body` — the same shape SwiftUI uses. When I tried to make an HTML document type also conform to `SwiftUI.View` for live previewing during development, the two `Body` requirements merged and the compiler rejected the conformance. This post walks through the wrong theories I tested, the compiler source that explains the real cause, and the rename that resolves it.
 
 ## What I tried
 
-Here is the running example. A rendering framework with a `View` protocol, and an HTML document type that conforms to it:
+Here is the running example. The rendering framework provides an HTML DSL — `Rendering.View` is the protocol all HTML elements conform to, analogous to `SwiftUI.View` for UI elements. A `View` protocol, and an HTML document type that conforms to it:
 
 ```swift
 extension Rendering {
@@ -53,7 +51,7 @@ extension HTML {
 
 This compiles. `HTML.Document` conforms to `HTML.View`, the generic parameter `Body` satisfies the associated type requirement, and the stored property fulfills the `body` accessor. Standard protocol resolution.
 
-Now the goal: make `HTML.Document` work in a SwiftUI `#Preview`.
+Now the goal: make `HTML.Document` work in a SwiftUI `#Preview`, so rendered HTML can be live-previewed during development without leaving Xcode.
 
 ```swift
 #Preview {
@@ -108,7 +106,7 @@ This hypothesis is testable. Move the `NSViewRepresentable` extension into a sep
 | V4 | Different file, `internal import SwiftUI` | on | Fails |
 | V5 | Different file, `package import SwiftUI` | on | Fails |
 
-Every variant fails. Identical error. If this were an import visibility bug, at least one variant would compile. ([V1–V5](https://github.com/swift-institute/swift-institute/tree/main/Experiments/member-import-visibility-body-conflict/Sources))
+Every variant fails. Identical error. If this were an import visibility bug, at least one variant would compile. ([V1–V5](https://github.com/swift-institute/Experiments/tree/main/member-import-visibility-body-conflict/Sources))
 
 > When five experiment variants all fail with the identical error, the bug is not in your import strategy. It is in your protocol.
 
@@ -120,7 +118,7 @@ Swift 6 introduced `@retroactive` for cross-module protocol conformance. Maybe t
 extension HTML.Document: @retroactive NSViewRepresentable { /* ... */ }
 ```
 
-The compiler rejects this with a different error: `@retroactive` is only for conformances declared outside the module that owns either the protocol or the conforming type. `HTML.Document` lives in the same module as the conformance. `@retroactive` doesn't apply. ([V7_Retroactive](https://github.com/swift-institute/swift-institute/tree/main/Experiments/member-import-visibility-body-conflict/Sources/V7_Retroactive))
+The compiler rejects this with a different error: `@retroactive` is only for conformances declared outside the module that owns either the protocol or the conforming type. `HTML.Document` lives in the same module as the conformance. `@retroactive` doesn't apply. ([V7_Retroactive](https://github.com/swift-institute/Experiments/tree/main/member-import-visibility-body-conflict/Sources/V7_Retroactive))
 
 Wrong tool.
 
@@ -142,7 +140,7 @@ The dependent-member form (`SwiftUI::View.Body`) is rejected outright, with an e
 
 > module selector is not allowed on generic member type; associated types with the same name are **merged instead of shadowing** one another
 
-*Merged*. Not disambiguated. Not shadowed. The syntax position varies; the underlying language rule does not. ([V8_ModuleSelectors](https://github.com/swift-institute/swift-institute/tree/main/Experiments/member-import-visibility-body-conflict/Sources/V8_ModuleSelectors))
+*Merged*. Not disambiguated. Not shadowed. The syntax position varies; the underlying language rule does not. ([V8_ModuleSelectors](https://github.com/swift-institute/Experiments/tree/main/member-import-visibility-body-conflict/Sources/V8_ModuleSelectors))
 
 This is the moment the investigation pivots. I stopped poking at imports and started reading the compiler source.
 
@@ -159,7 +157,7 @@ One more attempt before the source dive. The escape hatch: don't conform `HTML.D
 }
 ```
 
-This compiles. It's also unacceptable. Every preview call site grows a ceremonial suffix. You have traded a protocol conflict for an ergonomic tax, forever. If the goal is that `HTML.Document` works directly in `#Preview` — and it is — you don't get to rename the ergonomics around the bug. ([V9_Wrapper_Escape_Hatch](https://github.com/swift-institute/swift-institute/tree/main/Experiments/member-import-visibility-body-conflict/Sources/V9_Wrapper_Escape_Hatch))
+This compiles. It's also unacceptable. Every preview call site grows a ceremonial suffix. You have traded a protocol conflict for an ergonomic tax, forever. If the goal is that `HTML.Document` works directly in `#Preview` — and it is — you don't get to rename the ergonomics around the bug. ([V9_Wrapper_Escape_Hatch](https://github.com/swift-institute/Experiments/tree/main/member-import-visibility-body-conflict/Sources/V9_Wrapper_Escape_Hatch))
 
 Back to the compiler source.
 
@@ -174,30 +172,16 @@ Swift's rule is unconditional: when a single type conforms to two protocols that
 The compiler implements this through an *associated type anchor* — a canonical declaration that all same-named associated types in a conformance hierarchy fold into. The implementation is in `lib/AST/Decl.cpp`, inside `AssociatedTypeDecl::getAssociatedTypeAnchor`:
 
 ```cpp
-static AssociatedTypeDecl *getAssociatedTypeAnchor(
-                      const AssociatedTypeDecl *ATD,
-                      llvm::SmallSet<const AssociatedTypeDecl *, 8> &searched) {
-  auto overridden = ATD->getOverriddenDecls();
+auto overridden = ATD->getOverriddenDecls();
 
-  // If this declaration does not override any other declarations, it's
-  // the anchor.
-  if (overridden.empty()) return const_cast<AssociatedTypeDecl *>(ATD);
+// If this declaration does not override any other declarations, it's
+// the anchor.
+if (overridden.empty()) return const_cast<AssociatedTypeDecl *>(ATD);
 
-  // Find the best anchor among the anchors of the overridden decls.
-  AssociatedTypeDecl *bestAnchor = nullptr;
-  for (auto assocType : overridden) {
-    if (!searched.insert(assocType).second) continue;
-    auto anchor = getAssociatedTypeAnchor(assocType, searched);
-    if (!anchor) continue;
-    if (!bestAnchor || TypeDecl::compare(anchor, bestAnchor) < 0)
-      bestAnchor = anchor;
-  }
-
-  return bestAnchor;
-}
+// Find the best anchor among the anchors of the overridden decls.
 ```
 
-The anchor is computed by walking the overridden-declarations chain. The output feeds the generic signature builder, which uses anchors as the canonical names of dependent member types in conformance constraints.
+The anchor walk is recursive: each associated type declaration checks its overridden chain, and the first declaration with no overrides becomes the canonical anchor. The generic signature builder uses anchors as the canonical names of dependent member types in conformance constraints.
 
 This anchoring is what makes refinements like `Collection: Sequence` work. Both protocols declare `associatedtype Element`. The anchor lookup folds them into a single requirement, so a type conforming to `Collection` provides exactly one `Element`, not two. Without anchors, every refinement chain would have to repeat its associated type bindings.
 
@@ -228,15 +212,9 @@ The cost of the rule is that two unrelated protocols cannot share an associated 
 
 ## The fix
 
-With the diagnosis settled, only one decision remains: what to call the new associated type. Two constraints shape the answer.
+With the diagnosis settled, only one decision remains: what to call the new associated type. The name cannot be `Body` (the unifier matches by simple identifier). `Content` is out too — SwiftUI uses `associatedtype Content` in `ForEach`, `Group`, and `ViewModifier`. Any common noun just moves the trap.
 
-The compiler unifies by simple identifier inside the protocol, so the name cannot be `Body`. And I prefer nested namespaces over concatenated identifiers — `Render.Body` over `RenderBody` — so the squashed form is out too.
-
-`Content` was the obvious alternative — a natural noun for what the property exposes. But SwiftUI itself uses `associatedtype Content` in several places (`ForEach`, `Group`, `ViewModifier`'s `Content`). Picking another popular word just moves the trap.
-
-A nested namespace supplies the right shape. The body type is exposed as `Render.Body` — a nested protocol on the `Render` namespace, which avoids the concatenated form entirely and puts the rendered-body type at a name no existing Apple framework protocol uses. Inside the protocol declaration, the associated type gets a short fresh simple identifier; its constraint points at `Render.Body`, which is the name every other file in the codebase sees.
-
-The fix is a twofold rename: the protocol namespace itself moves from `Rendering` to `Render`, and the associated type is renamed from `Body` to `Rendered`.
+A nested namespace resolves it. The associated type becomes `Rendered`, constrained by `Render.Body` — a nested protocol on the `Render` namespace. The identifier is distinctive; the nested form means no Apple framework protocol will collide with it.
 
 ```swift
 extension Render {
@@ -269,7 +247,9 @@ With `Rendered` as the associated type identifier and `Render.Body` as its const
 | `Render.View` (via `HTML.View`) | `Rendered` (constrained by `Render.Body`) | the generic parameter `Body` |
 | `SwiftUI.View` (via `NSViewRepresentable`) | `Body` | `Never` |
 
-Different simple identifiers. No unification. No collision. The `#Preview` compiles. ([V10_Rendered_Namespace](https://github.com/swift-institute/swift-institute/tree/main/Experiments/member-import-visibility-body-conflict/Sources/V10_Rendered_Namespace) demonstrates the `Render` / `Rendered` shape; [V6_Content_AssocType](https://github.com/swift-institute/swift-institute/tree/main/Experiments/member-import-visibility-body-conflict/Sources/V6_Content_AssocType) proves the underlying mechanism with a different name)
+Different simple identifiers. No unification. No collision. The `#Preview` compiles.
+
+This fix works because you control the protocol definition. If you don't control either protocol — two third-party libraries both declaring `associatedtype Body` — this collision is currently unresolvable in Swift. The practical implication: pick a distinctive name up front, because you can't rename someone else's protocol later. ([V10_Rendered_Namespace](https://github.com/swift-institute/Experiments/tree/main/member-import-visibility-body-conflict/Sources/V10_Rendered_Namespace) demonstrates the `Render` / `Rendered` shape; [V6_Content_AssocType](https://github.com/swift-institute/Experiments/tree/main/member-import-visibility-body-conflict/Sources/V6_Content_AssocType) proves the underlying mechanism with a different name)
 
 ```swift
 #Preview {
@@ -319,4 +299,4 @@ The meta-lesson: when the compiler tells you something is "not allowed because X
 - Swift compiler: [`lib/AST/Decl.cpp`](https://github.com/swiftlang/swift/blob/main/lib/AST/Decl.cpp) — `AssociatedTypeDecl::getAssociatedTypeAnchor`
 - Swift compiler: [`lib/Sema/TypeCheckType.cpp`](https://github.com/swiftlang/swift/blob/main/lib/Sema/TypeCheckType.cpp) — `resolveDependentMemberType` rejects module selectors on dependent member types
 - Swift compiler: [`include/swift/AST/DiagnosticsSema.def`](https://github.com/swiftlang/swift/blob/main/include/swift/AST/DiagnosticsSema.def) — `module_selector_dependent_member_type_not_allowed`
-- Experiment: [`member-import-visibility-body-conflict`](https://github.com/swift-institute/swift-institute/tree/main/Experiments/member-import-visibility-body-conflict) — ten variants. V1–V5 prove `MemberImportVisibility` is innocent; V6 establishes the rename mechanism with `Content`; V10 exercises the specific `Render` / `Rendered` shape recommended here; V7–V9 cover `@retroactive`, SE-0491 module selectors, and the wrapper escape hatch
+- Experiment: [`member-import-visibility-body-conflict`](https://github.com/swift-institute/Experiments/tree/main/member-import-visibility-body-conflict) — ten variants. V1–V5 prove `MemberImportVisibility` is innocent; V6 establishes the rename mechanism with `Content`; V10 exercises the specific `Render` / `Rendered` shape recommended here; V7–V9 cover `@retroactive`, SE-0491 module selectors, and the wrapper escape hatch

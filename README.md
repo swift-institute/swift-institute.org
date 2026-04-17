@@ -36,12 +36,17 @@ The per-authority organizations include [swift-ietf](https://github.com/swift-ie
 |-----------|----------|
 | [`Audits/`](Audits) | Repository- and ecosystem-level audit reports |
 | [`Blog/`](Blog) | Blog posts (drafts, published), the ideas index, style guide, and series plans |
-| [`Experiments/`](Experiments) | Minimal reproductions — each experiment is a Swift package testing one claim, used as receipts for blog posts |
-| [`Research/`](Research) | Design rationale, trade-off analyses, and investigation notes (includes [`Research/Reflections/`](Research/Reflections) for post-session reflections). Non-normative |
 | [`Skills/`](Skills) | Development conventions — naming, errors, memory safety, testing, modularization. Each skill is the canonical source for its conventions |
 | [`Swift Evolution/`](Swift%20Evolution) | Draft proposals for Swift Evolution |
 | [`Swift Institute.docc/`](Swift%20Institute.docc) | Public-facing DocC documentation — architecture, platform, per-layer articles, blog |
 | [`Scripts/`](Scripts) | Scripts used by the institute's own processes (see [Scripts/README.md](Scripts/README.md)) |
+
+## Related Repositories
+
+| Repository | Contents |
+|------------|----------|
+| [swift-institute/Research](https://github.com/swift-institute/Research) | Design rationale, trade-off analyses, and investigation notes (includes `Reflections/` for post-session reflections). Non-normative |
+| [swift-institute/Experiments](https://github.com/swift-institute/Experiments) | Minimal reproductions — each experiment is a standalone Swift package testing one claim, used as receipts for blog posts |
 
 ## Where to start
 
@@ -50,16 +55,14 @@ The per-authority organizations include [swift-ietf](https://github.com/swift-ie
 | Evaluating whether this is worth your time | [FAQ](Swift%20Institute.docc/FAQ.md) |
 | Trying to understand the architecture | [Architecture](Swift%20Institute.docc/Architecture.md) |
 | Looking for conventions to adopt | [Skills/](Skills) |
-| Here from a blog post's receipt link | [Experiments/](Experiments) — each subdirectory is a standalone Swift package exercising one investigation; multi-variant packages address related claims through separate targets |
-| Curious why a decision was made a particular way | [Research/](Research) — design rationale and trade-off analyses |
-
-This repository has no root `Package.swift` intended for consumption. Each Experiment is an independent Swift package and can be cloned and built with `swift build` on Swift 6.3 or newer.
+| Here from a blog post's receipt link | [swift-institute/Experiments](https://github.com/swift-institute/Experiments) — each subdirectory is a standalone Swift package exercising one investigation; multi-variant packages address related claims through separate targets |
+| Curious why a decision was made a particular way | [swift-institute/Research](https://github.com/swift-institute/Research) — design rationale and trade-off analyses |
 
 ## Status
 
 This is an early public release, maintained by [Coen ten Thije Boonkkamp](https://github.com/coenttb). The documentation, research, experiments, and blog workflow in this repository are available now. The Swift package layers they describe are being released repository by repository on a rolling basis. Some links from blog posts and research documents point to repositories that are not yet world-readable; those links resolve as the release tags land.
 
-If you arrived here from a blog post's receipt link, you're looking at the minimal Swift package that backs a specific technical claim. The relevant experiment lives in [`Experiments/`](Experiments) and can be cloned and built with `swift build` on Swift 6.3 or newer.
+If you arrived here from a blog post's receipt link, you're looking at the minimal Swift package that backs a specific technical claim. The relevant experiment lives in [swift-institute/Experiments](https://github.com/swift-institute/Experiments) and can be cloned and built with `swift build` on Swift 6.3 or newer.
 
 ## Requirements
 

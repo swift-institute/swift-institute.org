@@ -9,7 +9,7 @@ Runnable Swift packages that verify compiler and runtime behaviour — so claims
 
 ## Overview
 
-Every repository in the ecosystem contains an `Experiments/` directory at its root. Each experiment is a standalone Swift package that isolates one hypothesis — a compiler behaviour, a language constraint, an architectural approach — with a runnable build that readers can clone and verify.
+Each superrepo in the ecosystem keeps experiments alongside the code they concern — `swift-primitives`, `swift-standards`, and `swift-foundations` each carry an `Experiments/` directory at the root. Ecosystem-wide experiments that do not belong to any one superrepo live in their own repository: [swift-institute/Experiments](https://github.com/swift-institute/Experiments). Each experiment is a standalone Swift package that isolates one hypothesis — a compiler behaviour, a language constraint, an architectural approach — with a runnable build that readers can clone and verify.
 
 Experiments are the ecosystem's receipts. When a blog post claims "the compiler rejects this pattern," the experiment proves it. When a research document says "approach A compiles but approach B does not," the experiment shows both.
 
@@ -57,11 +57,11 @@ Each experiment records its result:
 
 ## Where experiments live
 
-Like research, experiments live at the root of the repository they concern:
+Each superrepo's experiments live in an `Experiments/` directory at its root. Ecosystem-wide experiments live in a dedicated repository:
 
 | Scope | Location |
 |-------|----------|
-| Ecosystem-wide | `swift-institute/Experiments/` |
+| Ecosystem-wide | [swift-institute/Experiments](https://github.com/swift-institute/Experiments) |
 | Primitives-specific | `swift-primitives/Experiments/` |
 | Standards-specific | `swift-standards/Experiments/` |
 | Foundations-specific | `swift-foundations/Experiments/` |

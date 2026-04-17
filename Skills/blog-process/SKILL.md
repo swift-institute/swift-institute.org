@@ -447,7 +447,7 @@ A *load-bearing claim* is any assertion the post relies on for its argument: "th
 
 ```markdown
 Every variant fails. Identical error.
-([V1–V5](https://github.com/swift-institute/swift-institute/tree/main/Experiments/{experiment-name}))
+([V1–V5](https://github.com/swift-institute/Experiments/tree/main/{experiment-name}))
 ```
 
 **Acceptable alternative** — footnote-style for dense passages:
@@ -455,7 +455,7 @@ Every variant fails. Identical error.
 ```markdown
 The compiler emits a different error here[^v7].
 
-[^v7]: [V7_Retroactive](https://github.com/swift-institute/swift-institute/tree/main/Experiments/{experiment-name}/Sources/V7_Retroactive)
+[^v7]: [V7_Retroactive](https://github.com/swift-institute/Experiments/tree/main/{experiment-name}/Sources/V7_Retroactive)
 ```
 
 **Anti-pattern**: A claim asserted in prose without a link, when an experiment exists or could trivially be added. Any reader who wants to verify must hunt through the repo. Trust degrades.

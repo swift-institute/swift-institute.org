@@ -9,7 +9,7 @@ Design rationale and trade-off analysis — why the ecosystem is shaped the way 
 
 ## Overview
 
-Every repository in the ecosystem contains a `Research/` directory at its root. When a design decision has non-obvious alternatives, the reasoning is recorded here rather than lost in commit history. Research documents are Markdown files that capture the question, the options considered, and the outcome — so future readers can understand not just what was decided, but why.
+Each superrepo in the ecosystem keeps research alongside the code it concerns — `swift-primitives`, `swift-standards`, and `swift-foundations` each carry a `Research/` directory at the root. Ecosystem-wide research that does not belong to any one superrepo lives in its own repository: [swift-institute/Research](https://github.com/swift-institute/Research). When a design decision has non-obvious alternatives, the reasoning is recorded here rather than lost in commit history. Research documents are Markdown files that capture the question, the options considered, and the outcome — so future readers can understand not just what was decided, but why.
 
 Research documents are persistent and version-controlled. They are not internal drafts; they are part of the public record.
 
@@ -51,16 +51,16 @@ Documents carry metadata indicating their status:
 
 ## Where research lives
 
-Research documents live at the root of the repository they concern:
+Each superrepo's research lives in a `Research/` directory at its root. Ecosystem-wide research lives in a dedicated repository:
 
 | Scope | Location |
 |-------|----------|
-| Ecosystem-wide | `swift-institute/Research/` |
+| Ecosystem-wide | [swift-institute/Research](https://github.com/swift-institute/Research) |
 | Primitives-specific | `swift-primitives/Research/` |
 | Standards-specific | `swift-standards/Research/` |
 | Foundations-specific | `swift-foundations/Research/` |
 
-Each `Research/` directory has an `_index.md` file listing all documents with their topic and status.
+Each location has an `_index.md` file listing all documents with their topic and status.
 
 ---
 
