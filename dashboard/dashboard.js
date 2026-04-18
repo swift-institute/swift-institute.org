@@ -5,7 +5,10 @@
 
 const CORPORA = {
   research: {
-    dataUrl: "research.json",
+    // Fetched live from the authoritative source-of-truth on every page load.
+    // raw.githubusercontent.com serves with access-control-allow-origin: * and
+    // a 5-minute cache TTL. No redeploy needed when the corpus changes.
+    dataUrl: "https://raw.githubusercontent.com/swift-institute/Research/main/_index.json",
     entriesKey: "documents",
     title: "Research",
     eyebrow: "Swift Institute",
@@ -29,7 +32,7 @@ const CORPORA = {
     tableClass: "research",
   },
   experiments: {
-    dataUrl: "experiments.json",
+    dataUrl: "https://raw.githubusercontent.com/swift-institute/Experiments/main/_index.json",
     entriesKey: "experiments",
     title: "Experiments",
     eyebrow: "Swift Institute",
