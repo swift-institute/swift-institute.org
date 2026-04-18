@@ -106,11 +106,22 @@ jobs:
         run: |
           # The dashboard/ directory is a vanilla-JS SPA over the Research
           # and Experiments _index.json manifests. Copy it as-is into the
-          # deployed site. The committed research.json / experiments.json
-          # snapshots are used; regenerate them locally by running
-          # `cp ../Research/_index.json dashboard/research.json` etc. when
-          # the sibling-repo corpora change.
+          # deployed site.
           cp -R dashboard ./docc-output/dashboard
+
+      - name: Fetch live manifests from sibling repos
+        run: |
+          # Dashboard is data-driven from swift-institute/Research/_index.json
+          # and swift-institute/Experiments/_index.json. Fetch the freshest
+          # copies at deploy time — we do not commit snapshots in this repo.
+          git clone --depth 1 --branch main https://github.com/swift-institute/Research.git /tmp/si-research
+          git clone --depth 1 --branch main https://github.com/swift-institute/Experiments.git /tmp/si-experiments
+          cp /tmp/si-research/_index.json ./docc-output/dashboard/research.json
+          cp /tmp/si-experiments/_index.json ./docc-output/dashboard/experiments.json
+          echo "--- research.json ---"
+          wc -c ./docc-output/dashboard/research.json
+          echo "--- experiments.json ---"
+          wc -c ./docc-output/dashboard/experiments.json
 
       - name: Configure Pages
         uses: actions/configure-pages@v6

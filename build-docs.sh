@@ -23,4 +23,20 @@ sed -i '' 's|<title>Documentation</title>|<title>Swift Institute</title><meta pr
 # Copy dashboard/ into the built site, matching the deploy workflow.
 cp -R dashboard /tmp/si-docs/dashboard
 
+# Fetch live manifests from sibling repos. We do not commit snapshots in
+# this repo. Locally the sibling repos sit next to swift-institute.org/;
+# if they are present, copy from there; otherwise fetch from origin.
+if [ -f ../Research/_index.json ]; then
+    cp ../Research/_index.json /tmp/si-docs/dashboard/research.json
+else
+    curl -fsSL https://raw.githubusercontent.com/swift-institute/Research/main/_index.json \
+        -o /tmp/si-docs/dashboard/research.json
+fi
+if [ -f ../Experiments/_index.json ]; then
+    cp ../Experiments/_index.json /tmp/si-docs/dashboard/experiments.json
+else
+    curl -fsSL https://raw.githubusercontent.com/swift-institute/Experiments/main/_index.json \
+        -o /tmp/si-docs/dashboard/experiments.json
+fi
+
 echo "Built to /tmp/si-docs"

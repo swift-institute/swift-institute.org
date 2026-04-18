@@ -79,6 +79,10 @@ Thumbs.db
 !/build-docs.sh
 !/.swift-version
 !/dashboard/
+# Dashboard manifests are fetched live from sibling repos at build/deploy
+# time; never commit them to this repo.
+/dashboard/research.json
+/dashboard/experiments.json
 
 # Markdown content within the DocC catalog
 !**/Swift Institute.docc/**/*.md
