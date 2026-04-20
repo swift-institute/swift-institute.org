@@ -16,7 +16,7 @@ Primitives encoded as Swift packages, standards built on shared primitives, each
 ## Latest writing
 
 @Links(visualStyle: detailedGrid) {
-    - <doc:Restarting-the-Blog>
+    - <doc:Associated-Type-Trap>
 }
 
 ## Topics
