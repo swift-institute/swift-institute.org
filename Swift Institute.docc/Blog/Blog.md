@@ -11,4 +11,5 @@ Technical writing from the Swift Institute ecosystem.
 
 ### Posts
 
+- <doc:Associated-Type-Trap>
 - <doc:Restarting-the-Blog>
