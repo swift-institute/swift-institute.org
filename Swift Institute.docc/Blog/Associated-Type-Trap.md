@@ -47,8 +47,7 @@ Now the goal: make `HTML.Document` work in a SwiftUI `#Preview`, so rendered HTM
 `#Preview` requires its body to be a `SwiftUI.View`. The standard bridge is `NSViewRepresentable`, which refines `SwiftUI.View` with `Self.Body == Never`. Add the conformance:
 
 ```swift
-extension HTML.Document: NSViewRepresentable
-where Body: HTML.View, Head: HTML.View {
+extension HTML.Document: NSViewRepresentable {
     public typealias NSViewType = WKWebView
     public func makeNSView(context: Context) -> WKWebView { /* ... */ }
     public func updateNSView(_ view: WKWebView, context: Context) { /* ... */ }
