@@ -11,5 +11,6 @@ Technical writing from the Swift Institute ecosystem.
 
 ### Posts
 
+- <doc:Designing-Namespaced-Accessors>
 - <doc:Associated-Type-Trap>
 - <doc:Restarting-the-Blog>
