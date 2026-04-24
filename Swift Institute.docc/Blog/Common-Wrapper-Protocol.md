@@ -310,10 +310,6 @@ That's the spec. Two suppressions on `Self`, two suppressions on `Underlying`, a
 
 The language now has the pieces for that shape. The stdlib does not provide the protocol.
 
-## What's next
-
-The follow-up post introduces the library that does: one protocol for the wrapper recipe, four conformance recipes for the quadrant grid, and generic dispatch that preserves the concrete wrapper family. [Read the next post.][launch]
-
 ## References
 
 - Experiment: [`swift-carrier-primitives/Experiments/capability-lift-pattern`](https://github.com/swift-primitives/swift-carrier-primitives/tree/main/Experiments/capability-lift-pattern) — six variants V0–V5 probing per-type, super-protocol, and limit cases on Swift 6.3.1. Result: CONFIRMED.
@@ -333,4 +329,3 @@ The follow-up post introduces the library that does: one protocol for the wrappe
 [se-0446]: https://github.com/swiftlang/swift-evolution/blob/main/proposals/0446-non-escapable.md
 [se-0506]: https://github.com/swiftlang/swift-evolution/blob/main/proposals/0506-noncopyable-associated-types.md
 [se-0353]: https://github.com/swiftlang/swift-evolution/blob/main/proposals/0353-constrained-existential-types.md
-[launch]: https://swift-institute.org/documentation/swift-institute/introducing-swift-carrier-primitives
