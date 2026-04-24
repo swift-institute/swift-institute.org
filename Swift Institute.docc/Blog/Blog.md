@@ -11,6 +11,7 @@ Technical writing from the Swift Institute ecosystem.
 
 ### Posts
 
+- <doc:Common-Wrapper-Protocol>
 - <doc:Designing-Namespaced-Accessors>
 - <doc:Associated-Type-Trap>
 - <doc:Restarting-the-Blog>
