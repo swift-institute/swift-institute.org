@@ -117,7 +117,7 @@ extension File.Handle: Wrapper {
 
 `_read` is the coroutine form of a borrowing getter — it yields the stored value by reference, the caller uses it for the duration of the yield, and the yield returns without consuming. Plain `borrowing get { _storage }` fails here because `_storage` can't be implicitly copied out of the body.
 
-`User.ID` still conforms to the revised `Wrapper` — a `Copyable` conformer satisfies a `~Copyable` suppression trivially. The Q2 protocol covers Q1 as a degenerate case, and a generic function over `some Wrapper` now accepts bare `User.ID`, bare `Order.ID`, and `File.Handle` in the same signature. ([V5b](https://github.com/swift-primitives/swift-carrier-primitives/tree/main/Experiments/capability-lift-pattern) probes this shape in isolation on Swift 6.3.1; the repository's [*Round-trip semantics for `~Copyable` Underlyings*](https://github.com/swift-primitives/swift-carrier-primitives/blob/main/Research/round-trip-semantics-noncopyable-underlyings.md) documents the one surviving asymmetry — that `C(c.underlying)` does not compile when `Underlying` is `~Copyable`, because the borrow returned from `.underlying` can't be fed back into a `consuming` parameter.)
+`User.ID` still conforms to the revised `Wrapper` — a `Copyable` conformer satisfies a `~Copyable` suppression trivially. The Q2 protocol covers Q1 as a degenerate case, and a generic function over `some Wrapper` now accepts bare `User.ID`, bare `Order.ID`, and `File.Handle` in the same signature. ([V5b](https://github.com/swift-primitives/swift-carrier-primitives/tree/main/Experiments/capability-lift-pattern) probes this shape in isolation on Swift 6.3.1; the repository's [*Round-trip Semantics*](https://github.com/swift-primitives/swift-carrier-primitives/blob/main/Sources/Carrier%20Primitives/Carrier%20Primitives.docc/Round-trip-Semantics.md) DocC article documents the one surviving asymmetry — that `C(c.underlying)` does not compile when `Underlying` is `~Copyable`, because the borrow returned from `.underlying` can't be fed back into a `consuming` parameter.)
 
 ## Q3 — `~Escapable` underlying
 
@@ -230,7 +230,7 @@ Second, `rawValue: RawValue { get }` is a by-value read — the same Q1 assumpti
 
 Third, `init?(rawValue:)` bakes fallibility into the abstraction, while the structural wrapper recipe needs non-failable reconstruction from an already-valid underlying value. For enums (`Color(rawValue: 7)` rejects 7 when the enum has no case for it), fallibility is load-bearing. A wrapper conformer that always returns `.some` satisfies the signature but not the intent.
 
-`RawRepresentable` covers Q1, with caveats even there — no phantom discriminator, fallibility that doesn't apply, Foundation-era integration assumptions. The caveats turn into hard blocks outside Q1. The full nine-dimension comparison lives in [`carrier-vs-rawrepresentable-comparative-analysis.md`](https://github.com/swift-primitives/swift-carrier-primitives/blob/main/Research/carrier-vs-rawrepresentable-comparative-analysis.md).
+`RawRepresentable` covers Q1, with caveats even there — no phantom discriminator, fallibility that doesn't apply, Foundation-era integration assumptions. The caveats turn into hard blocks outside Q1. The [*Carrier vs RawRepresentable*](https://github.com/swift-primitives/swift-carrier-primitives/blob/main/Sources/Carrier%20Primitives/Carrier%20Primitives.docc/Carrier-vs-RawRepresentable.md) DocC article carries the decision tree.
 
 ### Per-type protocols
 
@@ -313,9 +313,9 @@ The language now has the pieces for that shape. The stdlib does not provide the 
 ## References
 
 - Experiment: [`swift-carrier-primitives/Experiments/capability-lift-pattern`](https://github.com/swift-primitives/swift-carrier-primitives/tree/main/Experiments/capability-lift-pattern) — six variants V0–V5 probing per-type, super-protocol, and limit cases on Swift 6.3.1. Result: CONFIRMED.
-- Research: [*Capability-lift pattern*](https://github.com/swift-primitives/swift-carrier-primitives/blob/main/Research/capability-lift-pattern.md) — recipe analysis, v1.1.0, RECOMMENDATION.
-- Research: [*Carrier vs RawRepresentable — comparative analysis*](https://github.com/swift-primitives/swift-carrier-primitives/blob/main/Research/carrier-vs-rawrepresentable-comparative-analysis.md) — nine-dimension comparison backing the §*`RawRepresentable`* breakdown.
-- Research: [*Round-trip semantics for `~Copyable` Underlyings*](https://github.com/swift-primitives/swift-carrier-primitives/blob/main/Research/round-trip-semantics-noncopyable-underlyings.md) — the semantic weakening noted under Q2.
+- Research: [*Carrier Primitives Vision*](https://github.com/swift-primitives/swift-carrier-primitives/blob/main/Research/Carrier%20Primitives%20Vision.md) — consolidated contributor narrative covering the capability-lift recipe, the four-quadrant matrix, the round-trip-semantic weakening, and the nine-dimension Carrier-vs-RawRepresentable comparison.
+- DocC: [*Carrier vs RawRepresentable*](https://github.com/swift-primitives/swift-carrier-primitives/blob/main/Sources/Carrier%20Primitives/Carrier%20Primitives.docc/Carrier-vs-RawRepresentable.md) — consumer-tier decision tree.
+- DocC: [*Round-trip Semantics*](https://github.com/swift-primitives/swift-carrier-primitives/blob/main/Sources/Carrier%20Primitives/Carrier%20Primitives.docc/Round-trip-Semantics.md) — the semantic weakening noted under Q2 in consumer-tier form.
 - [SE-0346: Lightweight same-type requirements for primary associated types][se-0346] — enables `some Wrapper<Underlying>`.
 - [SE-0390: Noncopyable structs and enums][se-0390] — introduces `~Copyable` types.
 - [SE-0427: Noncopyable generics][se-0427] — `~Copyable` on generic parameters and on `Self`.
