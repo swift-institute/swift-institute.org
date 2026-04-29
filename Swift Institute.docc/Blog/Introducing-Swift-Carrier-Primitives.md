@@ -9,8 +9,6 @@
 
 The companion post <doc:Common-Wrapper-Protocol> develops the design problem: Swift wrappers can sit in any quadrant of the `Copyable × Escapable` grid, but the stdlib does not provide one protocol spanning that shape. This package provides that protocol.
 
-The package is in pre-tag form. The 0.1.0 tag is gated on the `swift-primitives` 0.1.0 release cohort settling — `swift-carrier-primitives` is the pilot of four (carrier → ownership → tagged → property), and tagging the pilot before the cohort has cross-integrated would lock the API surface ahead of the learning that the rest of the cohort surfaces. Until tag day, depend on `branch: "main"` if you want to try it; everything else in this post applies.
-
 The package contains the protocol, a default extension for trivial self-wrappers, and a companion target with 28 stdlib primitive conformances — including the four `~Escapable` span types (`Span`, `MutableSpan`, `RawSpan`, `MutableRawSpan`). It has zero external dependencies, imports no Foundation module, and requires Swift 6.3.1.
 
 ## Highlights
