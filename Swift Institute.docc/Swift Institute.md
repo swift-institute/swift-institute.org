@@ -16,8 +16,8 @@ Primitives encoded as Swift packages, standards built on shared primitives, each
 ## Latest writing
 
 @Links(visualStyle: detailedGrid) {
+    - <doc:Forked-From>
     - <doc:Introducing-Swift-Carrier-Primitives>
-    - <doc:Common-Wrapper-Protocol>
 }
 
 ## Topics
