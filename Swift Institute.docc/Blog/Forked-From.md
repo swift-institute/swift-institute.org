@@ -28,7 +28,7 @@ The **platform record** is the GitHub fork badge — *forked from pointfreeco/sw
 The **git record** is the parent-pointer chain. [The Institute publication][publication-commit] is a single commit on top of upstream's HEAD-at-fork-time, so a fresh clone walks straight back through to Point-Free's history:
 
 ```text
-c5261e5 Initial publication: swift-tagged-primitives (fork of pointfreeco/swift-tagged)
+0634a1b Initial publication: swift-tagged-primitives (fork of pointfreeco/swift-tagged)
 6a85175 Update package versioning (#90)
 eea4bc0 Add conditional import to UUID (#86)
 68d4daa Add BitwiseCopyable conditional conformance (#83)
@@ -58,6 +58,6 @@ License compliance is the floor. The README is where many developers first meet 
 
 [pointfreeco-tagged]: https://github.com/pointfreeco/swift-tagged
 [tagged-primitives]: https://github.com/swift-primitives/swift-tagged-primitives
-[publication-commit]: https://github.com/swift-primitives/swift-tagged-primitives/commit/c5261e5
+[publication-commit]: https://github.com/swift-primitives/swift-tagged-primitives/commit/0634a1b
 [license-combined]: https://github.com/swift-primitives/swift-tagged-primitives/blob/main/LICENSE.md
 [readme-heritage]: https://github.com/swift-primitives/swift-tagged-primitives/blob/main/README.md
