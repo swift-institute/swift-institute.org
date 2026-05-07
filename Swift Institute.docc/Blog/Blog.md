@@ -11,6 +11,9 @@ Technical writing from the Swift Institute ecosystem.
 
 ### Posts
 
+- <doc:Introducing-Equation-Primitives>
+- <doc:Introducing-Comparison-Primitives>
+- <doc:Introducing-Hash-Primitives>
 - <doc:Forked-From>
 - <doc:Introducing-Swift-Carrier-Primitives>
 - <doc:Common-Wrapper-Protocol>
