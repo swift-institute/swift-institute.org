@@ -16,8 +16,8 @@ Primitives encoded as Swift packages, standards built on shared primitives, each
 ## Latest writing
 
 @Links(visualStyle: detailedGrid) {
+    - <doc:Introducing-Pair-Either-Product-Primitives>
     - <doc:Introducing-Equation-Primitives>
-    - <doc:Introducing-Comparison-Primitives>
     - <doc:Introducing-Hash-Primitives>
 }
 
