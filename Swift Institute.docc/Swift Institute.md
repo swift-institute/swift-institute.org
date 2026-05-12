@@ -16,9 +16,9 @@ Primitives encoded as Swift packages, standards built on shared primitives, each
 ## Latest writing
 
 @Links(visualStyle: detailedGrid) {
+    - <doc:Introducing-Cardinal-Ordinal-Affine-Primitives>
     - <doc:The-Missing-Fourth-Corner>
     - <doc:Introducing-Pair-Either-Product-Primitives>
-    - <doc:Introducing-Equation-Primitives>
 }
 
 ## Topics

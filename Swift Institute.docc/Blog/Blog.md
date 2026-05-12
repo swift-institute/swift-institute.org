@@ -11,6 +11,7 @@ Technical writing from the Swift Institute ecosystem.
 
 ### Posts
 
+- <doc:Introducing-Cardinal-Ordinal-Affine-Primitives>
 - <doc:The-Missing-Fourth-Corner>
 - <doc:Introducing-Pair-Either-Product-Primitives>
 - <doc:Introducing-Equation-Primitives>
