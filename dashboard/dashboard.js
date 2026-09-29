@@ -57,6 +57,36 @@ const CORPORA = {
     ],
     tableClass: "experiments",
   },
+  fleet: {
+    dataUrl: "https://raw.githubusercontent.com/swift-institute/.github/certificates/fleet-epoch/latest.json",
+    entriesKey: "results",
+    title: "Fleet",
+    eyebrow: "Swift Institute",
+    lead: "The nightly certificate: every public package cloned from GitHub main, then resolved, built and tested on Linux and macOS. Each row links to the repository.",
+    mapEntry: (e) => ({
+      ...e,
+      status: e.parked ? "PARKED"
+        : e.resolve === "not-a-package" ? "NOT_A_PACKAGE"
+        : e.resolve === "pass" && e.build === "pass" && (e.test === "pass" || e.test === "skip") ? "PASS"
+        : "FAIL",
+    }),
+    searchKeys: [
+      { name: "repository", weight: 2 },
+    ],
+    columns: [
+      { key: "repository", label: "Repository", sortable: true, render: renderRepositoryCell },
+      { key: "platform", label: "Platform", sortable: true, center: true },
+      { key: "resolve", label: "Resolve", center: true },
+      { key: "build", label: "Build", center: true },
+      { key: "test", label: "Test", center: true },
+      { key: "status", label: "Status", sortable: true, render: renderStatusCell },
+    ],
+    filters: [
+      { key: "status", label: "Status" },
+      { key: "platform", label: "Platform" },
+    ],
+    tableClass: "fleet",
+  },
 };
 
 // ---------- State ----------
@@ -65,6 +95,7 @@ let currentCorpus = "research";
 const state = {
   research: null, // { entries, activeFilters: {status: Set(), tier: Set()}, search: "", sort: {key, dir} }
   experiments: null,
+  fleet: null,
 };
 
 // ---------- Load ----------
@@ -72,8 +103,8 @@ const state = {
 async function loadCorpus(key) {
   if (state[key]) return state[key];
   const cfg = CORPORA[key];
-  const data = await fetch(cfg.dataUrl).then((r) => r.json());
-  const entries = data[cfg.entriesKey].map((e) => ({
+  const data = await fetch(cfg.dataUrl).then((r) => (r.ok ? r.json() : { [cfg.entriesKey]: [] }));
+  const entries = data[cfg.entriesKey].map((e) => (cfg.mapEntry ? cfg.mapEntry(e) : e)).map((e) => ({
     ...e,
     // Normalize tier/status for filtering
     _searchText: (cfg.searchKeys.map((sk) => e[sk.name] || "")).join(" "),
@@ -127,6 +158,11 @@ function renderDirectoryCell(entry) {
     ? `<div class="cat-chip" style="margin-top:4px">${escapeHTML(entry.category)}</div>`
     : "";
   return `<div class="title"><a href="${url}" target="_blank" rel="noopener"><code>${escapeHTML(entry.directory)}</code></a></div>${cat}`;
+}
+
+function renderRepositoryCell(entry) {
+  const url = "https://github.com/" + entry.repository;
+  return `<div class="title"><a href="${url}" target="_blank" rel="noopener"><code>${escapeHTML(entry.repository)}</code></a></div>`;
 }
 
 function renderRow(entry, cfg) {
@@ -318,8 +354,7 @@ async function switchCorpus(key) {
   document.title = `${cfg.title} — Swift Institute`;
   // Nav state
   document.querySelectorAll(".nav-link").forEach((a) => {
-    const isActive = (key === "research" && a.getAttribute("href") === "#research") ||
-                     (key === "experiments" && a.getAttribute("href") === "#experiments");
+    const isActive = a.getAttribute("href") === `#${key}`;
     a.classList.toggle("nav-link-active", isActive);
   });
   // Load + render
@@ -388,7 +423,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Nav click (same behavior)
   document.querySelectorAll(".nav-link").forEach((a) => {
     const href = a.getAttribute("href");
-    if (href === "#research" || href === "#experiments") {
+    if (href === "#research" || href === "#experiments" || href === "#fleet") {
       a.addEventListener("click", (e) => {
         e.preventDefault();
         switchCorpus(href.substring(1));
@@ -415,6 +450,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   // URL hash routing
-  const initial = (location.hash === "#experiments") ? "experiments" : "research";
+  const initial = ["#experiments", "#fleet"].includes(location.hash) ? location.hash.substring(1) : "research";
   await switchCorpus(initial);
 });

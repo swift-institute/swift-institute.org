@@ -631,12 +631,14 @@ tbody td .expand-toggle:hover { text-decoration: underline; }
 .status-COMPLETE,
 .status-IMPLEMENTED,
 .status-DECISION,
+.status-PASS,
 .status-CONVERGED {
   color: var(--s-positive-fg);
   background: var(--s-positive-bg);
 }
 
-.status-REFUTED {
+.status-REFUTED,
+.status-FAIL {
   color: var(--s-negative-fg);
   background: var(--s-negative-bg);
 }
@@ -646,6 +648,7 @@ tbody td .expand-toggle:hover { text-decoration: underline; }
 .status-INVESTIGATION,
 .status-ANALYSIS,
 .status-DRAFT,
+.status-PARKED,
 .status-ACTIVE,
 .status-INVENTORY {
   color: var(--s-warning-fg);
