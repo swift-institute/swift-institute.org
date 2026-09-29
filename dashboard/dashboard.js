@@ -72,6 +72,7 @@ const CORPORA = {
     }),
     searchKeys: [
       { name: "repository", weight: 2 },
+      { name: "cause", weight: 1 },
     ],
     columns: [
       { key: "repository", label: "Repository", sortable: true, render: renderRepositoryCell },
@@ -79,6 +80,7 @@ const CORPORA = {
       { key: "resolve", label: "Resolve", center: true },
       { key: "build", label: "Build", center: true },
       { key: "test", label: "Test", center: true },
+      { key: "cause", label: "Cause" },
       { key: "status", label: "Status", sortable: true, render: renderStatusCell },
     ],
     filters: [
