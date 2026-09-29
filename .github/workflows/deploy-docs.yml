@@ -23,7 +23,7 @@ env:
 jobs:
   build:
     name: Build DocC
-    runs-on: macos-26
+    runs-on: xcode-27
     # Gate workflow_dispatch: only main can trigger a deploy, even manually.
     # Push events are already gated by `branches: [main]` above; this covers
     # manual dispatch from other refs.
@@ -31,10 +31,8 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7
 
-      - name: Install Swift 6.3
-        uses: swift-actions/setup-swift@364295d9c23900ce04d4e5cc708387921b4e50f9  # v3
-        with:
-          swift-version: "6.3"
+      - name: Select Xcode 27
+        run: sudo xcode-select -s /Applications/Xcode_27.0.app
 
       - name: Show toolchain
         run: |

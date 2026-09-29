@@ -24,7 +24,7 @@ The full corpus is queryable in the [Research Dashboard](/dashboard/#research) �
 
 Ecosystem-wide research is published in [swift-institute/Research](https://github.com/swift-institute/Research); the dashboard's data is generated from that repository's [`_index.json`](https://github.com/swift-institute/Research/blob/main/_index.json). [`Reflections/`](https://github.com/swift-institute/Research/tree/main/Reflections) holds shorter post-session notes captured at the time of the work.
 
-Per-layer research lives alongside the code it concerns — in the `Research/` directory of each superrepo (primitives, standards, foundations).
+Per-layer research lives alongside the code it concerns — in the `Research/` directory of each layer's repository group.
 
 ## What gets a research document
 

@@ -9,7 +9,7 @@ Frequently asked questions about Swift Institute architecture, packaging, and us
 
 ## What's the current state of the ecosystem?
 
-The package ecosystem spans three layers — primitives, standards, and foundations — and is under active development. Most package repositories are still private and are being released on a rolling basis as they reach release quality. This website, [Research](https://github.com/swift-institute/Research), and [Experiments](https://github.com/swift-institute/Experiments) are public now.
+The package ecosystem spans four layers — atoms, molecules, standards, and compositions — and is under active development. Most package repositories are still private and are being released on a rolling basis as they reach release quality. This website, [Research](https://github.com/swift-institute/Research), and [Experiments](https://github.com/swift-institute/Experiments) are public now.
 
 ---
 
@@ -39,12 +39,12 @@ Two primary reasons:
 
 Fine-grained packaging provides:
 
-1. Minimal dependencies — a package needing only affine transforms does not pull in temporal primitives
+1. Minimal dependencies — a package needing only affine transforms does not pull in time
 2. Faster builds — smaller dependency graphs compile faster
 3. Clearer semantics — each package answers one question well
 4. Independent versioning — breaking changes propagate only to actual dependents
 
-The alternative, a monolithic `SwiftPrimitives` package, would force every consumer to accept every type, including those irrelevant to their domain. This contradicts the principle of minimal coupling.
+The alternative, one monolithic package, would force every consumer to accept every type, including those irrelevant to their domain. This contradicts the principle of minimal coupling.
 
 ---
 
@@ -53,10 +53,11 @@ The alternative, a monolithic `SwiftPrimitives` package, would force every consu
 Ask these questions in order:
 
 1. Does an external specification define it? If implementing an ISO, RFC, IEEE, W3C, or similar standard, the package belongs at the standards layer.
-2. Do standards need it but not define it? If it is a prerequisite for standards, it belongs at the primitives layer.
-3. Does it compose standards and primitives into a reusable domain abstraction? It belongs at the foundations layer.
+2. Is it one irreducible concept? It belongs at the atoms layer.
+3. Is it built from atoms, and do standards need it? It belongs at the molecules layer.
+4. Does it compose lower layers into a reusable domain abstraction? It belongs at the compositions layer.
 
-See the Layers section on the main page for the full decision model.
+See <doc:Layers> for the four layers.
 
 ---
 

@@ -7,7 +7,7 @@
   @PageImage(purpose: icon, source: "hero-icon", alt: "Swift Institute layers")
 }
 
-Primitives encoded as Swift packages, standards built on shared primitives, each composed into foundational packages.
+Atoms and molecules encoded as Swift packages, standards built on them, and compositions built from all three.
 
 @Options {
   @TopicsVisualStyle(detailedGrid)
@@ -31,9 +31,10 @@ Primitives encoded as Swift packages, standards built on shared primitives, each
 ### Layers
 
 - <doc:Layers>
-- <doc:Swift-Primitives>
+- <doc:Swift-Atoms>
+- <doc:Swift-Molecules>
 - <doc:Swift-Standards>
-- <doc:Swift-Foundations>
+- <doc:Swift-Compositions>
 
 ### Go deeper
 

@@ -32,7 +32,7 @@ swift build
 
 Requires Swift 6.3 or newer.
 
-Per-layer experiments live alongside the code they concern — in the `Experiments/` directory of each superrepo (primitives, standards, foundations).
+Per-layer experiments live alongside the code they concern — in the `Experiments/` directory of each layer's repository group.
 
 ## What gets an experiment
 

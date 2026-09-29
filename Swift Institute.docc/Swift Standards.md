@@ -5,7 +5,7 @@
     @PageImage(purpose: card, source: "card-swift-standards", alt: "Swift Standards")
 }
 
-Faithful Swift implementations of external normative specifications — RFCs, ISO standards, W3C specifications, and the rest.
+Layer 3: faithful Swift implementations of external normative specifications — RFCs, ISO standards, W3C specifications, and the rest.
 
 ## Overview
 
@@ -50,7 +50,7 @@ Even single-spec concepts benefit from the pattern. When a specification is revi
 | Direct spec package | The spec-specific module | Consumer code references the new spec |
 | Convergence (-standard) | The stable `*_Standard` module | -standard package updates; consumer unchanged |
 
--standard packages are policy-free. They do not add opinion or ecosystem integration — they faithfully compose externally-defined concepts. Higher-layer opinion lives in foundations; see <doc:Swift-Foundations>.
+-standard packages are policy-free. They do not add opinion or ecosystem integration — they faithfully compose externally-defined concepts. Higher-layer opinion lives in compositions; see <doc:Swift-Compositions>.
 
 ---
 
