@@ -5,6 +5,8 @@
   @PageImage(purpose: card, source: "blog-card", alt: "Swift Institute Blog")
 }
 
+> Note: `swift-html-rendering` has since been renamed to [`swift-html-render`](https://github.com/swift-compositions/swift-html-render); the links below point to its current location.
+
 I designed an HTML rendering primitive with the natural name — `associatedtype Body`. It collided with `SwiftUI.View.Body` in any type that tried to bridge the two. My first response was defensive: rename it to `RenderBody`. That fixed the symptom and spread the cost through every conforming type. The better fix turned out to be local: `@_implements` on the bridge type. Getting there meant ruling out three plausible explanations before the compiler behavior finally made sense.
 
 ## What I tried
@@ -228,7 +230,7 @@ public struct Document<Body: HTML.View, Head: HTML.View>: HTML.Document.`Protoco
 }
 ```
 
-The generic parameter goes back to `Body`. Two stamps, one per protocol. Release mode, 150/150 tests pass, `#Preview` works. ([V12_ImplementsBridge](https://github.com/swift-institute/Experiments/tree/main/member-import-visibility-body-conflict/Sources/V12_ImplementsBridge) mirrors the two-stamp shape in minimal form; [applied in swift-html-rendering](https://github.com/swift-foundations/swift-html-rendering/blob/main/Sources/HTML%20Rendering%20Core/HTML.Document.swift))
+The generic parameter goes back to `Body`. Two stamps, one per protocol. Release mode, 150/150 tests pass, `#Preview` works. ([V12_ImplementsBridge](https://github.com/swift-institute/Experiments/tree/main/member-import-visibility-body-conflict/Sources/V12_ImplementsBridge) mirrors the two-stamp shape in minimal form; [applied in swift-html-rendering](https://github.com/swift-compositions/swift-html-render/blob/main/Sources/HTML%20Rendering%20Core/HTML.Document.swift))
 
 That was the part I had missed: the diagnostic pushed me toward narrowing candidates, but the real fix was to pin the second protocol requirement explicitly.
 
@@ -258,4 +260,4 @@ Two meta-lessons:
 - Swift compiler: [`include/swift/Basic/Features.def`](https://github.com/swiftlang/swift/blob/main/include/swift/Basic/Features.def) — `BASELINE_LANGUAGE_FEATURE(AssociatedTypeImplements, 0, ...)`
 - Swift compiler: [`UnderscoredAttributes.md`](https://github.com/swiftlang/swift/blob/main/docs/ReferenceGuides/UnderscoredAttributes.md) — `@_implements(ProtocolName, Requirement)`
 - Experiment: [`member-import-visibility-body-conflict`](https://github.com/swift-institute/Experiments/tree/main/member-import-visibility-body-conflict) — twelve variants. V1–V5 prove `MemberImportVisibility` is innocent; V7 covers `@retroactive`; V8 covers SE-0491 module selectors; V9 demonstrates the wrapper escape hatch; V6/V10 show rename approaches; V11 demonstrates single-stamp `@_implements`; V12 demonstrates the two-stamp production pattern.
-- Applied fix: [`swift-html-rendering/HTML.Document.swift`](https://github.com/swift-foundations/swift-html-rendering/blob/main/Sources/HTML%20Rendering%20Core/HTML.Document.swift) — two-stamp production pattern in situ
+- Applied fix: [`swift-html-render/HTML.Document.swift`](https://github.com/swift-compositions/swift-html-render/blob/main/Sources/HTML%20Rendering%20Core/HTML.Document.swift) — two-stamp production pattern in situ

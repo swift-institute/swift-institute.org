@@ -5,6 +5,8 @@
   @PageImage(purpose: card, source: "blog-card", alt: "Swift Institute Blog")
 }
 
+> Note: `swift-equation-primitives` and its sibling comparison and hash packages have since been retired. The Swift 6.4 standard library's `Equatable`, `Comparable` and `Hashable` now cover what they provided, so the packages and the GitHub links in this post no longer exist.
+
 [`swift-equation-primitives`](https://github.com/swift-primitives/swift-equation-primitives) is now public on GitHub. It ships `Equation.Protocol` — an equality protocol that natively supports `~Copyable` types — and the namespace under which the matching hash and comparison primitives compose.
 
 The package is the root of a three-package sub-cohort: [`swift-equation-primitives`](https://github.com/swift-primitives/swift-equation-primitives), [`swift-comparison-primitives`](https://github.com/swift-primitives/swift-comparison-primitives), and [`swift-hash-primitives`](https://github.com/swift-primitives/swift-hash-primitives) — each shipping a stdlib-mirror protocol that admits move-only types and a small value-type surface that is independent of the protocol question. This post covers the root.

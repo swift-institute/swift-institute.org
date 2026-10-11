@@ -5,6 +5,8 @@
   @PageImage(purpose: card, source: "blog-card", alt: "Swift Institute Blog")
 }
 
+> Note: `swift-comparison-primitives` has since been retired. The Swift 6.4 standard library's `Comparable` now covers what it provided, so the package and the GitHub links in this post no longer exist.
+
 [`swift-comparison-primitives`](https://github.com/swift-primitives/swift-comparison-primitives) is now public on GitHub. It ships two things: a three-way comparison value type — `Comparison` with `.less` / `.equal` / `.greater` cases — and `Comparison.Protocol`, an ordering protocol that natively supports `~Copyable` types.
 
 The package is the middle of a three-package sub-cohort that ships together. The companion posts cover <doc:Introducing-Equation-Primitives> (the equality root) and <doc:Introducing-Hash-Primitives> (the hash leaf).

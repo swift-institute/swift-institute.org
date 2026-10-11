@@ -5,6 +5,8 @@
   @PageImage(purpose: card, source: "blog-card", alt: "Swift Institute Blog")
 }
 
+> Note: `swift-hash-primitives` has since been retired. The Swift 6.4 standard library's `Hashable` now covers what it provided, so the package and the GitHub links to it in this post no longer exist.
+
 [`swift-hash-primitives`](https://github.com/swift-primitives/swift-hash-primitives) is now public on GitHub. It ships `Hash.Value` — a typed wrapper for hash output — and `Hash.Protocol`, a hashing protocol that natively supports `~Copyable` types and refines the equation primitives' equality protocol so the equals/hashCode contract is a type-level invariant.
 
 The package is the leaf of a three-package sub-cohort. The companion posts cover <doc:Introducing-Equation-Primitives> (the equality root) and <doc:Introducing-Comparison-Primitives> (the ordering middle).
