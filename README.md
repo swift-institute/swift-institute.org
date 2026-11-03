@@ -1,16 +1,16 @@
 # swift-institute.org
 
-Source for [swift-institute.org](https://swift-institute.org) — the [Swift Institute](https://github.com/swift-institute) website.
+[swift-institute.org](https://swift-institute.org) is closed: every path on the domain redirects to the [Swift Institute](https://github.com/swift-institute) GitHub organization.
 
 ## What's here
 
 | Path | Contents |
 |------|----------|
-| [`Swift Institute.docc/`](Swift%20Institute.docc) | The DocC catalog that becomes the public site — articles, blog, theme |
+| [`.github/workflows/deploy-docs.yml`](.github/workflows/deploy-docs.yml) | GitHub Actions workflow that deploys the redirect pages to GitHub Pages on every push to `main`, keeping the domain's HTTPS certificate valid |
+| [`Swift Institute.docc/`](Swift%20Institute.docc) | The DocC catalog the former site was built from — articles, blog, theme |
 | [`Sources/`](Sources) | Stub Swift target used to generate the DocC symbol graph |
 | [`Package.swift`](Package.swift) | Package manifest declaring the `Swift Institute` target |
-| [`build-docs.sh`](build-docs.sh) | Local build script — produces a static site under `/tmp/si-docs` |
-| [`.github/workflows/deploy-docs.yml`](.github/workflows/deploy-docs.yml) | GitHub Actions workflow that builds and deploys to swift-institute.org on every push to `main` |
+| [`build-docs.sh`](build-docs.sh) | Local build script for the former site — produces a static site under `/tmp/si-docs` |
 
 Org-level community files (CONTRIBUTING, CODE_OF_CONDUCT, SECURITY, issue templates, profile) live in [swift-institute/.github](https://github.com/swift-institute/.github).
 
@@ -37,13 +37,6 @@ xcrun docc preview "Swift Institute.docc" \
 ## Deferred articles
 
 Articles temporarily removed from the live catalog live on `deferred/{name}` branches: `deferred/architecture`, `deferred/embedded-swift`, `deferred/getting-started`, `deferred/platform`, `deferred/principles`. Cherry-pick into `main` when ready to reintroduce.
-
-## Related Repositories
-
-| Repository | Contents |
-|------------|----------|
-| [Research](https://github.com/swift-institute/Research) | Design rationale, trade-off analyses, and post-session reflections |
-| [Experiments](https://github.com/swift-institute/Experiments) | Standalone Swift packages backing technical claims in the website's articles and blog |
 
 ## License
 
