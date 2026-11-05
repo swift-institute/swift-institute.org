@@ -16,5 +16,6 @@ let package = Package(
     ],
     targets: [
         .target(name: "Swift Institute"),
-    ]
+    ],
+    swiftLanguageModes: [.v6]
 )
