@@ -12,10 +12,10 @@ let package = Package(
         .visionOS(.v27),
     ],
     products: [
-        .library(name: "Swift Institute", targets: ["Swift Institute"]),
+        .library(name: "Swift Institute", targets: ["Swift Institute"])
     ],
     targets: [
-        .target(name: "Swift Institute"),
+        .target(name: "Swift Institute")
     ],
     swiftLanguageModes: [.v6]
 )
